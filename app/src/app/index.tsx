@@ -14,6 +14,7 @@ import { WalletChip } from '@/components/WalletChip';
 import { forecastSeries, sortViews, summarize, viewOf, weekDays } from '@/domain/interest';
 import { homeMessage, repayMessage } from '@/domain/messages';
 import { repayEffect } from '@/domain/wallet';
+import { feedback } from '@/lib/feedback';
 import { useProfile } from '@/store/profile';
 import { useStanding } from '@/store/standing';
 import { useTodos } from '@/store/todos';
@@ -87,6 +88,8 @@ export default function HomeScreen() {
                 // 잔고가 0 아래로 내려가지 않으므로 실제로 빠지는 이자는 잔고만큼까지다
                 const effect = repayEffect(v.principal, v.overdueDays, v.interest, wallet.streak);
                 repay(v.todo.id);
+                if (effect.gained > 0) feedback.buy();
+                else feedback.tap();
                 setLastRepaid({ id: v.todo.id, text: repayMessage({ ...effect, lost: Math.min(effect.lost, wallet.balance) }) });
               }}
               onOpen={() => router.push({ pathname: '/todo/[id]', params: { id: v.todo.id } })}
