@@ -1,4 +1,4 @@
-import { canBuy, ITEMS, ownedCodes, resolveLook, SLOTS, defaultItem } from '../shop';
+import { bankStage, canBuy, defaultItem, itemOf, ITEMS, lockLabel, nextBank, ownedCodes, resolveLook, SLOTS } from '../shop';
 
 describe('상점 물건 목록', () => {
   it('칸마다 기본 물건이 정확히 하나 있다', () => {
@@ -48,5 +48,30 @@ describe('착용 (TC-064)', () => {
     const look = resolveLook({ stampInk: 'ink-gold', stampWord: 'ink-blue' }, ownedCodes(['ink-blue']));
     expect(look.stampInk.code).toBe('ink-red');
     expect(look.stampWord.code).toBe('word-wannap');
+  });
+});
+
+describe('내 은행 (TC-070)', () => {
+  it('처음에는 길가 좌판(0단계)이고 다음은 엽전 가판대', () => {
+    const owned = ownedCodes([]);
+    expect(bankStage(owned)).toBe(0);
+    expect(nextBank(owned)?.code).toBe('bank-1');
+  });
+
+  it('순서대로만 산다. 1단계 없이 2단계는 잠겨 있다', () => {
+    const owned = ownedCodes([]);
+    expect(canBuy('bank-2', 99999, owned)).toMatchObject({ ok: false, reason: 'locked', lock: '엽전 가판대 다음에 열려요' });
+    expect(canBuy('bank-1', 5000, owned)).toEqual({ ok: true });
+  });
+
+  it('가진 은행 중 가장 높은 단계가 지금 단계', () => {
+    expect(bankStage(ownedCodes(['bank-1', 'bank-2']))).toBe(2);
+    expect(nextBank(ownedCodes(['bank-1', 'bank-2', 'bank-3', 'bank-4']))).toBeNull();
+  });
+
+  it('은행 단계가 모자라면 옷이 잠겨 있다', () => {
+    expect(lockLabel(itemOf('head-gat')!, ownedCodes(['bank-1']))).toBe('동네 창구를 열면');
+    expect(lockLabel(itemOf('head-gat')!, ownedCodes(['bank-1', 'bank-2']))).toBeNull();
+    expect(canBuy('body-banker', 99999, ownedCodes([]))).toMatchObject({ ok: false, reason: 'locked' });
   });
 });
