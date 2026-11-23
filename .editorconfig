@@ -1,0 +1,20 @@
+# 편집기 공통 설정. 코딩컨벤션.md 3절과 맞춘다.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+[*.{ts,tsx,js,json}]
+max_line_length = 120
+
+[*.md]
+# 표의 줄 끝 공백이 의미를 가질 수 있다
+trim_trailing_whitespace = false
+
+[*.sql]
+indent_size = 2
