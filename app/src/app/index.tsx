@@ -1,98 +1,101 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+import { router } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { Button } from '@/components/Button';
+import { DayStrip } from '@/components/DayStrip';
+import { DebtCard } from '@/components/DebtCard';
+import { Snackbar } from '@/components/Snackbar';
+import { SpeechBubble } from '@/components/SpeechBubble';
+import { TodoTicket } from '@/components/TodoTicket';
+import { forecastSeries, sortViews, summarize, viewOf, weekDays } from '@/domain/interest';
+import { homeMessage } from '@/domain/messages';
+import { useTodos } from '@/store/todos';
+import { color, type } from '@/theme/tokens';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+const UNDO_MS = 5000;
 
+/** TI-SCR-03 홈 */
 export default function HomeScreen() {
+  const { todos, today, repay, undoRepay } = useTodos();
+  const [lastRepaid, setLastRepaid] = useState<string | null>(null);
+
+  const { summary, views, days, series } = useMemo(() => {
+    const open = todos.filter((t) => t.status === 'open');
+    return {
+      summary: summarize(todos, today),
+      views: sortViews(open.map((t) => viewOf(t, today))),
+      days: weekDays(todos, today),
+      series: forecastSeries(todos, today),
+    };
+  }, [todos, today]);
+
+  useEffect(() => {
+    if (!lastRepaid) return;
+    const timer = setTimeout(() => setLastRepaid(null), UNDO_MS);
+    return () => clearTimeout(timer);
+  }, [lastRepaid]);
+
+  const message = homeMessage(summary, views);
+
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <Text style={[type.title, styles.title]} accessibilityRole="header">
+            할 일 이자
+          </Text>
+          <Pressable onPress={() => router.push('/history')} accessibilityRole="button" accessibilityLabel="상환 내역" hitSlop={12}>
+            <Text style={[type.label, styles.link]}>내역</Text>
+          </Pressable>
+          <Pressable onPress={() => router.push('/settings')} accessibilityRole="button" accessibilityLabel="설정" hitSlop={12}>
+            <Text style={[type.label, styles.link]}>설정</Text>
+          </Pressable>
+        </View>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+        <DebtCard summary={summary} series={series} />
+        <DayStrip days={days} />
+        {message ? <SpeechBubble text={message} /> : null}
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
+        <View style={styles.list}>
+          {views.map((v) => (
+            <TodoTicket
+              key={v.todo.id}
+              view={v}
+              onRepay={() => {
+                repay(v.todo.id);
+                setLastRepaid(v.todo.id);
+              }}
+              onOpen={() => router.push({ pathname: '/todo/[id]', params: { id: v.todo.id } })}
+            />
+          ))}
+        </View>
+      </ScrollView>
+
+      <View style={styles.footer}>
+        {lastRepaid ? (
+          <Snackbar
+            text="완납 처리했어요"
+            actionLabel="되돌리기"
+            onAction={() => {
+              undoRepay(lastRepaid);
+              setLastRepaid(null);
+            }}
           />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+        ) : null}
+        <Button label="할 일 추가" onPress={() => router.push('/todo/new')} />
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
-  },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
-  },
+  safe: { flex: 1, backgroundColor: color.bgPage },
+  content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24, gap: 16 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  title: { flex: 1, color: color.textPrimary },
+  link: { color: color.brandPrimary },
+  list: { gap: 12 },
+  footer: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, gap: 12, backgroundColor: color.bgPage },
 });
