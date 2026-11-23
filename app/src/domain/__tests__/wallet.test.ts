@@ -98,3 +98,21 @@ describe('상환 직후 알림 띠 (TC-064)', () => {
     expect(repayEffect(3000, 2, 630, 3)).toEqual({ gained: 0, bonus: false, lost: 630 });
   });
 });
+
+describe('친구 인증 보너스 (TC-080)', () => {
+  it('인증이 통과한 기한 안 상환은 보상의 50%를 더 받는다', () => {
+    const a = repaid('2026-11-20');
+    const b = repaid('2026-11-21');
+    const w = walletOf([a, b], [], new Set([a.id]));
+    expect(w.balance).toBe(300 + 150 + 300);
+    expect(w.ledger.filter((e) => e.kind === 'proof')).toHaveLength(1);
+  });
+
+  it('연체 상환은 인증이 통과해도 보너스가 없고, 연속 기록은 그대로다', () => {
+    const late = repaid('2026-11-20', 3000, 2, 630);
+    const on = repaid('2026-11-21');
+    const w = walletOf([late, on], [], new Set([late.id, on.id]));
+    expect(w.ledger.filter((e) => e.kind === 'proof').map((e) => e.amount)).toEqual([150]);
+    expect(w.streak).toBe(1);
+  });
+});

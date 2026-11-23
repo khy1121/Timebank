@@ -7,6 +7,7 @@ import type { Repayment } from './records';
  * - 기한 안 상환이 5번 이어질 때마다 1,000냥을 더 번다.
  * - 연체된 할 일을 상환하거나 탕감하면 그 이자만큼 잔고에서 빠지고 연속 기록이 끊긴다.
  *   이자로 빠질 때 잔고는 0 아래로 내려가지 않는다. 산 물건도 그대로 둔다.
+ * - 친구 그룹에서 인증이 통과한 기한 안 상환은 보상의 50%를 더 번다 (FR-080). 연속 기록에는 영향이 없다.
  */
 
 export const REWARD_RATE_DIVISOR = 10;
@@ -31,7 +32,7 @@ export function rewardFor(principal: number): number {
   return Math.floor(principal / REWARD_RATE_DIVISOR);
 }
 
-export type LedgerKind = 'reward' | 'bonus' | 'interest' | 'purchase';
+export type LedgerKind = 'reward' | 'bonus' | 'proof' | 'interest' | 'purchase';
 
 export type LedgerEntry = {
   kind: LedgerKind;
@@ -61,7 +62,8 @@ type Item =
   | { type: 'repayment'; date: DateString; r: Repayment }
   | { type: 'purchase'; date: DateString; p: Purchase };
 
-export function walletOf(repayments: Repayment[], purchases: Purchase[]): Wallet {
+/** verified: 친구 그룹에서 인증이 통과한 상환 ID */
+export function walletOf(repayments: Repayment[], purchases: Purchase[], verified: ReadonlySet<string> = new Set()): Wallet {
   const items: Item[] = [
     ...repayments.map((r) => ({ type: 'repayment' as const, date: r.settledOn, r })),
     ...purchases.map((p) => ({ type: 'purchase' as const, date: p.purchasedOn, p })),
@@ -97,6 +99,11 @@ export function walletOf(repayments: Repayment[], purchases: Purchase[]): Wallet
       const reward = rewardFor(r.principal);
       earned += reward;
       push('reward', item.date, reward, reward, r.id);
+      if (verified.has(r.id)) {
+        const extra = Math.floor(reward / 2);
+        earned += extra;
+        push('proof', item.date, extra, extra, r.id);
+      }
       streak += 1;
       if (streak % STREAK_STEP === 0) {
         earned += STREAK_BONUS;
