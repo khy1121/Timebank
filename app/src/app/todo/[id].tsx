@@ -13,6 +13,8 @@ import { TopBar } from '@/components/TopBar';
 import { formatKoreanDate } from '@/domain/dates';
 import { formatAmount, viewOf } from '@/domain/interest';
 import { interestHistory } from '@/domain/records';
+import { feedback } from '@/lib/feedback';
+import { useGroups } from '@/store/groups';
 import { useTodos } from '@/store/todos';
 import { color, hardShadow, radius, stroke, type } from '@/theme/tokens';
 
@@ -20,6 +22,7 @@ import { color, hardShadow, radius, stroke, type } from '@/theme/tokens';
 export default function TodoDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { todos, today, repay, remove } = useTodos();
+  const { groups } = useGroups();
   const [askDelete, setAskDelete] = useState(false);
   const todo = todos.find((t) => t.id === id && t.status === 'open');
 
@@ -117,8 +120,12 @@ export default function TodoDetailScreen() {
         <Button
           label="상환하기"
           onPress={() => {
-            repay(todo.id);
-            router.back();
+            const repaymentId = repay(todo.id);
+            if (overdue) feedback.tap();
+            else feedback.buy();
+            // 홈에서 상환할 때와 같이, 그룹에 들어가 있으면 바로 인증을 권한다 (FR-078)
+            if (repaymentId && groups.length > 0) router.replace({ pathname: '/proof', params: { repaymentId } });
+            else router.back();
           }}
         />
         <Button label={overdue ? '탕감하고 삭제' : '삭제'} variant="secondary" onPress={() => setAskDelete(true)} />
