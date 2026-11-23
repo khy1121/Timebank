@@ -26,6 +26,8 @@ import {
 } from '@/domain/sync';
 import { canBuy, itemOf, ownedCodes } from '@/domain/shop';
 import { walletOf, type Purchase, type Wallet } from '@/domain/wallet';
+import { daysUntilDue } from '@/domain/events';
+import { track } from '@/lib/events';
 import { supabase } from '@/lib/supabase';
 
 import { useAuth } from './auth';
@@ -377,8 +379,15 @@ export function TodosProvider({ children }: { children: ReactNode }) {
     const putRepayment = (repayment: StoredRepayment) => dispatch({ type: 'putRepayment', repayment });
     const record = (todo: StoredTodo, kind: Repayment['kind']) => {
       const at = now();
+      const rec = settle(todo, kind, today, Crypto.randomUUID());
       putTodo({ ...todo, status: kind, updatedAt: at });
-      putRepayment({ ...settle(todo, kind, today, Crypto.randomUUID()), updatedAt: at, deletedAt: null });
+      putRepayment({ ...rec, updatedAt: at, deletedAt: null });
+      // 사용 기록에는 금액과 일수만 남긴다. 제목은 남기지 않는다 (FR-053, NFR-009)
+      if (kind === 'repaid') {
+        track('repay', { on_time: rec.overdueDays === 0, overdue_days: rec.overdueDays, interest: rec.interest, streak: walletOf(visible(state.repayments), visible(state.purchases)).streak });
+      } else {
+        track('forgive', { overdue_days: rec.overdueDays, interest: rec.interest });
+      }
     };
     const repayments = visible(state.repayments);
     const purchases = visible(state.purchases);
@@ -398,6 +407,7 @@ export function TodosProvider({ children }: { children: ReactNode }) {
       add: (input) => {
         const id = Crypto.randomUUID();
         putTodo({ id, ...input, title: input.title.trim(), status: 'open', updatedAt: now(), deletedAt: null });
+        track('todo_create', { importance: input.importance, days_until_due: daysUntilDue(input.dueDate, today) });
         return id;
       },
       update: (id, input) => {
@@ -413,6 +423,7 @@ export function TodosProvider({ children }: { children: ReactNode }) {
         if (!todo) return;
         const at = now();
         putTodo({ ...todo, status: 'open', updatedAt: at });
+        track('repay_undo');
         for (const r of state.repayments) {
           if (r.todoId === id && !r.deletedAt) putRepayment({ ...r, updatedAt: at, deletedAt: at });
         }
@@ -441,6 +452,7 @@ export function TodosProvider({ children }: { children: ReactNode }) {
             type: 'putPurchase',
             purchase: { id: Crypto.randomUUID(), itemCode: item!.code, price: item!.price, purchasedOn: today, updatedAt: at, deletedAt: null },
           });
+          track('item_buy', { item_code: item!.code, price: item!.price });
         }
         return true;
       },
@@ -452,6 +464,7 @@ export function TodosProvider({ children }: { children: ReactNode }) {
           type: 'putPurchase',
           purchase: { id: Crypto.randomUUID(), itemCode, price: item.price, purchasedOn: today, updatedAt: at, deletedAt: null },
         });
+        track('item_buy', { item_code: itemCode, price: item.price });
         return true;
       },
       clearLocal: async () => {
