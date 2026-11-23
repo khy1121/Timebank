@@ -55,6 +55,7 @@ function Screens() {
         <Stack.Screen name="history" />
         <Stack.Screen name="settings" />
         <Stack.Screen name="onboarding" />
+        <Stack.Screen name="shop" />
         <Stack.Screen name="todo/new" />
         <Stack.Screen name="todo/[id]" />
         <Stack.Screen name="todo-edit/[id]" />
