@@ -1,0 +1,33 @@
+import { router, useLocalSearchParams } from 'expo-router';
+import { StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { SpeechBubble } from '@/components/SpeechBubble';
+import { TodoForm } from '@/components/TodoForm';
+import { TopBar } from '@/components/TopBar';
+import { useTodos } from '@/store/todos';
+import { color } from '@/theme/tokens';
+
+/** TI-SCR-04 할 일 입력 (수정) */
+export default function EditTodoScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { todos } = useTodos();
+  const todo = todos.find((t) => t.id === id && t.status === 'open');
+
+  if (!todo) {
+    return (
+      <SafeAreaView style={styles.safe}>
+        <TopBar onLead={() => router.back()} />
+        <View style={styles.body}>
+          <SpeechBubble text="이미 처리했거나 없는 할 일이에요." />
+        </View>
+      </SafeAreaView>
+    );
+  }
+  return <TodoForm original={todo} />;
+}
+
+const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: color.bgPage },
+  body: { padding: 24 },
+});
