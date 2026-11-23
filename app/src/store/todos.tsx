@@ -10,16 +10,22 @@ import {
   isUuid,
   latestUpdatedAt,
   mergeRows,
+  purchaseFromRow,
+  purchaseToParams,
   repaymentFromRow,
   repaymentToParams,
   todoFromRow,
   todoToParams,
   visible,
+  type PurchaseRow,
   type RepaymentRow,
+  type StoredPurchase,
   type StoredRepayment,
   type StoredTodo,
   type TodoRow,
 } from '@/domain/sync';
+import { canBuy, itemOf, ownedCodes } from '@/domain/shop';
+import { walletOf, type Purchase, type Wallet } from '@/domain/wallet';
 import { supabase } from '@/lib/supabase';
 
 import { useAuth } from './auth';
@@ -30,6 +36,7 @@ import { useAuth } from './auth';
  * - 바꾼 행은 "보낼 목록"에 넣고, 서버에 올라가면 목록에서 뺀다.
  * - 서버에서는 마지막으로 받은 시각 이후에 바뀐 행만 받아 와 합친다.
  * - 저장은 계정마다 따로 한다.
+ * - 상점 구매 기록도 같은 방식으로 맞춘다. 잔고는 저장하지 않고 상환·구매 기록에서 계산한다. (FR-060~063)
  */
 
 const storageKey = (userId: string) => `todo-interest/v2/${userId}`;
@@ -38,10 +45,12 @@ const LEGACY_KEY = 'todo-interest/v1';
 type Data = {
   todos: StoredTodo[];
   repayments: StoredRepayment[];
+  purchases: StoredPurchase[];
   /** 아직 서버에 올리지 못한 행의 ID */
   pendingTodos: string[];
   pendingRepayments: string[];
-  lastPulled: { todos: string | null; repayments: string | null };
+  pendingPurchases: string[];
+  lastPulled: { todos: string | null; repayments: string | null; purchases: string | null };
 };
 
 type State = Data & { hydrated: boolean };
@@ -49,9 +58,11 @@ type State = Data & { hydrated: boolean };
 const EMPTY: Data = {
   todos: [],
   repayments: [],
+  purchases: [],
   pendingTodos: [],
   pendingRepayments: [],
-  lastPulled: { todos: null, repayments: null },
+  pendingPurchases: [],
+  lastPulled: { todos: null, repayments: null, purchases: null },
 };
 
 type Stamp = { id: string; updatedAt: string };
@@ -61,8 +72,9 @@ type Action =
   | { type: 'reset' }
   | { type: 'putTodo'; todo: StoredTodo }
   | { type: 'putRepayment'; repayment: StoredRepayment }
-  | { type: 'pushed'; todos: Stamp[]; repayments: Stamp[] }
-  | { type: 'pulled'; todos: StoredTodo[]; repayments: StoredRepayment[] };
+  | { type: 'putPurchase'; purchase: StoredPurchase }
+  | { type: 'pushed'; todos: Stamp[]; repayments: Stamp[]; purchases: Stamp[] }
+  | { type: 'pulled'; todos: StoredTodo[]; repayments: StoredRepayment[]; purchases: StoredPurchase[] };
 
 const put = <T extends { id: string }>(rows: T[], row: T): T[] =>
   rows.some((r) => r.id === row.id) ? rows.map((r) => (r.id === row.id ? row : r)) : [...rows, row];
@@ -95,20 +107,29 @@ function reducer(state: State, action: Action): State {
         repayments: put(state.repayments, action.repayment),
         pendingRepayments: addId(state.pendingRepayments, action.repayment.id),
       };
+    case 'putPurchase':
+      return {
+        ...state,
+        purchases: put(state.purchases, action.purchase),
+        pendingPurchases: addId(state.pendingPurchases, action.purchase.id),
+      };
     case 'pushed':
       return {
         ...state,
         pendingTodos: settlePending(state.pendingTodos, state.todos, action.todos),
         pendingRepayments: settlePending(state.pendingRepayments, state.repayments, action.repayments),
+        pendingPurchases: settlePending(state.pendingPurchases, state.purchases, action.purchases),
       };
     case 'pulled':
       return {
         ...state,
         todos: mergeRows(state.todos, action.todos),
         repayments: mergeRows(state.repayments, action.repayments),
+        purchases: mergeRows(state.purchases, action.purchases),
         lastPulled: {
           todos: latestUpdatedAt(action.todos, state.lastPulled.todos),
           repayments: latestUpdatedAt(action.repayments, state.lastPulled.repayments),
+          purchases: latestUpdatedAt(action.purchases, state.lastPulled.purchases),
         },
       };
   }
@@ -117,6 +138,16 @@ function reducer(state: State, action: Action): State {
 function isData(v: unknown): v is Data {
   const d = v as Data | null;
   return !!d && Array.isArray(d.todos) && Array.isArray(d.repayments) && Array.isArray(d.pendingTodos);
+}
+
+/** 상점이 생기기 전에 저장한 사본에는 구매 기록 칸이 없다. 빈 칸으로 채운다. */
+function withDefaults(d: Data): Data {
+  return {
+    ...d,
+    purchases: d.purchases ?? [],
+    pendingPurchases: d.pendingPurchases ?? [],
+    lastPulled: { ...d.lastPulled, purchases: d.lastPulled?.purchases ?? null },
+  };
 }
 
 /** 로그인 기능이 생기기 전에 기기에만 저장하던 데이터를 옮겨 온다. 한 번만 일어난다. */
@@ -167,6 +198,11 @@ type Store = {
   hydrated: boolean;
   todos: Todo[];
   repayments: Repayment[];
+  purchases: Purchase[];
+  /** 냥 잔고와 연속 기록 */
+  wallet: Wallet;
+  /** 기본 물건과 산 물건의 코드 */
+  owned: Set<string>;
   today: DateString;
   /** 아직 서버에 올리지 못한 변경 수 */
   pendingCount: number;
@@ -178,6 +214,8 @@ type Store = {
   undoRepay: (id: string) => void;
   /** 삭제. 연체된 할 일이면 탕감으로 기록하고, 아니면 그냥 지운다. 탕감했으면 true. */
   remove: (id: string) => boolean;
+  /** 상점 물건 사기. 잔고가 모자라거나 이미 가졌으면 false (FR-063) */
+  buy: (itemCode: string) => boolean;
   /** 이 기기에 저장된 사본을 지운다. 로그아웃할 때 쓴다. (FR-003) */
   clearLocal: () => Promise<void>;
 };
@@ -186,6 +224,7 @@ const TodosContext = createContext<Store | null>(null);
 
 const TODO_COLUMNS = 'id,title,importance,due_date,status,updated_at,deleted_at';
 const REPAYMENT_COLUMNS = 'id,todo_id,kind,title,principal,interest,overdue_days,settled_on,updated_at,deleted_at';
+const PURCHASE_COLUMNS = 'id,item_code,price,purchased_on,updated_at,deleted_at';
 
 export function TodosProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();
@@ -210,7 +249,7 @@ export function TodosProvider({ children }: { children: ReactNode }) {
       try {
         const raw = await AsyncStorage.getItem(storageKey(userId));
         const parsed: unknown = raw ? JSON.parse(raw) : null;
-        if (isData(parsed)) data = parsed;
+        if (isData(parsed)) data = withDefaults(parsed);
         else data = (await readLegacy(new Date().toISOString())) ?? EMPTY;
       } catch (e) {
         console.warn('저장된 데이터를 읽지 못했어요', e);
@@ -239,6 +278,7 @@ export function TodosProvider({ children }: { children: ReactNode }) {
       const snapshot = stateRef.current;
       const pushedTodos: Stamp[] = [];
       const pushedRepayments: Stamp[] = [];
+      const pushedPurchases: Stamp[] = [];
 
       // 상환 기록은 할 일을 가리키므로 할 일을 먼저 올린다
       for (const id of snapshot.pendingTodos) {
@@ -263,21 +303,38 @@ export function TodosProvider({ children }: { children: ReactNode }) {
           pushedRepayments.push({ id, updatedAt: repayment.updatedAt });
         }
       }
-      dispatch({ type: 'pushed', todos: pushedTodos, repayments: pushedRepayments });
+      for (const id of snapshot.pendingPurchases) {
+        const purchase = snapshot.purchases.find((p) => p.id === id);
+        if (!purchase) continue;
+        const { error } = await supabase.rpc('upsert_purchase', purchaseToParams(purchase));
+        if (error) {
+          failed = true;
+          console.warn('구매 기록을 서버에 올리지 못했어요', error.message);
+        } else {
+          pushedPurchases.push({ id, updatedAt: purchase.updatedAt });
+        }
+      }
+      dispatch({ type: 'pushed', todos: pushedTodos, repayments: pushedRepayments, purchases: pushedPurchases });
 
       let todoQuery = supabase.from('todos').select(TODO_COLUMNS);
       if (snapshot.lastPulled.todos) todoQuery = todoQuery.gt('updated_at', snapshot.lastPulled.todos);
       let repaymentQuery = supabase.from('repayments').select(REPAYMENT_COLUMNS);
       if (snapshot.lastPulled.repayments) repaymentQuery = repaymentQuery.gt('updated_at', snapshot.lastPulled.repayments);
-      const [todosResult, repaymentsResult] = await Promise.all([todoQuery, repaymentQuery]);
-      if (todosResult.error || repaymentsResult.error) {
+      let purchaseQuery = supabase.from('purchases').select(PURCHASE_COLUMNS);
+      if (snapshot.lastPulled.purchases) purchaseQuery = purchaseQuery.gt('updated_at', snapshot.lastPulled.purchases);
+      const [todosResult, repaymentsResult, purchasesResult] = await Promise.all([todoQuery, repaymentQuery, purchaseQuery]);
+      if (todosResult.error || repaymentsResult.error || purchasesResult.error) {
         failed = true;
-        console.warn('서버에서 받아 오지 못했어요', todosResult.error?.message ?? repaymentsResult.error?.message);
+        console.warn(
+          '서버에서 받아 오지 못했어요',
+          todosResult.error?.message ?? repaymentsResult.error?.message ?? purchasesResult.error?.message,
+        );
       } else {
         dispatch({
           type: 'pulled',
           todos: (todosResult.data as TodoRow[]).map(todoFromRow),
           repayments: (repaymentsResult.data as RepaymentRow[]).map(repaymentFromRow),
+          purchases: (purchasesResult.data as PurchaseRow[]).map(purchaseFromRow),
         });
       }
     } catch (e) {
@@ -290,7 +347,7 @@ export function TodosProvider({ children }: { children: ReactNode }) {
   }, [userId]);
 
   // 맞추는 시점: 사본을 읽은 직후, 보낼 것이 생겼을 때, 앱이 다시 앞으로 나올 때
-  const pendingCount = state.pendingTodos.length + state.pendingRepayments.length;
+  const pendingCount = state.pendingTodos.length + state.pendingRepayments.length + state.pendingPurchases.length;
   useEffect(() => {
     if (state.hydrated && userId) sync();
   }, [state.hydrated, userId, pendingCount, sync]);
@@ -312,10 +369,17 @@ export function TodosProvider({ children }: { children: ReactNode }) {
       putTodo({ ...todo, status: kind, updatedAt: at });
       putRepayment({ ...settle(todo, kind, today, Crypto.randomUUID()), updatedAt: at, deletedAt: null });
     };
+    const repayments = visible(state.repayments);
+    const purchases = visible(state.purchases);
+    const wallet = walletOf(repayments, purchases);
+    const owned = ownedCodes(purchases.map((p) => p.itemCode));
     return {
       hydrated: state.hydrated,
       todos: visible(state.todos),
-      repayments: visible(state.repayments),
+      repayments,
+      purchases,
+      wallet,
+      owned,
       today,
       pendingCount,
       syncState,
@@ -351,6 +415,16 @@ export function TodosProvider({ children }: { children: ReactNode }) {
         const at = now();
         putTodo({ ...todo, updatedAt: at, deletedAt: at });
         return false;
+      },
+      buy: (itemCode) => {
+        const item = itemOf(itemCode);
+        if (!item || !canBuy(itemCode, wallet.balance, owned).ok) return false;
+        const at = now();
+        dispatch({
+          type: 'putPurchase',
+          purchase: { id: Crypto.randomUUID(), itemCode, price: item.price, purchasedOn: today, updatedAt: at, deletedAt: null },
+        });
+        return true;
       },
       clearLocal: async () => {
         if (userId) await AsyncStorage.removeItem(storageKey(userId)).catch((e) => console.warn('지우지 못했어요', e));
