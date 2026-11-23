@@ -171,6 +171,13 @@ async function readLegacy(now: string): Promise<Data | null> {
   };
 }
 
+/** 가장 늦은 수정 시각의 현지 날짜 */
+function lastActivityOf(rows: { updatedAt: string }[]): DateString | null {
+  let latest = 0;
+  for (const r of rows) latest = Math.max(latest, Date.parse(r.updatedAt) || 0);
+  return latest ? toDateString(new Date(latest)) : null;
+}
+
 /** 오늘 날짜. 앱이 다시 앞으로 나오거나 자정이 지나면 바뀐다. (FR-026) */
 function useToday(): DateString {
   const [today, setToday] = useState(() => toDateString(new Date()));
@@ -203,6 +210,8 @@ type Store = {
   wallet: Wallet;
   /** 기본 물건과 산 물건의 코드 */
   owned: Set<string>;
+  /** 마지막으로 할 일·기록을 고친 날(기기 현지 날짜). 없으면 null. 잠수 판정에 쓴다 (FR-066) */
+  lastActivity: DateString | null;
   today: DateString;
   /** 아직 서버에 올리지 못한 변경 수 */
   pendingCount: number;
@@ -380,6 +389,7 @@ export function TodosProvider({ children }: { children: ReactNode }) {
       purchases,
       wallet,
       owned,
+      lastActivity: lastActivityOf([...state.todos, ...state.repayments, ...state.purchases]),
       today,
       pendingCount,
       syncState,
