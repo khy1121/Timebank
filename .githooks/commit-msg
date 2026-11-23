@@ -1,0 +1,32 @@
+#!/bin/sh
+# 커밋 메시지 형식 검사. 규칙은 코딩컨벤션.md 5.4절.
+# 켜는 법: git config core.hooksPath .githooks
+
+subject=$(grep -v '^#' "$1" | sed -n '1p')
+
+# 병합·되돌리기처럼 git이 만드는 메시지는 그대로 둔다
+case "$subject" in
+  Merge\ *|Revert\ *|fixup!\ *|squash!\ *) exit 0 ;;
+esac
+
+if ! printf '%s' "$subject" | grep -Eq '^(feat|fix|design|refactor|test|docs|db|chore|ci): .+'; then
+  echo "커밋 메시지 형식이 맞지 않습니다." >&2
+  echo "  형식: {종류}: {무엇을 했는지}" >&2
+  echo "  종류: feat, fix, design, refactor, test, docs, db, chore, ci" >&2
+  echo "  받은 제목: $subject" >&2
+  exit 1
+fi
+
+if printf '%s' "$subject" | grep -Eq '\.$'; then
+  echo "제목 끝에 마침표를 찍지 않습니다: $subject" >&2
+  exit 1
+fi
+
+# 글자 수를 센다. UTF-8의 이어지는 바이트를 빼고 세면 로캘과 상관없이 맞는다
+length=$(printf '%s' "$subject" | LC_ALL=C tr -d '\200-\277' | wc -c | tr -d ' ')
+if [ "$length" -gt 72 ]; then
+  echo "제목이 너무 깁니다 (${length}자). 72자 이내로 줄이고 나머지는 본문에 적습니다." >&2
+  exit 1
+fi
+
+exit 0
