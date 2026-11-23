@@ -8,7 +8,7 @@
 
 import { josa } from './korean';
 
-export type DecorSlot = 'stampInk' | 'stampWord' | 'bubble';
+export type DecorSlot = 'stampInk' | 'stampWord' | 'stampShape' | 'bubble' | 'background';
 export type WearSlot = 'head' | 'face' | 'body';
 export type Slot = DecorSlot | WearSlot | 'bank';
 
@@ -29,7 +29,9 @@ export type ShopItem = {
 export const SLOT_LABEL: Record<Slot, string> = {
   stampInk: '도장 잉크',
   stampWord: '도장 글자',
+  stampShape: '도장 모양',
   bubble: '말풍선 색',
+  background: '홈 배경',
   head: '머리',
   face: '얼굴',
   body: '몸',
@@ -37,7 +39,7 @@ export const SLOT_LABEL: Record<Slot, string> = {
 };
 
 /** 상점 화면에 칸째로 진열하는 꾸미기 */
-export const SLOTS: DecorSlot[] = ['stampInk', 'stampWord', 'bubble'];
+export const SLOTS: DecorSlot[] = ['background', 'stampInk', 'stampWord', 'stampShape', 'bubble'];
 /** 옷장에서 입히는 칸. 그리는 순서(아래 → 위)이기도 하다: 몸 위에 얼굴(안경), 그 위에 머리 */
 export const WEAR_SLOTS: WearSlot[] = ['body', 'face', 'head'];
 /** 옷장 서랍의 탭 순서 */
@@ -58,6 +60,14 @@ export const ITEMS: ShopItem[] = [
   { code: 'bubble-sky', slot: 'bubble', name: '하늘', price: 1500, value: 'bubbleSky' },
   { code: 'bubble-mint', slot: 'bubble', name: '민트', price: 1500, value: 'bubbleMint' },
   { code: 'bubble-pink', slot: 'bubble', name: '분홍', price: 2500, value: 'bubblePink' },
+  { code: 'shape-circle', slot: 'stampShape', name: '동그라미', price: 0, value: 'circle' },
+  { code: 'shape-square', slot: 'stampShape', name: '네모', price: 2000, value: 'square' },
+  { code: 'shape-flower', slot: 'stampShape', name: '꽃', price: 3500, value: 'flower' },
+  { code: 'shape-star', slot: 'stampShape', name: '별', price: 6000, value: 'star', needsBank: 2 },
+  { code: 'bg-coins', slot: 'background', name: '엽전 무늬', price: 0, value: 'bg-coins' },
+  { code: 'bg-hanji', slot: 'background', name: '한지', price: 3000, value: 'bg-hanji' },
+  { code: 'bg-clouds', slot: 'background', name: '구름 무늬', price: 5000, value: 'bg-clouds', needsBank: 1 },
+  { code: 'bg-night', slot: 'background', name: '밤하늘 별', price: 10000, value: 'bg-night', needsBank: 3 },
 
   { code: 'head-none', slot: 'head', name: '안 씀', price: 0, value: '' },
   { code: 'head-beanie', slot: 'head', name: '털모자', price: 2500, value: 'beanie' },
@@ -117,7 +127,7 @@ export function lockLabel(item: ShopItem, owned: Set<string>): string | null {
 
 export type Look = Record<DecorSlot | WearSlot, ShopItem>;
 
-const LOOK_SLOTS: (DecorSlot | WearSlot)[] = ['stampInk', 'stampWord', 'bubble', 'head', 'face', 'body'];
+const LOOK_SLOTS: (DecorSlot | WearSlot)[] = ['stampInk', 'stampWord', 'stampShape', 'bubble', 'background', 'head', 'face', 'body'];
 
 /** 칸마다 실제로 쓰는 물건. 가지지 않았거나 모르는 코드면 기본 물건으로 되돌린다. */
 export function resolveLook(equipped: Equipped, owned: Set<string>): Look {

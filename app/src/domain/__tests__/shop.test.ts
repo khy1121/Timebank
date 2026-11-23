@@ -75,3 +75,17 @@ describe('내 은행 (TC-070)', () => {
     expect(canBuy('body-banker', 99999, ownedCodes([]))).toMatchObject({ ok: false, reason: 'locked' });
   });
 });
+
+describe('홈 배경과 도장 모양 (TC-064)', () => {
+  it('기본은 엽전 무늬와 동그라미', () => {
+    const look = resolveLook({}, ownedCodes([]));
+    expect(look.background.code).toBe('bg-coins');
+    expect(look.stampShape.code).toBe('shape-circle');
+  });
+
+  it('구름 무늬는 은행 1단계, 별 도장은 2단계, 밤하늘은 3단계부터', () => {
+    expect(lockLabel(itemOf('bg-clouds')!, ownedCodes([]))).toBe('엽전 가판대를 열면');
+    expect(lockLabel(itemOf('shape-star')!, ownedCodes(['bank-1']))).toBe('동네 창구를 열면');
+    expect(lockLabel(itemOf('bg-night')!, ownedCodes(['bank-1', 'bank-2', 'bank-3']))).toBeNull();
+  });
+});

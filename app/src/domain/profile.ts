@@ -101,7 +101,7 @@ export function needsOnboarding(profile: Profile | null): boolean {
   return profile !== null && profile.onboardedAt === null;
 }
 
-const SLOT_KEYS = ['stampInk', 'stampWord', 'bubble', 'head', 'face', 'body'] as const;
+const SLOT_KEYS = ['stampInk', 'stampWord', 'stampShape', 'bubble', 'background', 'head', 'face', 'body'] as const;
 
 /** 서버의 jsonb에서 문자열 값만 골라 읽는다. 물건이 실제로 있는지는 shop.resolveLook이 판단한다. */
 export function equippedFromRow(value: Record<string, unknown> | null | undefined): Equipped {
