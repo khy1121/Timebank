@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Amount } from '@/components/Amount';
 import { Button } from '@/components/Button';
 import { ConfirmSheet } from '@/components/ConfirmSheet';
+import { BACKGROUNDS } from '@/components/HomeBackground';
 import { Mascot } from '@/components/Mascot';
 import { SpeechBubble } from '@/components/SpeechBubble';
 import { Stamp } from '@/components/Stamp';
@@ -15,6 +16,7 @@ import { formatAmount } from '@/domain/interest';
 import { shopMessage } from '@/domain/messages';
 import { josa } from '@/domain/korean';
 import { BANK_NAMES, bankStage, canBuy, ITEMS, itemOf, itemsOf, nextBank, SLOT_LABEL, SLOTS, type ShopItem } from '@/domain/shop';
+import { toShape } from '@/domain/stampShape';
 import { STREAK_STEP } from '@/domain/wallet';
 import { feedback } from '@/lib/feedback';
 import { tokenColor, useLook } from '@/store/look';
@@ -177,6 +179,8 @@ function BankCard({ owned, balance, onOpen }: { owned: Set<string>; balance: num
 function Preview({ item }: { item: ShopItem }) {
   if (item.slot === 'stampInk') return <Stamp kind="repaid" size={48} ink={tokenColor(item.value, color.inkRed)} />;
   if (item.slot === 'stampWord') return <Stamp kind="repaid" size={48} word={item.value} />;
+  if (item.slot === 'stampShape') return <Stamp kind="repaid" size={48} shape={toShape(item.value)} />;
+  if (item.slot === 'background') return <Image source={BACKGROUNDS[item.value]} style={styles.bgThumb} contentFit="cover" accessible={false} />;
   return (
     <View style={[styles.bubble, { backgroundColor: tokenColor(item.value, color.bubbleCream) }]}>
       <Text style={[type.caption, styles.ink]}>안녕하세요</Text>
@@ -285,4 +289,5 @@ const styles = StyleSheet.create({
   closetText: { flex: 1, gap: 2 },
   chev: { color: color.inkOutline },
   closetPressed: { transform: [{ translateY: 2 }] },
+  bgThumb: { width: 72, height: 48, borderRadius: radius.md, borderWidth: stroke.outline, borderColor: color.inkOutline },
 });
