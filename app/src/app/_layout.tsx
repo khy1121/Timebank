@@ -70,6 +70,9 @@ function Screens() {
         <Stack.Screen name="closet" />
         <Stack.Screen name="standing" />
         <Stack.Screen name="status-guide" />
+        <Stack.Screen name="groups" />
+        <Stack.Screen name="group-new" />
+        <Stack.Screen name="group-join" />
         <Stack.Screen name="todo/new" />
         <Stack.Screen name="todo/[id]" />
         <Stack.Screen name="todo-edit/[id]" />

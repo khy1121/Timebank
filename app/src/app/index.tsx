@@ -17,6 +17,7 @@ import { homeMessage, repayMessage } from '@/domain/messages';
 import { repayEffect } from '@/domain/wallet';
 import { feedback } from '@/lib/feedback';
 import { useProfile } from '@/store/profile';
+import { useGroups } from '@/store/groups';
 import { useStanding } from '@/store/standing';
 import { useTodos } from '@/store/todos';
 import { color, type } from '@/theme/tokens';
@@ -27,6 +28,8 @@ const UNDO_MS = 5000;
 export default function HomeScreen() {
   const { todos, today, repay, undoRepay, wallet, repayments } = useTodos();
   const standing = useStanding();
+  const { groups } = useGroups();
+  const newProofs = groups.reduce((s, g) => s + g.newProofs, 0);
   const { needsOnboarding } = useProfile();
   const [lastRepaid, setLastRepaid] = useState<{ id: string; text: string } | null>(null);
 
@@ -60,6 +63,13 @@ export default function HomeScreen() {
             할 일 이자
           </Text>
           <WalletChip balance={wallet.balance} onPress={() => router.push('/shop')} />
+          <Pressable
+            onPress={() => router.push('/groups')}
+            accessibilityRole="button"
+            accessibilityLabel={newProofs ? `그룹. 새 인증 ${newProofs}개` : '그룹'}
+            hitSlop={12}>
+            <Text style={[type.label, styles.link]}>그룹{newProofs ? ` ${newProofs}` : ''}</Text>
+          </Pressable>
           <Pressable onPress={() => router.push('/history')} accessibilityRole="button" accessibilityLabel="상환 내역" hitSlop={12}>
             <Text style={[type.label, styles.link]}>내역</Text>
           </Pressable>
