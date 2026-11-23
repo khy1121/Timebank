@@ -1,24 +1,24 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Amount } from '@/components/Amount';
 import { BarChart } from '@/components/BarChart';
 import { Chip } from '@/components/Chip';
 import { SpeechBubble } from '@/components/SpeechBubble';
-import { StatusStamp, TONE_COLOR } from '@/components/StatusStamp';
+import { StatusStamp } from '@/components/StatusStamp';
 import { TopBar } from '@/components/TopBar';
 import { dayOfMonth, weekdayLabel } from '@/domain/dates';
 import { formatAmount } from '@/domain/interest';
-import { dailyScores, MIN_PARTICIPANTS, STATUS, STATUS_ORDER, topPercent, weeklyBars } from '@/domain/standing';
+import { dailyScores, MIN_PARTICIPANTS, STATUS, topPercent, weeklyBars } from '@/domain/standing';
 import { useScoreBreakdown, useStanding } from '@/store/standing';
 import { useTodos } from '@/store/todos';
 import { color, hardShadow, radius, stroke, type } from '@/theme/tokens';
 
 type Range = 'week' | 'month';
 
-/** TI-SCR-11 이번 주 순위. 상태, 등수, 지난주 대비, 주간·월간 차트, 점수 설명, 상태 기준. (FR-065~069) */
+/** TI-SCR-11 이번 주 순위. 상태, 등수, 지난주 대비, 주간·월간 차트, 점수 설명. 상태 기준은 TI-SCR-12로 뺐다. (FR-065~069) */
 export default function StandingScreen() {
   const { weeks, current, change, status, message, failed } = useStanding();
   const { repayments, today } = useTodos();
@@ -113,25 +113,17 @@ export default function StandingScreen() {
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={[type.headline, styles.ink]} accessibilityRole="header">
-            상태 기준
-          </Text>
-          <Text style={[type.caption, styles.muted]}>위에서부터 처음 맞는 상태 하나가 붙어요.</Text>
-          <View style={styles.rules}>
-            {STATUS_ORDER.map((code, i) => {
-              const s = STATUS[code];
-              const mine = code === status;
-              return (
-                <View key={code} style={[styles.rule, i > 0 && styles.ruleBorder, mine && styles.ruleMine]}>
-                  <Text style={[type.label, styles.ruleLabel, { color: TONE_COLOR[s.tone].fg }]}>{s.label}</Text>
-                  <Text style={[type.caption, styles.ruleText]}>{s.rule}</Text>
-                  {mine ? <Text style={[type.caption, styles.me]}>지금</Text> : null}
-                </View>
-              );
-            })}
+        <Pressable
+          onPress={() => router.push('/status-guide')}
+          accessibilityRole="button"
+          accessibilityLabel={`왜 ${STATUS[status].label}인가요? 상태 기준 14개 보기`}
+          style={({ pressed }) => [styles.why, pressed && styles.pressed]}>
+          <View style={styles.whyText}>
+            <Text style={[type.label, styles.ink]}>왜 &quot;{STATUS[status].label}&quot;인가요?</Text>
+            <Text style={[type.caption, styles.muted]}>{STATUS[status].rule}</Text>
           </View>
-        </View>
+          <Text style={[type.label, styles.link]}>기준 14개 ›</Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
@@ -169,19 +161,20 @@ const styles = StyleSheet.create({
   },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   divider: { height: 1, backgroundColor: color.borderDefault },
-  rules: {
+  why: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
     backgroundColor: color.bgSurface,
     borderRadius: radius.lg,
     borderWidth: stroke.hairline,
     borderColor: color.borderDefault,
-    overflow: 'hidden',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
   },
-  rule: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, paddingHorizontal: 14 },
-  ruleBorder: { borderTopWidth: stroke.hairline, borderTopColor: color.borderDefault },
-  ruleMine: { backgroundColor: color.brandSoft },
-  ruleLabel: { width: 84 },
-  ruleText: { flex: 1, color: color.textSecondary },
-  me: { color: color.brandPrimary },
+  whyText: { flex: 1, gap: 2 },
+  link: { color: color.brandPrimary },
+  pressed: { backgroundColor: color.bgSunken },
   ink: { color: color.textPrimary },
   muted: { color: color.textSecondary },
 });
