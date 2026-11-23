@@ -18,6 +18,7 @@ import { track } from '@/lib/events';
 import { feedback } from '@/lib/feedback';
 import { useProfile } from '@/store/profile';
 import { useTodos } from '@/store/todos';
+import * as layout from '@/theme/layout';
 import { color, hardShadow, radius, stroke, type } from '@/theme/tokens';
 
 const THUMBS: Record<string, number> = {
@@ -279,9 +280,9 @@ function Tile({ item, wearing, owned, lock, onTap, onDragStart, onDragMove, onDr
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: color.bgPage },
+  safe: layout.screen,
   root: { flex: 1 },
-  content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24, gap: 16 },
+  content: layout.content,
   stage: {
     alignItems: 'center',
     gap: 8,

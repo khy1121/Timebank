@@ -11,6 +11,7 @@ import { TopBar } from '@/components/TopBar';
 import { inviteMessage, MAX_MEMBERS, type Member } from '@/domain/groups';
 import { josa } from '@/domain/korean';
 import { useGroups } from '@/store/groups';
+import * as layout from '@/theme/layout';
 import { color, radius, stroke, type } from '@/theme/tokens';
 
 type Dialog = { kind: 'leave' } | { kind: 'rotate' } | { kind: 'kick'; member: Member } | null;
@@ -151,8 +152,8 @@ export default function GroupSettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: color.bgPage },
-  content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 32, gap: 16 },
+  safe: layout.screen,
+  content: layout.content,
   secondary: { color: color.textSecondary },
   error: { color: color.debtFg },
   invite: {
@@ -165,5 +166,5 @@ const styles = StyleSheet.create({
     backgroundColor: color.bgSurface,
   },
   code: { color: color.inkOutline, letterSpacing: 6 },
-  list: { borderRadius: radius.lg, borderWidth: stroke.outline, borderColor: color.inkOutline, backgroundColor: color.bgSurface, overflow: 'hidden' },
+  list: layout.list,
 });

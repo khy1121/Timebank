@@ -22,6 +22,7 @@ import {
 import { josa } from '@/domain/korean';
 import { feedback } from '@/lib/feedback';
 import { useGroups } from '@/store/groups';
+import * as layout from '@/theme/layout';
 import { color, radius, stroke, type } from '@/theme/tokens';
 
 type Tab = 'feed' | 'standing' | 'members';
@@ -345,8 +346,8 @@ function MemberList({ rows, onToggleBlock }: { rows: Member[] | null; onToggleBl
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: color.bgPage },
-  content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 32 },
+  safe: layout.screen,
+  content: { ...layout.content, gap: 0 },
   headerBlock: { gap: 16, marginBottom: 16 },
   tabs: { flexDirection: 'row', gap: 8 },
   gap: { height: 16 },
@@ -357,9 +358,9 @@ const styles = StyleSheet.create({
   error: { color: color.debtFg },
   errorBox: { padding: 12, borderRadius: radius.md, backgroundColor: color.debtBg },
   banner: { paddingVertical: 10, paddingHorizontal: 14, borderRadius: radius.md, backgroundColor: color.brandSoft },
-  empty: { gap: 8, padding: 20, borderRadius: radius.lg, backgroundColor: color.bgSurface, borderWidth: stroke.hairline, borderColor: color.borderDefault },
+  empty: { ...layout.panel, gap: 8, padding: 20 },
   section: { gap: 10 },
-  list: { borderRadius: radius.lg, borderWidth: stroke.outline, borderColor: color.inkOutline, backgroundColor: color.bgSurface, overflow: 'hidden' },
+  list: layout.list,
   rankRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 },
   rowBorder: { borderTopWidth: stroke.hairline, borderTopColor: color.borderDefault },
   mine: { backgroundColor: color.brandSoft },

@@ -4,7 +4,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { TopBar } from '@/components/TopBar';
 import { PRIVACY_EFFECTIVE_DATE, PRIVACY_SECTIONS } from '@/domain/privacy';
-import { color, radius, stroke, type } from '@/theme/tokens';
+import * as layout from '@/theme/layout';
+import { color, type } from '@/theme/tokens';
 
 const CONTACT = process.env.EXPO_PUBLIC_CONTACT_EMAIL ?? '';
 
@@ -45,18 +46,11 @@ export default function PrivacyScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: color.bgPage },
-  content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 32, gap: 24 },
+  safe: layout.screen,
+  content: layout.content,
   section: { gap: 8 },
   title: { color: color.textPrimary, paddingLeft: 4 },
-  card: {
-    backgroundColor: color.bgSurface,
-    borderRadius: radius.lg,
-    borderWidth: stroke.hairline,
-    borderColor: color.borderDefault,
-    padding: 16,
-    gap: 10,
-  },
+  card: { ...layout.panel, padding: 16, gap: 10 },
   line: { color: color.textSecondary },
   date: { color: color.textTertiary, textAlign: 'center' },
 });

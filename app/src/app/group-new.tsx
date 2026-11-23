@@ -11,6 +11,7 @@ import { GROUP_NAME_MAX, groupNameError, inviteMessage, MAX_MEMBERS, NICKNAME_MA
 import { josa } from '@/domain/korean';
 import { feedback } from '@/lib/feedback';
 import { useGroups } from '@/store/groups';
+import * as layout from '@/theme/layout';
 import { color, hardShadow, radius, stroke, type } from '@/theme/tokens';
 
 /** TI-SCR-15 그룹 만들기 (FR-075). 만들면 초대 코드를 보여준다. 피그마 53:1594 */
@@ -104,9 +105,9 @@ export default function NewGroupScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: color.bgPage },
+  safe: layout.screen,
   flex: { flex: 1 },
-  content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24, gap: 20 },
+  content: layout.content,
   ink: { color: color.textPrimary },
   secondary: { color: color.textSecondary },
   center: { textAlign: 'center' },
@@ -123,5 +124,5 @@ const styles = StyleSheet.create({
     ...hardShadow(4),
   },
   code: { color: color.inkOutline, letterSpacing: 6 },
-  footer: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, gap: 12 },
+  footer: layout.footer,
 });

@@ -6,7 +6,8 @@ import { StatusStamp } from '@/components/StatusStamp';
 import { TopBar } from '@/components/TopBar';
 import { MIN_PARTICIPANTS, STATUS, STATUS_ORDER } from '@/domain/standing';
 import { useStanding } from '@/store/standing';
-import { color, radius, stroke, type } from '@/theme/tokens';
+import * as layout from '@/theme/layout';
+import { color, stroke, type } from '@/theme/tokens';
 
 /** TI-SCR-12 상태 기준. 상태 14개를 판정 순서대로 보여주고 지금 내 상태를 강조한다. (FR-066) */
 export default function StatusGuideScreen() {
@@ -49,16 +50,10 @@ export default function StatusGuideScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: color.bgPage },
-  content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 32, gap: 16 },
+  safe: layout.screen,
+  content: layout.content,
   intro: { gap: 6, paddingHorizontal: 4 },
-  list: {
-    backgroundColor: color.bgSurface,
-    borderRadius: radius.lg,
-    borderWidth: stroke.hairline,
-    borderColor: color.borderDefault,
-    overflow: 'hidden',
-  },
+  list: layout.list,
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingHorizontal: 14 },
   rowBorder: { borderTopWidth: stroke.hairline, borderTopColor: color.borderDefault },
   rowMine: { backgroundColor: color.brandSoft },

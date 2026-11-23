@@ -18,6 +18,7 @@ import { useAuth } from '@/store/auth';
 import { useNotifications } from '@/store/notifications';
 import { useProfile } from '@/store/profile';
 import { useTodos } from '@/store/todos';
+import * as layout from '@/theme/layout';
 import { color, radius, stroke, type } from '@/theme/tokens';
 
 const CONTACT = process.env.EXPO_PUBLIC_CONTACT_EMAIL ?? '';
@@ -283,17 +284,11 @@ function Group({ label, children }: { label: string; children: ReactNode }) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: color.bgPage },
-  content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 32, gap: 24 },
+  safe: layout.screen,
+  content: layout.content,
   group: { gap: 8 },
   groupLabel: { color: color.textSecondary, paddingLeft: 8 },
-  rows: {
-    backgroundColor: color.bgSurface,
-    borderRadius: radius.lg,
-    borderWidth: stroke.hairline,
-    borderColor: color.borderDefault,
-    overflow: 'hidden',
-  },
+  rows: layout.list,
   version: { color: color.textTertiary, textAlign: 'center' },
   backdrop: { flex: 1, backgroundColor: 'rgba(22, 34, 74, 0.45)', justifyContent: 'flex-end', padding: 16 },
   sheet: {

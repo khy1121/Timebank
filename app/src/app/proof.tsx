@@ -14,6 +14,7 @@ import { CAPTION_MAX, PHOTO_LONG_EDGE, PHOTO_QUALITY, proofBonus } from '@/domai
 import { feedback } from '@/lib/feedback';
 import { useGroups } from '@/store/groups';
 import { useTodos } from '@/store/todos';
+import * as layout from '@/theme/layout';
 import { color, radius, stroke, type } from '@/theme/tokens';
 
 /** 처음 인증을 올리기 전에 한 번 동의받는다 (FR-083) */
@@ -189,9 +190,9 @@ export default function ProofScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: color.bgPage },
+  safe: layout.screen,
   flex: { flex: 1 },
-  content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24, gap: 16 },
+  content: layout.content,
   ink: { color: color.textPrimary },
   secondary: { color: color.textSecondary },
   brand: { color: color.brandPrimary },
@@ -214,6 +215,6 @@ const styles = StyleSheet.create({
   photo: { aspectRatio: 4 / 3, borderRadius: radius.lg, borderWidth: stroke.outline, borderColor: color.inkOutline },
   retake: { alignSelf: 'flex-end' },
   rules: { gap: 8, padding: 16, borderRadius: radius.lg, backgroundColor: color.mascotCream, borderWidth: stroke.hairline, borderColor: color.borderDefault },
-  footer: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12 },
+  footer: layout.footer,
   actions: { flexDirection: 'row', gap: 10 },
 });

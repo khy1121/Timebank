@@ -9,6 +9,7 @@ import { TopBar } from '@/components/TopBar';
 import { CODE_LENGTH, codeFromText, isCompleteCode, MAX_MEMBERS, NICKNAME_MAX, nicknameError, normalizeCode } from '@/domain/groups';
 import { feedback } from '@/lib/feedback';
 import { useGroups, type GroupPreview } from '@/store/groups';
+import * as layout from '@/theme/layout';
 import { color, radius, stroke, type } from '@/theme/tokens';
 
 type Lookup = { code: string; result: GroupPreview | null | 'error' };
@@ -122,9 +123,9 @@ export default function JoinGroupScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: color.bgPage },
+  safe: layout.screen,
   flex: { flex: 1 },
-  content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24, gap: 16 },
+  content: layout.content,
   ink: { color: color.textPrimary },
   secondary: { color: color.textSecondary },
   muted: { color: color.textTertiary },
@@ -148,5 +149,5 @@ const styles = StyleSheet.create({
     borderColor: color.inkOutline,
     backgroundColor: color.mascotCream,
   },
-  footer: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, gap: 12 },
+  footer: layout.footer,
 });

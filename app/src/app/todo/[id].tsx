@@ -16,6 +16,7 @@ import { interestHistory } from '@/domain/records';
 import { feedback } from '@/lib/feedback';
 import { useGroups } from '@/store/groups';
 import { useTodos } from '@/store/todos';
+import * as layout from '@/theme/layout';
 import { color, hardShadow, radius, stroke, type } from '@/theme/tokens';
 
 /** TI-SCR-05 할 일 상세 */
@@ -149,9 +150,9 @@ export default function TodoDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: color.bgPage },
+  safe: layout.screen,
   missing: { padding: 24 },
-  content: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 24, gap: 20 },
+  content: layout.content,
   heading: { gap: 8 },
   title: { color: color.textPrimary },
   meta: { flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
@@ -172,5 +173,5 @@ const styles = StyleSheet.create({
   added: { color: color.debtFg },
   future: { color: color.textTertiary },
   total: { width: 92, alignItems: 'flex-end' },
-  footer: { paddingHorizontal: 24, paddingTop: 12, paddingBottom: 12, gap: 12 },
+  footer: layout.footer,
 });

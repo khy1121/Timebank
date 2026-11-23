@@ -8,6 +8,7 @@ import { principalOf, type Importance, type Todo } from '@/domain/interest';
 import { inputRuleHint } from '@/domain/messages';
 import { canChangeDueDate, TITLE_MAX, validateInput, type TodoInput } from '@/domain/records';
 import { useTodos } from '@/store/todos';
+import * as layout from '@/theme/layout';
 import { color, radius, stroke, type } from '@/theme/tokens';
 
 import { Amount } from './Amount';
@@ -177,9 +178,9 @@ function Stepper({ label, glyph, disabled, onPress }: { label: string; glyph: st
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: color.bgPage },
+  safe: layout.screen,
   flex: { flex: 1 },
-  content: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 32, gap: 24 },
+  content: layout.content,
   field: { gap: 10 },
   question: { color: color.textPrimary },
   input: {

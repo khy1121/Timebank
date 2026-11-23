@@ -6,7 +6,7 @@ import { SpeechBubble } from '@/components/SpeechBubble';
 import { TodoForm } from '@/components/TodoForm';
 import { TopBar } from '@/components/TopBar';
 import { useTodos } from '@/store/todos';
-import { color } from '@/theme/tokens';
+import * as layout from '@/theme/layout';
 
 /** TI-SCR-04 할 일 입력 (수정) */
 export default function EditTodoScreen() {
@@ -28,6 +28,6 @@ export default function EditTodoScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: color.bgPage },
+  safe: layout.screen,
   body: { padding: 24 },
 });
