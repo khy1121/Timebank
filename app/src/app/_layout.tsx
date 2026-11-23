@@ -7,6 +7,7 @@ import { useEffect } from 'react';
 import { AuthProvider, useAuth } from '@/store/auth';
 import { NotificationsProvider } from '@/store/notifications';
 import { ProfileProvider } from '@/store/profile';
+import { StandingProvider } from '@/store/standing';
 import { TodosProvider } from '@/store/todos';
 import { color } from '@/theme/tokens';
 
@@ -28,8 +29,10 @@ export default function RootLayout() {
       <ProfileProvider>
         <TodosProvider>
           <NotificationsProvider>
-            <StatusBar style="dark" />
-            <Screens />
+            <StandingProvider>
+              <StatusBar style="dark" />
+              <Screens />
+            </StandingProvider>
           </NotificationsProvider>
         </TodosProvider>
       </ProfileProvider>
@@ -56,6 +59,7 @@ function Screens() {
         <Stack.Screen name="settings" />
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="shop" />
+        <Stack.Screen name="standing" />
         <Stack.Screen name="todo/new" />
         <Stack.Screen name="todo/[id]" />
         <Stack.Screen name="todo-edit/[id]" />
