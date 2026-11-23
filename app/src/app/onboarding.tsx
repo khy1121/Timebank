@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -43,7 +43,8 @@ export default function OnboardingScreen() {
     setBusy(true);
     // 고르지 않았거나 건너뛰면 유입 경로는 unknown으로 남긴다
     await update({ onboardedAt: new Date().toISOString(), signupSource: picked ?? 'unknown' });
-    router.replace('/');
+    // 경로 타입 생성기가 탭 묶음 안의 index를 '/(tabs)/index'로 적어서 '/'를 모른다. 실제 주소는 '/'가 맞다.
+    router.replace('/' as Href);
   };
 
   return (

@@ -62,15 +62,12 @@ function Screens() {
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: color.bgPage } }}>
       <Stack.Protected guard={signedIn}>
-        <Stack.Screen name="index" />
+        <Stack.Screen name="(tabs)" />
         <Stack.Screen name="history" />
         <Stack.Screen name="settings" />
         <Stack.Screen name="onboarding" />
-        <Stack.Screen name="shop" />
         <Stack.Screen name="closet" />
-        <Stack.Screen name="standing" />
         <Stack.Screen name="status-guide" />
-        <Stack.Screen name="groups" />
         <Stack.Screen name="group-new" />
         <Stack.Screen name="group-join" />
         <Stack.Screen name="group/[id]" />

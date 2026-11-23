@@ -22,7 +22,8 @@ import { feedback } from '@/lib/feedback';
 import { tokenColor, useLook } from '@/store/look';
 import { useProfile } from '@/store/profile';
 import { useTodos } from '@/store/todos';
-import { color, hardShadow, radius, stroke, type } from '@/theme/tokens';
+import * as layout from '@/theme/layout';
+import { color, radius, stroke, type } from '@/theme/tokens';
 
 const BANK_ART = [
   require('@/assets/images/bank/bank-0.png'),
@@ -46,10 +47,10 @@ export default function ShopScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <TopBar title="상점" onLead={() => router.back()} />
+    <SafeAreaView style={styles.safe} edges={['top']}>
+      <TopBar lead="none" title="상점" />
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={[styles.panel, hardShadow(4)]}>
+        <View style={styles.panel}>
           <Text style={[type.label, styles.panelLabel]}>내 잔고</Text>
           <Amount value={wallet.balance} size="XL" />
           <View style={styles.streak} accessible accessibilityLabel={`연속 기록 ${wallet.streak}번, 보너스까지 ${wallet.toNextBonus}번`}>
@@ -68,7 +69,7 @@ export default function ShopScreen() {
           onPress={() => router.push('/closet')}
           accessibilityRole="button"
           accessibilityLabel="옷장에서 마스코트 옷 입혀 보기"
-          style={({ pressed }) => [styles.closet, !pressed && hardShadow(3), pressed && styles.closetPressed]}>
+          style={({ pressed }) => [styles.closet, pressed && styles.closetPressed]}>
           <Mascot size={72} />
           <View style={styles.closetText}>
             <Text style={[type.headline, styles.ink]}>옷장</Text>
@@ -144,7 +145,7 @@ function BankCard({ owned, balance, onOpen }: { owned: Set<string>; balance: num
   const next = nextBank(owned);
   const ratio = next ? Math.min(1, balance / next.price) : 1;
   return (
-    <View style={[styles.bank, hardShadow(4)]}>
+    <View style={styles.bank}>
       <View style={styles.bankTop}>
         <View style={styles.bankArt}>
           <Image source={BANK_ART[stage]} style={styles.bankImage} contentFit="contain" accessibilityLabel={`내 은행 ${BANK_NAMES[stage]} 그림`} />
@@ -204,8 +205,8 @@ function Action({ label, onPress, primary }: { label: string; onPress: () => voi
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: color.bgPage },
-  content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 32, gap: 20 },
+  safe: layout.screen,
+  content: layout.content,
   panel: {
     backgroundColor: color.bgSurface,
     borderRadius: radius.xl,
@@ -290,6 +291,6 @@ const styles = StyleSheet.create({
   },
   closetText: { flex: 1, gap: 2 },
   chev: { color: color.inkOutline },
-  closetPressed: { transform: [{ translateY: 2 }] },
+  closetPressed: { opacity: 0.8 },
   bgThumb: { width: 72, height: 48, borderRadius: radius.md, borderWidth: stroke.outline, borderColor: color.inkOutline },
 });

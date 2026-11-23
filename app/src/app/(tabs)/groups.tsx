@@ -8,6 +8,7 @@ import { GroupRow } from '@/components/GroupRow';
 import { TopBar } from '@/components/TopBar';
 import { MAX_GROUPS } from '@/domain/groups';
 import { useGroups } from '@/store/groups';
+import * as layout from '@/theme/layout';
 import { color, radius, type } from '@/theme/tokens';
 
 /** TI-SCR-14 그룹 목록 (FR-075, FR-076). 피그마 53:1511 */
@@ -23,8 +24,8 @@ export default function GroupsScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <TopBar title="그룹" onLead={() => router.back()} />
+    <SafeAreaView style={styles.safe} edges={['top']}>
+      <TopBar lead="none" title="그룹" />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={[type.title, styles.ink]}>친한 친구끼리 인증하고 겨뤄요</Text>
         <Text style={[type.body, styles.secondary]}>
@@ -56,8 +57,8 @@ export default function GroupsScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: color.bgPage },
-  content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24, gap: 16 },
+  safe: layout.screen,
+  content: layout.content,
   ink: { color: color.textPrimary },
   secondary: { color: color.textSecondary },
   muted: { color: color.textTertiary },
@@ -71,5 +72,5 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     borderColor: color.borderDefault,
   },
-  footer: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, gap: 12 },
+  footer: layout.footer,
 });

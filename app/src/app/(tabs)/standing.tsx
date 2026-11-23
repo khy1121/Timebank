@@ -15,7 +15,8 @@ import { dailyScores, MIN_PARTICIPANTS, STATUS, topPercent, weeklyBars } from '@
 import { track } from '@/lib/events';
 import { useScoreBreakdown, useStanding } from '@/store/standing';
 import { useTodos } from '@/store/todos';
-import { color, hardShadow, radius, stroke, type } from '@/theme/tokens';
+import * as layout from '@/theme/layout';
+import { color, radius, stroke, type } from '@/theme/tokens';
 
 type Range = 'week' | 'month';
 
@@ -39,10 +40,10 @@ export default function StandingScreen() {
   const gap = current ? current.topScore - current.score : 0;
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <TopBar title="이번 주 순위" onLead={() => router.back()} />
+    <SafeAreaView style={styles.safe} edges={['top']}>
+      <TopBar lead="none" title="순위" />
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={[styles.hero, hardShadow(4)]}>
+        <View style={styles.hero}>
           <StatusStamp code={status} size="l" />
           {current ? (
             <>
@@ -148,8 +149,8 @@ function Row({ label, value }: { label: string; value: number }) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: color.bgPage },
-  content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 32, gap: 20 },
+  safe: layout.screen,
+  content: layout.content,
   hero: {
     backgroundColor: color.bgSurface,
     borderRadius: radius.xl,
@@ -160,14 +161,7 @@ const styles = StyleSheet.create({
   },
   section: { gap: 10 },
   tabs: { flexDirection: 'row', gap: 8 },
-  card: {
-    backgroundColor: color.bgSurface,
-    borderRadius: radius.lg,
-    borderWidth: stroke.hairline,
-    borderColor: color.borderDefault,
-    padding: 16,
-    gap: 12,
-  },
+  card: { ...layout.panel, padding: 16, gap: 12 },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   divider: { height: 1, backgroundColor: color.borderDefault },
   why: {
