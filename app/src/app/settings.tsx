@@ -1,23 +1,41 @@
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
-import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState, type ReactNode } from 'react';
+import { ActivityIndicator, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { Button } from '@/components/Button';
+import { Chip } from '@/components/Chip';
 import { ConfirmSheet } from '@/components/ConfirmSheet';
+import { SettingRow } from '@/components/SettingRow';
+import { Toggle } from '@/components/Toggle';
 import { TopBar } from '@/components/TopBar';
+import { formatTimeLabel, NOTIFY_TIMES } from '@/domain/profile';
+import { DELETE_WORD, feedbackMailto, isDeleteConfirmed } from '@/domain/settings';
 import { useAuth } from '@/store/auth';
+import { useNotifications } from '@/store/notifications';
+import { useProfile } from '@/store/profile';
 import { useTodos } from '@/store/todos';
 import { color, radius, stroke, type } from '@/theme/tokens';
 
-/**
- * TI-SCR-07 설정. 지금은 계정 영역과 서버 저장 상태만 있다.
- * 알림, 도움말, 계정 삭제는 해당 기능을 만들 때 추가한다.
- */
+const CONTACT = process.env.EXPO_PUBLIC_CONTACT_EMAIL ?? '';
+const VERSION = Constants.expoConfig?.version ?? '1.0.0';
+
+type Dialog = 'signOut' | 'time' | 'deleteWarn' | 'deleteType' | null;
+
+/** TI-SCR-07 설정. 알림, 도움말, 계정. (FR-003, FR-004, FR-032, FR-033, FR-050~052) */
 export default function SettingsScreen() {
-  const { email, signOut } = useAuth();
-  const { pendingCount, syncState, clearLocal } = useTodos();
-  const [askSignOut, setAskSignOut] = useState(false);
+  const { email, signOut, deleteAccount } = useAuth();
+  const { pendingCount, syncState, clearLocal: clearTodos } = useTodos();
+  const { profile, update, clearLocal: clearProfile } = useProfile();
+  const { permission, request } = useNotifications();
+  const [dialog, setDialog] = useState<Dialog>(null);
+  const [typed, setTyped] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const unsupported = permission === 'unsupported';
+  const notifyOn = !!profile?.notifyEnabled && !unsupported;
   const syncText =
     pendingCount > 0
       ? syncState === 'syncing'
@@ -25,35 +43,81 @@ export default function SettingsScreen() {
         : `아직 서버에 저장되지 않은 변경 ${pendingCount}건`
       : '모두 서버에 저장됐어요';
 
+  const toggleNotify = async (next: boolean) => {
+    await update({ notifyEnabled: next });
+    // 켰는데 아직 권한을 물은 적이 없으면 지금 묻는다
+    if (next && permission === 'undetermined') await request();
+  };
+
+  const closeDelete = () => {
+    setDialog(null);
+    setTyped('');
+    setDeleteError(null);
+  };
+
+  const runDelete = async () => {
+    setDeleting(true);
+    setDeleteError(null);
+    const result = await deleteAccount();
+    if (!result.ok) {
+      setDeleting(false);
+      setDeleteError(result.message);
+      return;
+    }
+    // 계정이 지워졌다. 이 기기에 남은 사본도 지운다. 화면은 로그인으로 넘어간다.
+    await Promise.all([clearTodos(), clearProfile()]);
+  };
+
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <TopBar title="설정" onLead={() => router.back()} />
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.group}>
-          <Text style={[type.label, styles.groupLabel]} accessibilityRole="header">
-            계정
-          </Text>
-          <View style={styles.rows}>
-            <View style={styles.row}>
-              <Text style={[type.body, styles.muted]}>{email ?? '로그인 정보 없음'}</Text>
-            </View>
-            <View style={[styles.row, styles.rowBorder]}>
-              <Text style={[type.body, pendingCount > 0 && syncState !== 'syncing' ? styles.warn : styles.muted]}>{syncText}</Text>
-            </View>
-            <Pressable
-              onPress={() => setAskSignOut(true)}
-              accessibilityRole="button"
-              accessibilityLabel="로그아웃"
-              style={[styles.row, styles.rowBorder]}>
-              <Text style={[type.body, styles.ink]}>로그아웃</Text>
-            </Pressable>
-          </View>
-        </View>
-        <Text style={[type.caption, styles.version]}>버전 {Constants.expoConfig?.version ?? '1.0.0'}</Text>
+        <Group label="알림">
+          <SettingRow
+            first
+            label="알림 받기"
+            hint={unsupported ? '알림은 휴대폰 앱에서만 받을 수 있어요' : '기한 당일과 이자가 붙기 시작한 날에 알려요'}
+            right={<Toggle value={notifyOn} onChange={toggleNotify} label="알림 받기" disabled={unsupported || !profile} />}
+          />
+          <SettingRow
+            label="알림 시각"
+            value={profile ? formatTimeLabel(profile.notifyTime) : undefined}
+            tone={notifyOn ? 'default' : 'muted'}
+            onPress={notifyOn ? () => setDialog('time') : undefined}
+          />
+          {notifyOn && permission === 'denied' ? (
+            <SettingRow
+              label="기기 알림 권한이 꺼져 있어요"
+              hint="기기 설정에서 켜야 알림이 와요"
+              tone="warn"
+              onPress={() => Linking.openSettings()}
+            />
+          ) : null}
+        </Group>
+
+        <Group label="도움말">
+          <SettingRow first label="이자 규칙 다시 보기" onPress={() => router.push({ pathname: '/onboarding', params: { review: '1' } })} />
+          {CONTACT ? (
+            <SettingRow
+              label="의견 보내기"
+              onPress={() => Linking.openURL(feedbackMailto({ address: CONTACT, version: VERSION, platform: Platform.OS }))}
+            />
+          ) : null}
+          <SettingRow label="개인정보 처리방침" onPress={() => router.push('/privacy')} />
+        </Group>
+
+        <Group label="계정">
+          <SettingRow first label={email ?? '로그인 정보 없음'} tone="muted" />
+          <SettingRow label={syncText} tone={pendingCount > 0 && syncState !== 'syncing' ? 'danger' : 'muted'} />
+          <SettingRow label="로그아웃" onPress={() => setDialog('signOut')} />
+          <SettingRow label="계정 삭제" hint="모든 할 일과 내역이 지워져요" tone="danger" onPress={() => setDialog('deleteWarn')} />
+        </Group>
+
+        <Text style={[type.caption, styles.version]}>버전 {VERSION}</Text>
       </ScrollView>
 
       <ConfirmSheet
-        visible={askSignOut}
+        visible={dialog === 'signOut'}
         title="로그아웃할까요?"
         message={
           pendingCount > 0
@@ -63,13 +127,99 @@ export default function SettingsScreen() {
         confirmLabel="로그아웃"
         danger={pendingCount > 0}
         onConfirm={async () => {
-          setAskSignOut(false);
-          await clearLocal();
+          setDialog(null);
+          await Promise.all([clearTodos(), clearProfile()]);
           await signOut();
         }}
-        onCancel={() => setAskSignOut(false)}
+        onCancel={() => setDialog(null)}
       />
+
+      <ConfirmSheet
+        visible={dialog === 'deleteWarn'}
+        title="계정을 삭제할까요?"
+        message="모든 할 일과 내역이 삭제되고 되돌릴 수 없어요."
+        confirmLabel="계속"
+        danger
+        onConfirm={() => setDialog('deleteType')}
+        onCancel={closeDelete}
+      />
+
+      {/* 알림 시각 고르기 */}
+      <Modal visible={dialog === 'time'} transparent animationType="fade" onRequestClose={() => setDialog(null)}>
+        <Pressable style={styles.backdrop} onPress={() => setDialog(null)} accessibilityLabel="닫기">
+          <Pressable style={styles.sheet} onPress={() => {}} accessibilityViewIsModal>
+            <Text style={[type.title, styles.sheetTitle]} accessibilityRole="header">
+              몇 시에 알려 드릴까요?
+            </Text>
+            <View style={styles.times} accessibilityRole="radiogroup">
+              {NOTIFY_TIMES.map((time) => (
+                <Chip
+                  key={time}
+                  label={formatTimeLabel(time)}
+                  selected={profile?.notifyTime === time}
+                  onPress={() => {
+                    update({ notifyTime: time });
+                    setDialog(null);
+                  }}
+                />
+              ))}
+            </View>
+            <Button label="그만두기" variant="secondary" onPress={() => setDialog(null)} />
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* 계정 삭제 2단계: 글자를 직접 입력해야 진행된다 */}
+      <Modal visible={dialog === 'deleteType'} transparent animationType="fade" onRequestClose={deleting ? undefined : closeDelete}>
+        <View style={styles.backdrop}>
+          <View style={styles.sheet} accessibilityViewIsModal>
+            {deleting ? (
+              <View style={styles.progress} accessibilityRole="progressbar" accessibilityLabel="계정을 삭제하는 중">
+                <ActivityIndicator color={color.debtFg} />
+                <Text style={[type.body, styles.sheetMessage]}>계정을 삭제하는 중이에요</Text>
+              </View>
+            ) : (
+              <>
+                <Text style={[type.title, styles.sheetTitle]} accessibilityRole="header">
+                  정말 삭제하려면
+                </Text>
+                <Text style={[type.body, styles.sheetMessage]}>아래에 &quot;{DELETE_WORD}&quot;라고 입력해 주세요.</Text>
+                <TextInput
+                  value={typed}
+                  onChangeText={setTyped}
+                  placeholder={DELETE_WORD}
+                  placeholderTextColor={color.textTertiary}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  accessibilityLabel={`${DELETE_WORD}라고 입력`}
+                  style={[type.body, styles.input]}
+                />
+                {deleteError ? (
+                  <Text style={[type.label, styles.error]} accessibilityRole="alert">
+                    {deleteError}
+                  </Text>
+                ) : null}
+                <View style={styles.actions}>
+                  <Button label="계정 삭제" variant="danger" disabled={!isDeleteConfirmed(typed)} onPress={runDelete} />
+                  <Button label="그만두기" variant="secondary" onPress={closeDelete} />
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
+  );
+}
+
+function Group({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <View style={styles.group}>
+      <Text style={[type.label, styles.groupLabel]} accessibilityRole="header">
+        {label}
+      </Text>
+      <View style={styles.rows}>{children}</View>
+    </View>
   );
 }
 
@@ -85,10 +235,29 @@ const styles = StyleSheet.create({
     borderColor: color.borderDefault,
     overflow: 'hidden',
   },
-  row: { paddingVertical: 15, paddingHorizontal: 16 },
-  rowBorder: { borderTopWidth: stroke.hairline, borderTopColor: color.borderDefault },
-  muted: { color: color.textSecondary },
-  warn: { color: color.debtFg },
-  ink: { color: color.textPrimary },
   version: { color: color.textTertiary, textAlign: 'center' },
+  backdrop: { flex: 1, backgroundColor: 'rgba(22, 34, 74, 0.45)', justifyContent: 'flex-end', padding: 16 },
+  sheet: {
+    backgroundColor: color.bgSurface,
+    borderRadius: radius.xl,
+    borderWidth: stroke.outline,
+    borderColor: color.inkOutline,
+    padding: 24,
+    gap: 12,
+  },
+  sheetTitle: { color: color.textPrimary },
+  sheetMessage: { color: color.textSecondary },
+  times: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginVertical: 8 },
+  input: {
+    backgroundColor: color.bgSurface,
+    borderWidth: stroke.outline,
+    borderColor: color.inkOutline,
+    borderRadius: radius.md,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    color: color.textPrimary,
+  },
+  error: { color: color.debtFg },
+  actions: { gap: 12, marginTop: 8 },
+  progress: { alignItems: 'center', gap: 12, paddingVertical: 24 },
 });
