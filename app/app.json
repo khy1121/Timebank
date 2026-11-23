@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "app",
-    "slug": "app",
+    "name": "할 일 이자",
+    "slug": "todo-interest",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "app",
+    "scheme": "todointerest",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon"
