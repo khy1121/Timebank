@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,6 +11,7 @@ import { SpeechBubble } from '@/components/SpeechBubble';
 import { TodoTicket } from '@/components/TodoTicket';
 import { forecastSeries, sortViews, summarize, viewOf, weekDays } from '@/domain/interest';
 import { homeMessage } from '@/domain/messages';
+import { useProfile } from '@/store/profile';
 import { useTodos } from '@/store/todos';
 import { color, type } from '@/theme/tokens';
 
@@ -19,6 +20,7 @@ const UNDO_MS = 5000;
 /** TI-SCR-03 홈 */
 export default function HomeScreen() {
   const { todos, today, repay, undoRepay } = useTodos();
+  const { needsOnboarding } = useProfile();
   const [lastRepaid, setLastRepaid] = useState<string | null>(null);
 
   const { summary, views, days, series } = useMemo(() => {
@@ -38,6 +40,9 @@ export default function HomeScreen() {
   }, [lastRepaid]);
 
   const message = homeMessage(summary, views);
+
+  // 가입 직후 한 번은 첫 실행 안내를 먼저 보여준다 (FR-050)
+  if (needsOnboarding) return <Redirect href="/onboarding" />;
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
