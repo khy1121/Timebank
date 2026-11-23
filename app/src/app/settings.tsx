@@ -23,7 +23,7 @@ const VERSION = Constants.expoConfig?.version ?? '1.0.0';
 
 type Dialog = 'signOut' | 'time' | 'deleteWarn' | 'deleteType' | null;
 
-/** TI-SCR-07 설정. 알림, 도움말, 계정. (FR-003, FR-004, FR-032, FR-033, FR-050~052) */
+/** TI-SCR-07 설정. 알림, 순위, 도움말, 계정. (FR-003, FR-004, FR-032, FR-033, FR-050~052, FR-067) */
 export default function SettingsScreen() {
   const { email, signOut, deleteAccount } = useAuth();
   const { pendingCount, syncState, clearLocal: clearTodos } = useTodos();
@@ -93,6 +93,20 @@ export default function SettingsScreen() {
               onPress={() => Linking.openSettings()}
             />
           ) : null}
+        </Group>
+
+        <Group label="순위">
+          <SettingRow
+            first
+            label="상태 말투"
+            hint={profile?.voice === 'mild' ? '순한맛: 놀리되 비난하지 않아요' : '매운맛: 밀리면 독하게 말해요'}
+            right={
+              <View style={styles.voice} accessibilityRole="radiogroup">
+                <Chip label="매운맛" selected={profile?.voice !== 'mild'} onPress={() => update({ voice: 'spicy' })} disabled={!profile} />
+                <Chip label="순한맛" selected={profile?.voice === 'mild'} onPress={() => update({ voice: 'mild' })} disabled={!profile} />
+              </View>
+            }
+          />
         </Group>
 
         <Group label="도움말">
@@ -260,4 +274,5 @@ const styles = StyleSheet.create({
   error: { color: color.debtFg },
   actions: { gap: 12, marginTop: 8 },
   progress: { alignItems: 'center', gap: 12, paddingVertical: 24 },
+  voice: { flexDirection: 'row', gap: 6 },
 });
