@@ -1,21 +1,23 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text } from 'react-native';
 
 import { color, radius, stroke, type } from '@/theme/tokens';
 
 type Variant = 'primary' | 'secondary' | 'danger' | 'kakao';
 
+/** pressed: 누르고 있는 동안의 바탕색 */
 const STYLE = {
-  primary: { face: color.brandPrimary, edge: color.brandPressed, fg: color.textOnPrimary, outlined: false },
-  secondary: { face: color.bgSurface, edge: color.inkOutline, fg: color.inkOutline, outlined: true },
-  danger: { face: color.debtFg, edge: color.debtPressed, fg: color.textOnPrimary, outlined: false },
-  kakao: { face: color.kakaoYellow, edge: color.kakaoYellowPressed, fg: color.kakaoLabel, outlined: false },
+  primary: { face: color.brandPrimary, pressed: color.brandPressed, fg: color.textOnPrimary, outlined: false },
+  secondary: { face: color.bgSurface, pressed: color.bgSunken, fg: color.inkOutline, outlined: true },
+  danger: { face: color.debtFg, pressed: color.debtPressed, fg: color.textOnPrimary, outlined: false },
+  kakao: { face: color.kakaoYellow, pressed: color.kakaoYellowPressed, fg: color.kakaoLabel, outlined: false },
 } as const;
-
-const EDGE = 4;
 
 type Props = { label: string; onPress?: () => void; variant?: Variant; disabled?: boolean };
 
-/** 아래쪽 단이 눌리면 사라지는 입체 버튼. 한 화면에 primary는 하나만 쓴다. */
+/**
+ * 버튼. 테두리는 네 면이 같은 두께이고, 누르면 바탕색이 짙어진다. (디자인방향 8.2: 그림자·바닥 두께를 쓰지 않는다)
+ * 한 화면에 primary는 하나만 쓴다.
+ */
 export function Button({ label, onPress, variant = 'primary', disabled = false }: Props) {
   const s = STYLE[variant];
   return (
@@ -25,36 +27,16 @@ export function Button({ label, onPress, variant = 'primary', disabled = false }
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
-      style={styles.hit}>
-      {({ pressed }) => {
-        const down = pressed && !disabled;
-        return (
-          <View
-            style={[
-              styles.edge,
-              { backgroundColor: down ? 'transparent' : disabled ? color.borderDefault : s.edge },
-              down ? { paddingTop: EDGE } : { paddingBottom: EDGE },
-            ]}>
-            <View
-              style={[
-                styles.face,
-                { backgroundColor: disabled ? color.bgSunken : s.face },
-                (s.outlined || disabled) && {
-                  borderWidth: stroke.outline,
-                  borderColor: disabled ? color.borderDefault : color.inkOutline,
-                },
-              ]}>
-              <Text style={[type.headline, { color: disabled ? color.textTertiary : s.fg }]}>{label}</Text>
-            </View>
-          </View>
-        );
-      }}
+      style={({ pressed }) => [
+        styles.face,
+        { backgroundColor: disabled ? color.bgSunken : pressed ? s.pressed : s.face },
+        (s.outlined || disabled) && { borderWidth: stroke.outline, borderColor: disabled ? color.borderDefault : color.inkOutline },
+      ]}>
+      <Text style={[type.headline, { color: disabled ? color.textTertiary : s.fg }]}>{label}</Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  hit: { alignSelf: 'stretch' },
-  edge: { borderRadius: radius.lg },
-  face: { height: 52, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center' },
+  face: { alignSelf: 'stretch', height: 52, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center' },
 });
