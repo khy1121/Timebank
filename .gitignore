@@ -1,0 +1,22 @@
+# 운영체제·편집기
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# 연결 정보와 비밀 값. 어떤 경우에도 올리지 않는다
+.env
+.env.*
+!.env.example
+*.pem
+*.p8
+*.p12
+*.jks
+*.keystore
+
+# 임시 파일
+*.log
+*.tmp
+~$*
