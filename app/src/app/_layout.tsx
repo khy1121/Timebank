@@ -5,6 +5,8 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
 import { AuthProvider, useAuth } from '@/store/auth';
+import { NotificationsProvider } from '@/store/notifications';
+import { ProfileProvider } from '@/store/profile';
 import { TodosProvider } from '@/store/todos';
 import { color } from '@/theme/tokens';
 
@@ -23,10 +25,14 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <TodosProvider>
-        <StatusBar style="dark" />
-        <Screens />
-      </TodosProvider>
+      <ProfileProvider>
+        <TodosProvider>
+          <NotificationsProvider>
+            <StatusBar style="dark" />
+            <Screens />
+          </NotificationsProvider>
+        </TodosProvider>
+      </ProfileProvider>
     </AuthProvider>
   );
 }
@@ -48,6 +54,7 @@ function Screens() {
         <Stack.Screen name="index" />
         <Stack.Screen name="history" />
         <Stack.Screen name="settings" />
+        <Stack.Screen name="onboarding" />
         <Stack.Screen name="todo/new" />
         <Stack.Screen name="todo/[id]" />
         <Stack.Screen name="todo-edit/[id]" />
@@ -56,6 +63,8 @@ function Screens() {
         <Stack.Screen name="login" />
         <Stack.Screen name="verify" />
       </Stack.Protected>
+      {/* 처리방침은 로그인 전후 모두 볼 수 있다 (FR-052) */}
+      <Stack.Screen name="privacy" />
     </Stack>
   );
 }
