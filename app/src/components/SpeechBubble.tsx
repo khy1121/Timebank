@@ -1,8 +1,9 @@
-import { Image } from 'expo-image';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useLook } from '@/store/look';
 import { color, radius, stroke, type } from '@/theme/tokens';
+
+import { Mascot } from './Mascot';
 
 /**
  * 마스코트가 건네는 한마디. 문구는 미리 정한 목록에서 고른다. (FR-055)
@@ -12,7 +13,9 @@ export function SpeechBubble({ text, tint }: { text: string; tint?: string }) {
   const look = useLook();
   return (
     <View style={styles.row} accessible accessibilityLabel={text}>
-      <Image source={require('@/assets/images/mascot-coin.png')} style={styles.mascot} contentFit="contain" accessible={false} />
+      <View style={styles.mascot} accessible={false} importantForAccessibility="no-hide-descendants">
+        <Mascot size={60} />
+      </View>
       <View style={[styles.bubble, { backgroundColor: tint ?? look.bubbleColor }]}>
         <Text style={[type.body, styles.text]}>{text}</Text>
       </View>
