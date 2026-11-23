@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AuthProvider, useAuth } from '@/store/auth';
+import { GroupsProvider } from '@/store/groups';
 import { NotificationsProvider } from '@/store/notifications';
 import { ProfileProvider } from '@/store/profile';
 import { StandingProvider } from '@/store/standing';
@@ -30,6 +31,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
     <AuthProvider>
       <ProfileProvider>
+        <GroupsProvider>
         <TodosProvider>
           <NotificationsProvider>
             <StandingProvider>
@@ -39,6 +41,7 @@ export default function RootLayout() {
             </StandingProvider>
           </NotificationsProvider>
         </TodosProvider>
+        </GroupsProvider>
       </ProfileProvider>
     </AuthProvider>
     </GestureHandlerRootView>

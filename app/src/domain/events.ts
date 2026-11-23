@@ -15,7 +15,13 @@ export type EventName =
   | 'item_buy'
   | 'standing_view'
   | 'voice_change'
-  | 'closet_try';
+  | 'closet_try'
+  | 'group_create'
+  | 'group_join'
+  | 'group_leave'
+  | 'proof_post'
+  | 'proof_vote'
+  | 'proof_report';
 
 export type EventProps = Record<string, string | number | boolean>;
 
@@ -37,6 +43,12 @@ const ALLOWED_KEYS: Record<EventName, string[]> = {
   standing_view: ['status', 'rank', 'participants'],
   voice_change: ['voice'],
   closet_try: ['item_code', 'owned'],
+  group_create: [],
+  group_join: [],
+  group_leave: [],
+  proof_post: ['group_count', 'on_time'],
+  proof_vote: ['vote'],
+  proof_report: ['reason'],
 };
 
 /** 정해진 키만 남기고, 글자 값은 짧게 자른다. 제목 같은 것이 섞여 들어가지 않게 한다 */
