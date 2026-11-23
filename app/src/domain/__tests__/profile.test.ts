@@ -13,6 +13,7 @@ const profile = (over: Partial<Profile> = {}): Profile => ({
   notifyTime: '09:00',
   onboardedAt: null,
   signupSource: 'unknown',
+  equipped: {},
   ...over,
 });
 
@@ -39,7 +40,7 @@ describe('사용자 설정 변환', () => {
   it('서버 행을 앱의 모양으로 옮긴다', () => {
     expect(
       profileFromRow({ notify_enabled: false, notify_time: '18:00:00', onboarded_at: null, signup_source: 'sns' }),
-    ).toEqual({ notifyEnabled: false, notifyTime: '18:00', onboardedAt: null, signupSource: 'sns' });
+    ).toEqual({ notifyEnabled: false, notifyTime: '18:00', onboardedAt: null, signupSource: 'sns', equipped: {} });
   });
 
   it('모르는 유입 경로는 unknown으로 읽는다', () => {
@@ -67,5 +68,22 @@ describe('첫 실행 안내를 보여줄지 (TC-050)', () => {
 
   it('설정을 아직 읽지 못했으면 보여주지 않는다', () => {
     expect(needsOnboarding(null)).toBe(false);
+  });
+});
+
+describe('착용한 물건 읽기', () => {
+  it('서버 값에서 칸 이름과 문자열 값만 읽는다', () => {
+    const row = {
+      notify_enabled: true,
+      notify_time: '09:00:00',
+      onboarded_at: null,
+      signup_source: 'unknown',
+      equipped: { stampInk: 'ink-blue', bubble: 3, hat: 'x' },
+    };
+    expect(profileFromRow(row).equipped).toEqual({ stampInk: 'ink-blue' });
+  });
+
+  it('바꾼 착용 정보를 그대로 올린다', () => {
+    expect(profilePatchToRow({ equipped: { stampWord: 'word-choego' } })).toEqual({ equipped: { stampWord: 'word-choego' } });
   });
 });

@@ -1,3 +1,5 @@
+import type { Equipped } from './shop';
+
 /**
  * 사용자 설정(profiles 테이블). (FR-032, FR-050, FR-054)
  * 코드값은 코드정의서 2.6절과 같다.
@@ -12,6 +14,8 @@ export type Profile = {
   /** 첫 실행 안내를 마친 일시. 아직이면 null */
   onboardedAt: string | null;
   signupSource: SignupSource;
+  /** 칸마다 착용한 상점 물건 코드 (FR-064) */
+  equipped: Equipped;
 };
 
 export type ProfileRow = {
@@ -19,6 +23,7 @@ export type ProfileRow = {
   notify_time: string;
   onboarded_at: string | null;
   signup_source: string;
+  equipped?: Record<string, unknown> | null;
 };
 
 export const DEFAULT_NOTIFY_TIME = '09:00';
@@ -66,6 +71,7 @@ export function profileFromRow(row: ProfileRow): Profile {
     notifyTime: normalizeTime(row.notify_time),
     onboardedAt: row.onboarded_at,
     signupSource: SOURCES.includes(row.signup_source as SignupSource) ? (row.signup_source as SignupSource) : 'unknown',
+    equipped: equippedFromRow(row.equipped),
   };
 }
 
@@ -76,10 +82,23 @@ export function profilePatchToRow(patch: Partial<Profile>): Partial<ProfileRow> 
   if (patch.notifyTime !== undefined) row.notify_time = normalizeTime(patch.notifyTime);
   if (patch.onboardedAt !== undefined) row.onboarded_at = patch.onboardedAt;
   if (patch.signupSource !== undefined) row.signup_source = patch.signupSource;
+  if (patch.equipped !== undefined) row.equipped = patch.equipped;
   return row;
 }
 
 /** 첫 실행 안내를 보여줘야 하는가. 설정을 아직 읽지 못했으면 보여주지 않는다. */
 export function needsOnboarding(profile: Profile | null): boolean {
   return profile !== null && profile.onboardedAt === null;
+}
+
+const SLOT_KEYS = ['stampInk', 'stampWord', 'bubble'] as const;
+
+/** 서버의 jsonb에서 문자열 값만 골라 읽는다. 물건이 실제로 있는지는 shop.resolveLook이 판단한다. */
+export function equippedFromRow(value: Record<string, unknown> | null | undefined): Equipped {
+  const equipped: Equipped = {};
+  if (!value || typeof value !== 'object') return equipped;
+  for (const key of SLOT_KEYS) {
+    if (typeof value[key] === 'string') equipped[key] = value[key] as string;
+  }
+  return equipped;
 }
