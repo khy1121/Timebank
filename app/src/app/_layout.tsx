@@ -3,6 +3,7 @@ import Stack from 'expo-router/stack';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AuthProvider, useAuth } from '@/store/auth';
 import { NotificationsProvider } from '@/store/notifications';
@@ -25,6 +26,7 @@ export default function RootLayout() {
   if (!loaded && !error) return null;
 
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <AuthProvider>
       <ProfileProvider>
         <TodosProvider>
@@ -37,6 +39,7 @@ export default function RootLayout() {
         </TodosProvider>
       </ProfileProvider>
     </AuthProvider>
+    </GestureHandlerRootView>
   );
 }
 
@@ -59,6 +62,7 @@ function Screens() {
         <Stack.Screen name="settings" />
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="shop" />
+        <Stack.Screen name="closet" />
         <Stack.Screen name="standing" />
         <Stack.Screen name="status-guide" />
         <Stack.Screen name="todo/new" />
