@@ -35,7 +35,7 @@ export default function ShopScreen() {
       <TopBar title="상점" onLead={() => router.back()} />
       <ScrollView contentContainerStyle={styles.content}>
         <View style={[styles.panel, hardShadow(4)]}>
-          <Text style={[type.label, styles.muted]}>내 잔고</Text>
+          <Text style={[type.label, styles.panelLabel]}>내 잔고</Text>
           <Amount value={wallet.balance} size="XL" />
           <View style={styles.streak} accessible accessibilityLabel={`연속 기록 ${wallet.streak}번, 보너스까지 ${wallet.toNextBonus}번`}>
             {Array.from({ length: STREAK_STEP }, (_, i) => (
@@ -167,5 +167,6 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.8 },
   wearing: { color: color.brandPrimary, minHeight: 36, lineHeight: 36 },
   muted: { color: color.textSecondary, textAlign: 'center' },
+  panelLabel: { color: color.textSecondary },
   ink: { color: color.textPrimary },
 });
