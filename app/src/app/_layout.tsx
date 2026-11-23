@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from '@/store/auth';
 import { NotificationsProvider } from '@/store/notifications';
 import { ProfileProvider } from '@/store/profile';
 import { StandingProvider } from '@/store/standing';
+import { UsageTracker } from '@/store/usage';
 import { TodosProvider } from '@/store/todos';
 import { color } from '@/theme/tokens';
 
@@ -33,6 +34,7 @@ export default function RootLayout() {
           <NotificationsProvider>
             <StandingProvider>
               <StatusBar style="dark" />
+              <UsageTracker />
               <Screens />
             </StandingProvider>
           </NotificationsProvider>
