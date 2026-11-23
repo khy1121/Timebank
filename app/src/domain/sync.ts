@@ -1,5 +1,6 @@
 import type { Todo } from './interest';
 import type { Repayment } from './records';
+import type { Purchase } from './wallet';
 
 /**
  * 기기와 서버 사이의 동기화 규칙. (FR-040~042, 데이터설계서 6절)
@@ -10,6 +11,7 @@ import type { Repayment } from './records';
 export type SyncMeta = { updatedAt: string; deletedAt: string | null };
 export type StoredTodo = Todo & SyncMeta;
 export type StoredRepayment = Repayment & SyncMeta;
+export type StoredPurchase = Purchase & SyncMeta;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -125,5 +127,37 @@ export function repaymentToParams(r: StoredRepayment) {
     p_settled_on: r.settledOn,
     p_updated_at: r.updatedAt,
     p_deleted_at: r.deletedAt,
+  };
+}
+
+export type PurchaseRow = {
+  id: string;
+  item_code: string;
+  price: number;
+  purchased_on: string;
+  updated_at: string;
+  deleted_at: string | null;
+};
+
+export function purchaseFromRow(row: PurchaseRow): StoredPurchase {
+  return {
+    id: row.id,
+    itemCode: row.item_code,
+    price: row.price,
+    purchasedOn: row.purchased_on,
+    updatedAt: row.updated_at,
+    deletedAt: row.deleted_at,
+  };
+}
+
+/** upsert_purchase 함수에 넘길 값 */
+export function purchaseToParams(p: StoredPurchase) {
+  return {
+    p_id: p.id,
+    p_item_code: p.itemCode,
+    p_price: p.price,
+    p_purchased_on: p.purchasedOn,
+    p_updated_at: p.updatedAt,
+    p_deleted_at: p.deletedAt,
   };
 }
