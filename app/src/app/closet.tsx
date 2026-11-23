@@ -14,6 +14,7 @@ import { outfitOf, sameOutfit, trialState, wear, wearLine, withOutfit, type Outf
 import { formatAmount } from '@/domain/interest';
 import { josa } from '@/domain/korean';
 import { itemsOf, lockLabel, SLOT_LABEL, WEAR_TABS, type ShopItem, type WearSlot } from '@/domain/shop';
+import { track } from '@/lib/events';
 import { feedback } from '@/lib/feedback';
 import { useProfile } from '@/store/profile';
 import { useTodos } from '@/store/todos';
@@ -81,6 +82,7 @@ export default function ClosetScreen() {
       return;
     }
     feedback.wear();
+    track('closet_try', { item_code: item.code, owned: owned.has(item.code) });
     const lock = lockLabel(item, owned);
     const extra = owned.has(item.code) ? '' : lock ? ` (${lock} 살 수 있어요)` : ` 마음에 들면 ${formatAmount(item.price)}냥이에요.`;
     setLine(wearLine(item.code) + extra);

@@ -12,6 +12,7 @@ import { Toggle } from '@/components/Toggle';
 import { TopBar } from '@/components/TopBar';
 import { formatTimeLabel, NOTIFY_TIMES } from '@/domain/profile';
 import { DELETE_WORD, feedbackMailto, isDeleteConfirmed } from '@/domain/settings';
+import { clearEvents, flush, track } from '@/lib/events';
 import { feedback, getSettings, setSettings, subscribe } from '@/lib/feedback';
 import { useAuth } from '@/store/auth';
 import { useNotifications } from '@/store/notifications';
@@ -46,6 +47,7 @@ export default function SettingsScreen() {
       : '모두 서버에 저장됐어요';
 
   const toggleNotify = async (next: boolean) => {
+    track('notify_toggle', { enabled: next });
     await update({ notifyEnabled: next });
     // 켰는데 아직 권한을 물은 적이 없으면 지금 묻는다
     if (next && permission === 'undetermined') await request();
@@ -67,7 +69,7 @@ export default function SettingsScreen() {
       return;
     }
     // 계정이 지워졌다. 이 기기에 남은 사본도 지운다. 화면은 로그인으로 넘어간다.
-    await Promise.all([clearTodos(), clearProfile()]);
+    await Promise.all([clearTodos(), clearProfile(), clearEvents()]);
   };
 
   return (
@@ -104,8 +106,14 @@ export default function SettingsScreen() {
             hint={profile?.voice === 'mild' ? '순한맛: 놀리되 비난하지 않아요' : '매운맛: 밀리면 독하게 말해요'}
             right={
               <View style={styles.voice} accessibilityRole="radiogroup">
-                <Chip label="매운맛" selected={profile?.voice !== 'mild'} onPress={() => update({ voice: 'spicy' })} disabled={!profile} />
-                <Chip label="순한맛" selected={profile?.voice === 'mild'} onPress={() => update({ voice: 'mild' })} disabled={!profile} />
+                <Chip label="매운맛" selected={profile?.voice !== 'mild'} onPress={() => {
+                    update({ voice: 'spicy' });
+                    track('voice_change', { voice: 'spicy' });
+                  }} disabled={!profile} />
+                <Chip label="순한맛" selected={profile?.voice === 'mild'} onPress={() => {
+                    update({ voice: 'mild' });
+                    track('voice_change', { voice: 'mild' });
+                  }} disabled={!profile} />
               </View>
             }
           />
@@ -177,7 +185,9 @@ export default function SettingsScreen() {
         danger={pendingCount > 0}
         onConfirm={async () => {
           setDialog(null);
-          await Promise.all([clearTodos(), clearProfile()]);
+          // 로그아웃 전에 남은 사용 기록을 올리고 지운다
+          await flush().catch(() => {});
+          await Promise.all([clearTodos(), clearProfile(), clearEvents()]);
           await signOut();
         }}
         onCancel={() => setDialog(null)}

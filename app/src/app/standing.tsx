@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -12,6 +12,7 @@ import { TopBar } from '@/components/TopBar';
 import { dayOfMonth, weekdayLabel } from '@/domain/dates';
 import { formatAmount } from '@/domain/interest';
 import { dailyScores, MIN_PARTICIPANTS, STATUS, topPercent, weeklyBars } from '@/domain/standing';
+import { track } from '@/lib/events';
 import { useScoreBreakdown, useStanding } from '@/store/standing';
 import { useTodos } from '@/store/todos';
 import { color, hardShadow, radius, stroke, type } from '@/theme/tokens';
@@ -24,6 +25,14 @@ export default function StandingScreen() {
   const { repayments, today } = useTodos();
   const breakdown = useScoreBreakdown();
   const [range, setRange] = useState<Range>('week');
+
+  // 순위를 받아 온 뒤 한 번 남긴다 (상태별 재방문율을 보려고)
+  const viewed = current ? `${current.weekEnd}:${current.rank}` : null;
+  useEffect(() => {
+    if (!viewed || !current) return;
+    track('standing_view', { status, rank: current.rank, participants: current.participants });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewed]);
 
   const days = dailyScores(repayments, today);
   const monthly = weeklyBars(weeks);
