@@ -53,6 +53,8 @@ export function StandingProvider({ children }: { children: ReactNode }) {
   const [loaded, setLoaded] = useState<{ userId: string; weeks: StandingWeek[] } | null>(null);
   const [failed, setFailed] = useState(false);
   const inFlight = useRef(false);
+  // 그룹원에게 보여줄 내 상태를 마지막으로 올린 값 (FR-081)
+  const uploadedStatus = useRef<string | null>(null);
   // 받는 중에 또 요청이 오면 끝난 뒤 한 번 더 받는다 (그 사이 바뀐 기록을 놓치지 않게)
   const again = useRef(false);
 
@@ -97,7 +99,8 @@ export function StandingProvider({ children }: { children: ReactNode }) {
     return () => sub.remove();
   }, [refresh]);
 
-  const store = useMemo<Store>(() => {
+  // 계산한 값과 받아 오는 함수를 나눠 둔다. 아래 상태 올리기 effect가 계산한 값만 보게 하려는 것이다.
+  const derived = useMemo(() => {
     const weeks = loaded && loaded.userId === userId ? loaded.weeks : [];
     const current = weeks.length ? weeks[weeks.length - 1] : null;
     const previous = weeks.length > 1 ? weeks[weeks.length - 2] : null;
@@ -118,11 +121,33 @@ export function StandingProvider({ children }: { children: ReactNode }) {
       signals,
       status,
       message: statusMessage(status, signals, profile?.voice ?? 'spicy'),
-      loading: !loaded && !failed,
-      failed,
-      refresh,
     };
-  }, [loaded, userId, todos, repayments, today, wallet.streak, lastActivity, profile, failed, refresh]);
+  }, [loaded, userId, todos, repayments, today, wallet.streak, lastActivity, profile]);
+
+  const store = useMemo<Store>(
+    () => ({ ...derived, loading: !loaded && !failed, failed, refresh }),
+    [derived, loaded, failed, refresh],
+  );
+
+  // 순위를 받은 뒤 상태가 바뀌었으면 서버에 올려 둔다. 그룹원 목록과 그룹 순위에 보인다 (FR-081)
+  const ready = !!loaded && loaded.userId === userId && !failed;
+  const status = derived.status;
+  useEffect(() => {
+    if (!userId || !ready) return;
+    const key = `${userId}:${status}:${today}`;
+    if (uploadedStatus.current === key) return;
+    uploadedStatus.current = key;
+    supabase
+      .from('profiles')
+      .update({ status_code: status, status_on: today })
+      .eq('id', userId)
+      .then(({ error }) => {
+        if (error) {
+          console.warn('상태를 올리지 못했어요', error.message);
+          uploadedStatus.current = null;
+        }
+      });
+  }, [userId, ready, status, today]);
 
   return <StandingContext.Provider value={store}>{children}</StandingContext.Provider>;
 }
