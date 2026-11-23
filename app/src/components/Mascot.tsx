@@ -17,6 +17,8 @@ const LAYERS: Record<string, number> = {
   banker: require('@/assets/images/closet/banker.png'),
 };
 const BASE = require('@/assets/images/closet/base.png');
+// 모자를 쓰면 새싹이 모자 뒤로 비치지 않도록 새싹 없는 몸을 쓴다
+const BASE_NO_SPROUT = require('@/assets/images/closet/base-nosprout.png');
 
 type Props = {
   size: number;
@@ -44,7 +46,7 @@ export function Mascot({ size, outfit, bounceKey = 0, animateLayers = false }: P
 
   return (
     <Animated.View style={[box, bounce]} accessible accessibilityRole="image" accessibilityLabel={describeOutfit(worn)}>
-      <Image source={BASE} style={[styles.layer, box]} contentFit="contain" accessible={false} />
+      <Image source={itemOf(worn.head)?.value ? BASE_NO_SPROUT : BASE} style={[styles.layer, box]} contentFit="contain" accessible={false} />
       {WEAR_SLOTS.map((slot) => {
         const value = itemOf(worn[slot])?.value;
         const src = value ? LAYERS[value] : undefined;
