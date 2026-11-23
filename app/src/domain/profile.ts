@@ -1,4 +1,5 @@
 import type { Equipped } from './shop';
+import type { Voice } from './standing';
 
 /**
  * 사용자 설정(profiles 테이블). (FR-032, FR-050, FR-054)
@@ -16,6 +17,10 @@ export type Profile = {
   signupSource: SignupSource;
   /** 칸마다 착용한 상점 물건 코드 (FR-064) */
   equipped: Equipped;
+  /** 상태 문구 말투 (FR-067) */
+  voice: Voice;
+  /** 가입한 날(기기 현지 날짜). 신입 판정에 쓴다. 모르면 null */
+  signupDate: string | null;
 };
 
 export type ProfileRow = {
@@ -24,6 +29,8 @@ export type ProfileRow = {
   onboarded_at: string | null;
   signup_source: string;
   equipped?: Record<string, unknown> | null;
+  voice?: string | null;
+  created_at?: string | null;
 };
 
 export const DEFAULT_NOTIFY_TIME = '09:00';
@@ -72,6 +79,8 @@ export function profileFromRow(row: ProfileRow): Profile {
     onboardedAt: row.onboarded_at,
     signupSource: SOURCES.includes(row.signup_source as SignupSource) ? (row.signup_source as SignupSource) : 'unknown',
     equipped: equippedFromRow(row.equipped),
+    voice: row.voice === 'mild' ? 'mild' : 'spicy',
+    signupDate: row.created_at ? localDate(row.created_at) : null,
   };
 }
 
@@ -83,6 +92,7 @@ export function profilePatchToRow(patch: Partial<Profile>): Partial<ProfileRow> 
   if (patch.onboardedAt !== undefined) row.onboarded_at = patch.onboardedAt;
   if (patch.signupSource !== undefined) row.signup_source = patch.signupSource;
   if (patch.equipped !== undefined) row.equipped = patch.equipped;
+  if (patch.voice !== undefined) row.voice = patch.voice;
   return row;
 }
 
@@ -101,4 +111,11 @@ export function equippedFromRow(value: Record<string, unknown> | null | undefine
     if (typeof value[key] === 'string') equipped[key] = value[key] as string;
   }
   return equipped;
+}
+
+/** 서버 일시를 기기 현지 날짜(YYYY-MM-DD)로 */
+function localDate(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }

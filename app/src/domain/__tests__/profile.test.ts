@@ -14,6 +14,8 @@ const profile = (over: Partial<Profile> = {}): Profile => ({
   onboardedAt: null,
   signupSource: 'unknown',
   equipped: {},
+  voice: 'spicy',
+  signupDate: null,
   ...over,
 });
 
@@ -40,7 +42,7 @@ describe('사용자 설정 변환', () => {
   it('서버 행을 앱의 모양으로 옮긴다', () => {
     expect(
       profileFromRow({ notify_enabled: false, notify_time: '18:00:00', onboarded_at: null, signup_source: 'sns' }),
-    ).toEqual({ notifyEnabled: false, notifyTime: '18:00', onboardedAt: null, signupSource: 'sns', equipped: {} });
+    ).toEqual({ notifyEnabled: false, notifyTime: '18:00', onboardedAt: null, signupSource: 'sns', equipped: {}, voice: 'spicy', signupDate: null });
   });
 
   it('모르는 유입 경로는 unknown으로 읽는다', () => {
@@ -85,5 +87,23 @@ describe('착용한 물건 읽기', () => {
 
   it('바꾼 착용 정보를 그대로 올린다', () => {
     expect(profilePatchToRow({ equipped: { stampWord: 'word-choego' } })).toEqual({ equipped: { stampWord: 'word-choego' } });
+  });
+});
+
+describe('말투와 가입일', () => {
+  it('말투는 mild가 아니면 매운맛으로 읽는다', () => {
+    const row = { notify_enabled: true, notify_time: '09:00:00', onboarded_at: null, signup_source: 'unknown' };
+    expect(profileFromRow({ ...row, voice: 'mild' }).voice).toBe('mild');
+    expect(profileFromRow({ ...row, voice: 'loud' }).voice).toBe('spicy');
+    expect(profileFromRow(row).voice).toBe('spicy');
+  });
+
+  it('바꾼 말투를 그대로 올린다', () => {
+    expect(profilePatchToRow({ voice: 'mild' })).toEqual({ voice: 'mild' });
+  });
+
+  it('가입 일시를 날짜로 읽는다', () => {
+    const row = { notify_enabled: true, notify_time: '09:00:00', onboarded_at: null, signup_source: 'unknown', created_at: '2026-11-20T03:00:00Z' };
+    expect(profileFromRow(row).signupDate).toMatch(/^2026-11-2[01]$/);
   });
 });
