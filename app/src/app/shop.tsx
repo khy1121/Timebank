@@ -97,8 +97,10 @@ export default function ShopScreen() {
                       <Action label="착용" onPress={() => equip(item)} />
                     ) : check.ok ? (
                       <Action label={`${formatAmount(item.price)}냥`} primary onPress={() => setAsking(item.code)} />
+                    ) : !check.ok && check.reason === 'locked' ? (
+                      <Text style={[type.caption, styles.muted]}>{check.lock}</Text>
                     ) : (
-                      <Text style={[type.caption, styles.muted]}>{formatAmount(check.short ?? item.price)}냥 더 필요해요</Text>
+                      <Text style={[type.caption, styles.muted]}>{formatAmount(check.ok ? 0 : (check.short ?? item.price))}냥 더 필요해요</Text>
                     )}
                   </View>
                 );
