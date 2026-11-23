@@ -19,7 +19,7 @@ import { feedback } from '@/lib/feedback';
 import { useProfile } from '@/store/profile';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
-import { color, hardShadow, radius, stroke, type } from '@/theme/tokens';
+import { color, radius, stroke, type } from '@/theme/tokens';
 
 const THUMBS: Record<string, number> = {
   '': require('@/assets/images/outfits/none.png'),
@@ -259,7 +259,7 @@ function Tile({ item, wearing, owned, lock, onTap, onDragStart, onDragMove, onDr
   return (
     <GestureDetector gesture={Gesture.Race(pan, tap)}>
       <View
-        style={[styles.tile, wearing && [styles.tileOn, hardShadow(2)]]}
+        style={[styles.tile, wearing && styles.tileOn]}
         accessible
         accessibilityRole="button"
         accessibilityLabel={`${SLOT_LABEL[item.slot]} ${item.name}${status ? `, ${status}` : ''}`}

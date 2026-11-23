@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { formatAmount, type TodoView } from '@/domain/interest';
-import { color, hardShadow, radius, stroke, type } from '@/theme/tokens';
+import { color, radius, stroke, type } from '@/theme/tokens';
 
 import { Amount } from './Amount';
 import { Badge } from './Badge';
@@ -28,7 +28,7 @@ export function TodoTicket({ view, onRepay, onOpen }: Props) {
   const { todo, state } = view;
   const overdue = state === 'overdue';
   return (
-    <View style={[styles.ticket, hardShadow(3)]}>
+    <View style={styles.ticket}>
       <Pressable
         onPress={onRepay}
         accessibilityRole="button"

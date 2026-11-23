@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { formatAmount } from '@/domain/interest';
-import { color, hardShadow, radius, stroke, type } from '@/theme/tokens';
+import { color, radius, stroke, type } from '@/theme/tokens';
 
 type Props = { balance: number; onPress: () => void };
 
@@ -14,7 +14,7 @@ export function WalletChip({ balance, onPress }: Props) {
       accessibilityRole="button"
       accessibilityLabel={`잔고 ${text}냥, 상점 열기`}
       hitSlop={8}
-      style={({ pressed }) => [styles.chip, !pressed && hardShadow(2), pressed && styles.pressed]}>
+      style={({ pressed }) => [styles.chip, pressed && styles.pressed]}>
       <View style={styles.coin}>
         <View style={styles.hole} />
       </View>
@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
     borderColor: color.inkOutline,
     backgroundColor: color.mascotCream,
   },
-  pressed: { transform: [{ translateY: 2 }] },
+  pressed: { opacity: 0.8 },
   coin: {
     width: 18,
     height: 18,

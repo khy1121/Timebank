@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { color, hardShadow, radius, stroke, type } from '@/theme/tokens';
+import { color, radius, stroke, type } from '@/theme/tokens';
 
 type Props = { label: string; selected: boolean; onPress: () => void };
 
@@ -12,7 +12,7 @@ export function OptionRow({ label, selected, onPress }: Props) {
       accessibilityRole="radio"
       accessibilityLabel={label}
       accessibilityState={{ selected }}
-      style={[styles.row, selected ? [styles.on, hardShadow(2)] : styles.off]}>
+      style={[styles.row, selected ? styles.on : styles.off]}>
       <View style={[styles.radio, selected && styles.radioOn]}>{selected ? <View style={styles.dot} /> : null}</View>
       <Text style={[type.body, styles.label]}>{label}</Text>
     </Pressable>

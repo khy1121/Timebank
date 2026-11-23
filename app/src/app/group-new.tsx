@@ -12,7 +12,7 @@ import { josa } from '@/domain/korean';
 import { feedback } from '@/lib/feedback';
 import { useGroups } from '@/store/groups';
 import * as layout from '@/theme/layout';
-import { color, hardShadow, radius, stroke, type } from '@/theme/tokens';
+import { color, radius, stroke, type } from '@/theme/tokens';
 
 /** TI-SCR-15 그룹 만들기 (FR-075). 만들면 초대 코드를 보여준다. 피그마 53:1594 */
 export default function NewGroupScreen() {
@@ -121,7 +121,6 @@ const styles = StyleSheet.create({
     borderWidth: stroke.outline,
     borderColor: color.inkOutline,
     backgroundColor: color.bgSurface,
-    ...hardShadow(4),
   },
   code: { color: color.inkOutline, letterSpacing: 6 },
   footer: layout.footer,

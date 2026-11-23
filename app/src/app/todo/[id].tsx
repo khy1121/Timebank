@@ -17,7 +17,7 @@ import { feedback } from '@/lib/feedback';
 import { useGroups } from '@/store/groups';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
-import { color, hardShadow, radius, stroke, type } from '@/theme/tokens';
+import { color, radius, stroke, type } from '@/theme/tokens';
 
 /** TI-SCR-05 할 일 상세 */
 export default function TodoDetailScreen() {
@@ -66,7 +66,7 @@ export default function TodoDetailScreen() {
           </View>
         </View>
 
-        <View style={[styles.panel, hardShadow(4)]}>
+        <View style={styles.panel}>
           <View style={styles.now}>
             <Text style={[type.label, styles.muted]}>{overdue ? '지금 갚을 빚' : '걸어 둔 원금'}</Text>
             <Amount value={overdue ? v.debt : v.principal} size="XL" tone={overdue ? 'debt' : 'ink'} />

@@ -2,7 +2,7 @@ import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { countsLabel, proofNote, proofState, STATE_LABEL, timeAgo, votingOpen, type Proof, type ProofState, type Vote } from '@/domain/groups';
-import { color, hardShadow, radius, stroke, type } from '@/theme/tokens';
+import { color, radius, stroke, type } from '@/theme/tokens';
 
 const AVATAR = require('@/assets/images/closet/base.png');
 
@@ -98,7 +98,6 @@ const styles = StyleSheet.create({
     borderColor: color.inkOutline,
     padding: 14,
     gap: 10,
-    ...hardShadow(3),
   },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   avatar: {

@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
 
-import { color, hardShadow, radius, stroke, type } from '@/theme/tokens';
+import { color, radius, stroke, type } from '@/theme/tokens';
 
 type Props = { label: string; selected: boolean; onPress: () => void; grow?: boolean; a11yLabel?: string; disabled?: boolean };
 
@@ -16,7 +16,7 @@ export function Chip({ label, selected, onPress, grow, a11yLabel, disabled }: Pr
       style={[
         styles.chip,
         grow && styles.grow,
-        selected ? [styles.on, hardShadow(2)] : styles.off,
+        selected ? styles.on : styles.off,
         disabled && styles.disabled,
       ]}>
       <Text style={[type.label, { color: selected ? color.textOnPrimary : color.textPrimary }]}>{label}</Text>
