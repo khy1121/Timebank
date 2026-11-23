@@ -73,6 +73,8 @@ function Screens() {
         <Stack.Screen name="groups" />
         <Stack.Screen name="group-new" />
         <Stack.Screen name="group-join" />
+        <Stack.Screen name="group/[id]" />
+        <Stack.Screen name="group-settings/[id]" />
         <Stack.Screen name="todo/new" />
         <Stack.Screen name="todo/[id]" />
         <Stack.Screen name="todo-edit/[id]" />
