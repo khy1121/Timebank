@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
@@ -114,7 +114,11 @@ export default function LoginScreen() {
             ) : null}
           </View>
 
-          <Text style={[type.caption, styles.terms]}>계속하면 개인정보 처리방침에 동의하게 돼요</Text>
+          <Pressable onPress={() => router.push('/privacy')} accessibilityRole="link" accessibilityLabel="개인정보 처리방침 보기" hitSlop={12}>
+            <Text style={[type.caption, styles.terms]}>
+              계속하면 <Text style={styles.termsLink}>개인정보 처리방침</Text>에 동의하게 돼요
+            </Text>
+          </Pressable>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
@@ -139,4 +143,5 @@ const styles = StyleSheet.create({
   },
   error: { color: color.debtFg },
   terms: { color: color.textTertiary, textAlign: 'center' },
+  termsLink: { color: color.textSecondary, textDecorationLine: 'underline' },
 });
