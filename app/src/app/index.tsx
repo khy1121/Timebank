@@ -8,12 +8,14 @@ import { DayStrip } from '@/components/DayStrip';
 import { DebtCard } from '@/components/DebtCard';
 import { Snackbar } from '@/components/Snackbar';
 import { SpeechBubble } from '@/components/SpeechBubble';
+import { StandingCard } from '@/components/StandingCard';
 import { TodoTicket } from '@/components/TodoTicket';
 import { WalletChip } from '@/components/WalletChip';
 import { forecastSeries, sortViews, summarize, viewOf, weekDays } from '@/domain/interest';
 import { homeMessage, repayMessage } from '@/domain/messages';
 import { repayEffect } from '@/domain/wallet';
 import { useProfile } from '@/store/profile';
+import { useStanding } from '@/store/standing';
 import { useTodos } from '@/store/todos';
 import { color, type } from '@/theme/tokens';
 
@@ -21,7 +23,8 @@ const UNDO_MS = 5000;
 
 /** TI-SCR-03 홈 */
 export default function HomeScreen() {
-  const { todos, today, repay, undoRepay, wallet } = useTodos();
+  const { todos, today, repay, undoRepay, wallet, repayments } = useTodos();
+  const standing = useStanding();
   const { needsOnboarding } = useProfile();
   const [lastRepaid, setLastRepaid] = useState<{ id: string; text: string } | null>(null);
 
@@ -63,6 +66,15 @@ export default function HomeScreen() {
         </View>
 
         <DebtCard summary={summary} series={series} />
+        <StandingCard
+          status={standing.status}
+          message={standing.message}
+          current={standing.current}
+          change={standing.change}
+          repayments={repayments}
+          today={today}
+          onPress={() => router.push('/standing')}
+        />
         <DayStrip days={days} />
         {message ? <SpeechBubble text={message} /> : null}
 
