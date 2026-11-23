@@ -9,8 +9,10 @@ import { DebtCard } from '@/components/DebtCard';
 import { Snackbar } from '@/components/Snackbar';
 import { SpeechBubble } from '@/components/SpeechBubble';
 import { TodoTicket } from '@/components/TodoTicket';
+import { WalletChip } from '@/components/WalletChip';
 import { forecastSeries, sortViews, summarize, viewOf, weekDays } from '@/domain/interest';
-import { homeMessage } from '@/domain/messages';
+import { homeMessage, repayMessage } from '@/domain/messages';
+import { repayEffect } from '@/domain/wallet';
 import { useProfile } from '@/store/profile';
 import { useTodos } from '@/store/todos';
 import { color, type } from '@/theme/tokens';
@@ -19,9 +21,9 @@ const UNDO_MS = 5000;
 
 /** TI-SCR-03 홈 */
 export default function HomeScreen() {
-  const { todos, today, repay, undoRepay } = useTodos();
+  const { todos, today, repay, undoRepay, wallet } = useTodos();
   const { needsOnboarding } = useProfile();
-  const [lastRepaid, setLastRepaid] = useState<string | null>(null);
+  const [lastRepaid, setLastRepaid] = useState<{ id: string; text: string } | null>(null);
 
   const { summary, views, days, series } = useMemo(() => {
     const open = todos.filter((t) => t.status === 'open');
@@ -51,6 +53,7 @@ export default function HomeScreen() {
           <Text style={[type.title, styles.title]} accessibilityRole="header">
             할 일 이자
           </Text>
+          <WalletChip balance={wallet.balance} onPress={() => router.push('/shop')} />
           <Pressable onPress={() => router.push('/history')} accessibilityRole="button" accessibilityLabel="상환 내역" hitSlop={12}>
             <Text style={[type.label, styles.link]}>내역</Text>
           </Pressable>
@@ -69,8 +72,10 @@ export default function HomeScreen() {
               key={v.todo.id}
               view={v}
               onRepay={() => {
+                // 잔고가 0 아래로 내려가지 않으므로 실제로 빠지는 이자는 잔고만큼까지다
+                const effect = repayEffect(v.principal, v.overdueDays, v.interest, wallet.streak);
                 repay(v.todo.id);
-                setLastRepaid(v.todo.id);
+                setLastRepaid({ id: v.todo.id, text: repayMessage({ ...effect, lost: Math.min(effect.lost, wallet.balance) }) });
               }}
               onOpen={() => router.push({ pathname: '/todo/[id]', params: { id: v.todo.id } })}
             />
@@ -81,10 +86,10 @@ export default function HomeScreen() {
       <View style={styles.footer}>
         {lastRepaid ? (
           <Snackbar
-            text="완납 처리했어요"
+            text={lastRepaid.text}
             actionLabel="되돌리기"
             onAction={() => {
-              undoRepay(lastRepaid);
+              undoRepay(lastRepaid.id);
               setLastRepaid(null);
             }}
           />
@@ -98,7 +103,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: color.bgPage },
   content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24, gap: 16 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   title: { flex: 1, color: color.textPrimary },
   link: { color: color.brandPrimary },
   list: { gap: 12 },
