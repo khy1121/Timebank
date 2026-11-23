@@ -19,7 +19,7 @@ import { useAuth } from './auth';
  */
 
 const storageKey = (userId: string) => `todo-interest/profile/${userId}`;
-const COLUMNS = 'notify_enabled,notify_time,onboarded_at,signup_source';
+const COLUMNS = 'notify_enabled,notify_time,onboarded_at,signup_source,equipped';
 
 type Store = {
   /** 아직 읽지 못했으면 null */
@@ -43,7 +43,11 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     (async () => {
       try {
         const raw = await AsyncStorage.getItem(storageKey(userId));
-        if (raw && active) setLoaded({ userId, profile: JSON.parse(raw) as Profile });
+        // 상점이 생기기 전의 사본에는 equipped가 없다
+        if (raw && active) {
+          const cached = JSON.parse(raw) as Partial<Profile> & Omit<Profile, 'equipped'>;
+          setLoaded({ userId, profile: { ...cached, equipped: cached.equipped ?? {} } });
+        }
       } catch (e) {
         console.warn('설정 사본을 읽지 못했어요', e);
       }
