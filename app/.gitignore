@@ -41,3 +41,6 @@ example
 # generated native folders
 /ios
 /android
+
+# Supabase 연결 정보 (공개용 키라도 저장소에 올리지 않는다)
+.env
