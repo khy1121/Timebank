@@ -27,6 +27,15 @@ export const color = {
   accentCoinDeep: '#C98A12',
   accentCheek: '#FF8A3D',
   accentSprout: '#3DAA5C',
+  // 상점 꾸미기 (domain/shop.ts의 value와 같은 이름)
+  inkRed: '#E5484D',
+  inkBlue: '#2F47B8',
+  inkGreen: '#1E8A4E',
+  inkGold: '#B9861A',
+  bubbleCream: '#FFF1CF',
+  bubbleSky: '#DDEBFF',
+  bubbleMint: '#DCF4E5',
+  bubblePink: '#FFE2EC',
   // 카카오 로그인 버튼 (카카오 디자인 가이드의 지정 색)
   kakaoYellow: '#FEE500',
   kakaoYellowPressed: '#D9C300',
