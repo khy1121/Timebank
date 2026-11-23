@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
 import { DayStrip } from '@/components/DayStrip';
 import { DebtCard } from '@/components/DebtCard';
+import { HomeBackground } from '@/components/HomeBackground';
 import { Snackbar } from '@/components/Snackbar';
 import { SpeechBubble } from '@/components/SpeechBubble';
 import { StandingCard } from '@/components/StandingCard';
@@ -51,6 +52,7 @@ export default function HomeScreen() {
   if (needsOnboarding) return <Redirect href="/onboarding" />;
 
   return (
+    <HomeBackground>
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
@@ -112,11 +114,13 @@ export default function HomeScreen() {
         <Button label="할 일 추가" onPress={() => router.push('/todo/new')} />
       </View>
     </SafeAreaView>
+    </HomeBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: color.bgPage },
+  // 배경 무늬가 보이도록 화면 자체는 투명하게 둔다
+  safe: { flex: 1 },
   content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24, gap: 16 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   title: { flex: 1, color: color.textPrimary },
