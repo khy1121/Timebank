@@ -11,6 +11,7 @@ import {
   sendErrorMessage,
   verifyErrorMessage,
 } from '@/domain/auth';
+import { DELETE_FAILED } from '@/domain/settings';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 
 /**
@@ -35,6 +36,8 @@ type Auth = {
   verifyCode: (code: string) => Promise<Result>;
   cancelPending: () => void;
   signOut: () => Promise<void>;
+  /** 서버의 계정과 모든 데이터를 지운다. 되돌릴 수 없다. (FR-004) */
+  deleteAccount: () => Promise<Result>;
 };
 
 const AuthContext = createContext<Auth | null>(null);
@@ -136,6 +139,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { error } = await supabase.auth.signOut();
         if (error) console.warn('로그아웃 요청이 실패했어요', error);
         setSession(null);
+      },
+      deleteAccount: async () => {
+        if (!isSupabaseConfigured) return NOT_CONFIGURED;
+        const { error } = await supabase.rpc('delete_account');
+        if (error) {
+          console.warn('계정을 삭제하지 못했어요', error);
+          return { ok: false, message: DELETE_FAILED };
+        }
+        // 서버의 로그인 상태는 계정과 함께 사라졌다. 이 기기에 남은 것만 지운다.
+        await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+        setSession(null);
+        return { ok: true };
       },
     }),
     [loading, session, pendingEmail],
