@@ -1,0 +1,369 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Crypto from 'expo-crypto';
+import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from 'react';
+import { AppState } from 'react-native';
+
+import { toDateString, type DateString } from '@/domain/dates';
+import { todoState, type Todo } from '@/domain/interest';
+import { settle, type Repayment, type TodoInput } from '@/domain/records';
+import {
+  isUuid,
+  latestUpdatedAt,
+  mergeRows,
+  repaymentFromRow,
+  repaymentToParams,
+  todoFromRow,
+  todoToParams,
+  visible,
+  type RepaymentRow,
+  type StoredRepayment,
+  type StoredTodo,
+  type TodoRow,
+} from '@/domain/sync';
+import { supabase } from '@/lib/supabase';
+
+import { useAuth } from './auth';
+
+/**
+ * 할 일 저장소.
+ * 화면은 항상 기기 안의 사본을 읽고, 서버 반영은 뒤에서 처리한다. (FR-040~042, NFR-005)
+ * - 바꾼 행은 "보낼 목록"에 넣고, 서버에 올라가면 목록에서 뺀다.
+ * - 서버에서는 마지막으로 받은 시각 이후에 바뀐 행만 받아 와 합친다.
+ * - 저장은 계정마다 따로 한다.
+ */
+
+const storageKey = (userId: string) => `todo-interest/v2/${userId}`;
+const LEGACY_KEY = 'todo-interest/v1';
+
+type Data = {
+  todos: StoredTodo[];
+  repayments: StoredRepayment[];
+  /** 아직 서버에 올리지 못한 행의 ID */
+  pendingTodos: string[];
+  pendingRepayments: string[];
+  lastPulled: { todos: string | null; repayments: string | null };
+};
+
+type State = Data & { hydrated: boolean };
+
+const EMPTY: Data = {
+  todos: [],
+  repayments: [],
+  pendingTodos: [],
+  pendingRepayments: [],
+  lastPulled: { todos: null, repayments: null },
+};
+
+type Stamp = { id: string; updatedAt: string };
+
+type Action =
+  | { type: 'hydrate'; data: Data }
+  | { type: 'reset' }
+  | { type: 'putTodo'; todo: StoredTodo }
+  | { type: 'putRepayment'; repayment: StoredRepayment }
+  | { type: 'pushed'; todos: Stamp[]; repayments: Stamp[] }
+  | { type: 'pulled'; todos: StoredTodo[]; repayments: StoredRepayment[] };
+
+const put = <T extends { id: string }>(rows: T[], row: T): T[] =>
+  rows.some((r) => r.id === row.id) ? rows.map((r) => (r.id === row.id ? row : r)) : [...rows, row];
+
+const addId = (ids: string[], id: string) => (ids.includes(id) ? ids : [...ids, id]);
+
+/** 올린 뒤에 다시 바뀌지 않은 행만 보낼 목록에서 뺀다 */
+function settlePending<T extends Stamp>(pending: string[], rows: T[], pushed: Stamp[]): string[] {
+  const done = new Set(
+    pushed.filter((p) => rows.find((r) => r.id === p.id)?.updatedAt === p.updatedAt).map((p) => p.id),
+  );
+  return pending.filter((id) => !done.has(id));
+}
+
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case 'hydrate':
+      return { ...action.data, hydrated: true };
+    case 'reset':
+      return { ...EMPTY, hydrated: false };
+    case 'putTodo':
+      return {
+        ...state,
+        todos: put(state.todos, action.todo),
+        pendingTodos: addId(state.pendingTodos, action.todo.id),
+      };
+    case 'putRepayment':
+      return {
+        ...state,
+        repayments: put(state.repayments, action.repayment),
+        pendingRepayments: addId(state.pendingRepayments, action.repayment.id),
+      };
+    case 'pushed':
+      return {
+        ...state,
+        pendingTodos: settlePending(state.pendingTodos, state.todos, action.todos),
+        pendingRepayments: settlePending(state.pendingRepayments, state.repayments, action.repayments),
+      };
+    case 'pulled':
+      return {
+        ...state,
+        todos: mergeRows(state.todos, action.todos),
+        repayments: mergeRows(state.repayments, action.repayments),
+        lastPulled: {
+          todos: latestUpdatedAt(action.todos, state.lastPulled.todos),
+          repayments: latestUpdatedAt(action.repayments, state.lastPulled.repayments),
+        },
+      };
+  }
+}
+
+function isData(v: unknown): v is Data {
+  const d = v as Data | null;
+  return !!d && Array.isArray(d.todos) && Array.isArray(d.repayments) && Array.isArray(d.pendingTodos);
+}
+
+/** 로그인 기능이 생기기 전에 기기에만 저장하던 데이터를 옮겨 온다. 한 번만 일어난다. */
+async function readLegacy(now: string): Promise<Data | null> {
+  const raw = await AsyncStorage.getItem(LEGACY_KEY);
+  if (!raw) return null;
+  await AsyncStorage.removeItem(LEGACY_KEY);
+  const old = JSON.parse(raw) as { todos?: Todo[]; repayments?: Repayment[] };
+  // 개발용 예시(ID가 UUID가 아님)는 서버에 올릴 수 없으므로 버린다
+  const todos = (old.todos ?? []).filter((t) => isUuid(t.id)).map((t) => ({ ...t, updatedAt: now, deletedAt: null }));
+  const kept = new Set(todos.map((t) => t.id));
+  const repayments = (old.repayments ?? [])
+    .filter((r) => isUuid(r.id) && kept.has(r.todoId))
+    .map((r) => ({ ...r, updatedAt: now, deletedAt: null }));
+  return {
+    ...EMPTY,
+    todos,
+    repayments,
+    pendingTodos: todos.map((t) => t.id),
+    pendingRepayments: repayments.map((r) => r.id),
+  };
+}
+
+/** 오늘 날짜. 앱이 다시 앞으로 나오거나 자정이 지나면 바뀐다. (FR-026) */
+function useToday(): DateString {
+  const [today, setToday] = useState(() => toDateString(new Date()));
+
+  useEffect(() => {
+    const refresh = () => setToday(toDateString(new Date()));
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s === 'active') refresh();
+    });
+    const now = new Date();
+    const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 1);
+    const timer = setTimeout(refresh, nextMidnight.getTime() - now.getTime());
+    return () => {
+      sub.remove();
+      clearTimeout(timer);
+    };
+  }, [today]);
+
+  return today;
+}
+
+export type SyncState = 'idle' | 'syncing' | 'error';
+
+type Store = {
+  hydrated: boolean;
+  todos: Todo[];
+  repayments: Repayment[];
+  today: DateString;
+  /** 아직 서버에 올리지 못한 변경 수 */
+  pendingCount: number;
+  syncState: SyncState;
+  add: (input: TodoInput) => string;
+  update: (id: string, input: TodoInput) => void;
+  /** 상환(완료). 그 시점의 금액을 기록한다. */
+  repay: (id: string) => void;
+  undoRepay: (id: string) => void;
+  /** 삭제. 연체된 할 일이면 탕감으로 기록하고, 아니면 그냥 지운다. 탕감했으면 true. */
+  remove: (id: string) => boolean;
+  /** 이 기기에 저장된 사본을 지운다. 로그아웃할 때 쓴다. (FR-003) */
+  clearLocal: () => Promise<void>;
+};
+
+const TodosContext = createContext<Store | null>(null);
+
+const TODO_COLUMNS = 'id,title,importance,due_date,status,updated_at,deleted_at';
+const REPAYMENT_COLUMNS = 'id,todo_id,kind,title,principal,interest,overdue_days,settled_on,updated_at,deleted_at';
+
+export function TodosProvider({ children }: { children: ReactNode }) {
+  const { session } = useAuth();
+  const userId = session?.user.id ?? null;
+  const today = useToday();
+  const [state, dispatch] = useReducer(reducer, { ...EMPTY, hydrated: false });
+  const [syncState, setSyncState] = useState<SyncState>('idle');
+  // 서버와 맞추는 함수가 항상 최신 상태를 읽도록 보관한다. 아래의 다른 effect보다 먼저 실행되어야 한다.
+  const stateRef = useRef(state);
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+  const syncing = useRef(false);
+
+  // 기기에 저장된 사본 읽기. 계정이 바뀌면 다시 읽는다.
+  useEffect(() => {
+    dispatch({ type: 'reset' });
+    if (!userId) return;
+    let cancelled = false;
+    (async () => {
+      let data: Data = EMPTY;
+      try {
+        const raw = await AsyncStorage.getItem(storageKey(userId));
+        const parsed: unknown = raw ? JSON.parse(raw) : null;
+        if (isData(parsed)) data = parsed;
+        else data = (await readLegacy(new Date().toISOString())) ?? EMPTY;
+      } catch (e) {
+        console.warn('저장된 데이터를 읽지 못했어요', e);
+      }
+      if (!cancelled) dispatch({ type: 'hydrate', data });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
+  // 바뀔 때마다 기기에 저장
+  useEffect(() => {
+    if (!state.hydrated || !userId) return;
+    const { hydrated: _hydrated, ...data } = state;
+    AsyncStorage.setItem(storageKey(userId), JSON.stringify(data)).catch((e) => console.warn('저장하지 못했어요', e));
+  }, [state, userId]);
+
+  // 서버와 맞추기: 보낼 목록을 올리고, 그 뒤에 바뀐 행을 받아 온다
+  const sync = useCallback(async () => {
+    if (syncing.current || !userId || !stateRef.current.hydrated) return;
+    syncing.current = true;
+    setSyncState('syncing');
+    let failed = false;
+    try {
+      const snapshot = stateRef.current;
+      const pushedTodos: Stamp[] = [];
+      const pushedRepayments: Stamp[] = [];
+
+      // 상환 기록은 할 일을 가리키므로 할 일을 먼저 올린다
+      for (const id of snapshot.pendingTodos) {
+        const todo = snapshot.todos.find((t) => t.id === id);
+        if (!todo) continue;
+        const { error } = await supabase.rpc('upsert_todo', todoToParams(todo));
+        if (error) {
+          failed = true;
+          console.warn('할 일을 서버에 올리지 못했어요', error.message);
+        } else {
+          pushedTodos.push({ id, updatedAt: todo.updatedAt });
+        }
+      }
+      for (const id of snapshot.pendingRepayments) {
+        const repayment = snapshot.repayments.find((r) => r.id === id);
+        if (!repayment) continue;
+        const { error } = await supabase.rpc('upsert_repayment', repaymentToParams(repayment));
+        if (error) {
+          failed = true;
+          console.warn('상환 기록을 서버에 올리지 못했어요', error.message);
+        } else {
+          pushedRepayments.push({ id, updatedAt: repayment.updatedAt });
+        }
+      }
+      dispatch({ type: 'pushed', todos: pushedTodos, repayments: pushedRepayments });
+
+      let todoQuery = supabase.from('todos').select(TODO_COLUMNS);
+      if (snapshot.lastPulled.todos) todoQuery = todoQuery.gt('updated_at', snapshot.lastPulled.todos);
+      let repaymentQuery = supabase.from('repayments').select(REPAYMENT_COLUMNS);
+      if (snapshot.lastPulled.repayments) repaymentQuery = repaymentQuery.gt('updated_at', snapshot.lastPulled.repayments);
+      const [todosResult, repaymentsResult] = await Promise.all([todoQuery, repaymentQuery]);
+      if (todosResult.error || repaymentsResult.error) {
+        failed = true;
+        console.warn('서버에서 받아 오지 못했어요', todosResult.error?.message ?? repaymentsResult.error?.message);
+      } else {
+        dispatch({
+          type: 'pulled',
+          todos: (todosResult.data as TodoRow[]).map(todoFromRow),
+          repayments: (repaymentsResult.data as RepaymentRow[]).map(repaymentFromRow),
+        });
+      }
+    } catch (e) {
+      failed = true;
+      console.warn('서버와 맞추지 못했어요', e);
+    } finally {
+      syncing.current = false;
+      setSyncState(failed ? 'error' : 'idle');
+    }
+  }, [userId]);
+
+  // 맞추는 시점: 사본을 읽은 직후, 보낼 것이 생겼을 때, 앱이 다시 앞으로 나올 때
+  const pendingCount = state.pendingTodos.length + state.pendingRepayments.length;
+  useEffect(() => {
+    if (state.hydrated && userId) sync();
+  }, [state.hydrated, userId, pendingCount, sync]);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s === 'active') sync();
+    });
+    return () => sub.remove();
+  }, [sync]);
+
+  const store = useMemo<Store>(() => {
+    const now = () => new Date().toISOString();
+    const find = (id: string) => state.todos.find((t) => t.id === id && !t.deletedAt);
+    const putTodo = (todo: StoredTodo) => dispatch({ type: 'putTodo', todo });
+    const putRepayment = (repayment: StoredRepayment) => dispatch({ type: 'putRepayment', repayment });
+    const record = (todo: StoredTodo, kind: Repayment['kind']) => {
+      const at = now();
+      putTodo({ ...todo, status: kind, updatedAt: at });
+      putRepayment({ ...settle(todo, kind, today, Crypto.randomUUID()), updatedAt: at, deletedAt: null });
+    };
+    return {
+      hydrated: state.hydrated,
+      todos: visible(state.todos),
+      repayments: visible(state.repayments),
+      today,
+      pendingCount,
+      syncState,
+      add: (input) => {
+        const id = Crypto.randomUUID();
+        putTodo({ id, ...input, title: input.title.trim(), status: 'open', updatedAt: now(), deletedAt: null });
+        return id;
+      },
+      update: (id, input) => {
+        const todo = find(id);
+        if (todo) putTodo({ ...todo, ...input, title: input.title.trim(), updatedAt: now() });
+      },
+      repay: (id) => {
+        const todo = find(id);
+        if (todo) record(todo, 'repaid');
+      },
+      undoRepay: (id) => {
+        const todo = find(id);
+        if (!todo) return;
+        const at = now();
+        putTodo({ ...todo, status: 'open', updatedAt: at });
+        for (const r of state.repayments) {
+          if (r.todoId === id && !r.deletedAt) putRepayment({ ...r, updatedAt: at, deletedAt: at });
+        }
+      },
+      remove: (id) => {
+        const todo = find(id);
+        if (!todo) return false;
+        if (todoState(todo, today) === 'overdue') {
+          record(todo, 'forgiven');
+          return true;
+        }
+        const at = now();
+        putTodo({ ...todo, updatedAt: at, deletedAt: at });
+        return false;
+      },
+      clearLocal: async () => {
+        if (userId) await AsyncStorage.removeItem(storageKey(userId)).catch((e) => console.warn('지우지 못했어요', e));
+        dispatch({ type: 'reset' });
+      },
+    };
+  }, [state, today, pendingCount, syncState, userId]);
+
+  return <TodosContext.Provider value={store}>{children}</TodosContext.Provider>;
+}
+
+export function useTodos(): Store {
+  const store = useContext(TodosContext);
+  if (!store) throw new Error('TodosProvider 안에서만 쓸 수 있어요');
+  return store;
+}
