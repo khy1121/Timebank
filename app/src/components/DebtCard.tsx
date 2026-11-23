@@ -1,4 +1,3 @@
-import { Image } from 'expo-image';
 import { StyleSheet, Text, View } from 'react-native';
 
 import type { Summary } from '@/domain/interest';
@@ -6,6 +5,7 @@ import { color, hardShadow, radius, stroke, type } from '@/theme/tokens';
 
 import { Amount } from './Amount';
 import { GradeGauge } from './GradeGauge';
+import { Mascot } from './Mascot';
 
 type Props = { summary: Summary; series: number[] };
 
@@ -23,13 +23,9 @@ export function DebtCard({ summary, series }: Props) {
             <Text style={[type.numberL, styles.none]}>빚이 없어요</Text>
           )}
         </View>
-        <Image
-          source={require('@/assets/images/mascot-coin.png')}
-          style={styles.mascot}
-          contentFit="contain"
-          accessibilityIgnoresInvertColors
-          accessible={false}
-        />
+        <View style={styles.mascot} accessible={false} importantForAccessibility="no-hide-descendants">
+          <Mascot size={styles.mascot.width as number} />
+        </View>
       </View>
 
       <View style={styles.panel}>
