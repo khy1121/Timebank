@@ -1,0 +1,26 @@
+import { formatAmount, type Summary, type TodoView } from './interest';
+
+/**
+ * 마스코트 문구. 미리 정한 문구에서 고르며 인공지능을 쓰지 않는다. (FR-055)
+ * 금액이 들어가는 문구는 계산값을 그대로 넣는다.
+ */
+
+export const LOGIN_GREETING = '안녕하세요. 미루면 이자가 붙는 할 일 앱이에요.';
+
+export const SOURCE_QUESTION = '어디서 알게 되셨어요? 고르지 않아도 돼요.';
+
+export const EMPTY_LIST = '미룰 일이 하나도 없네요. 할 일을 추가해 보세요.';
+
+/** 할 일 입력 화면의 규칙 안내. 원금에 따라 첫날 이자가 달라진다. */
+export function inputRuleHint(principal: number): string {
+  return `기한을 넘기면 하루에 ${formatAmount(Math.floor(principal / 10))}냥씩 붙기 시작해요.`;
+}
+
+/** 홈에서 목록 위에 보여줄 한마디. 보여줄 말이 없으면 null. */
+export function homeMessage(summary: Summary, views: TodoView[]): string | null {
+  if (views.length === 0) return EMPTY_LIST;
+  if (summary.overdueCount === 0 && summary.todayCount > 0) {
+    return `오늘까지인 일이 ${summary.todayCount}건 있어요. 오늘 끝내면 이자가 붙지 않아요.`;
+  }
+  return null;
+}
