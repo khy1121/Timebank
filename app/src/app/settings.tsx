@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
-import { useState, type ReactNode } from 'react';
+import { useState, useSyncExternalStore, type ReactNode } from 'react';
 import { ActivityIndicator, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -12,6 +12,7 @@ import { Toggle } from '@/components/Toggle';
 import { TopBar } from '@/components/TopBar';
 import { formatTimeLabel, NOTIFY_TIMES } from '@/domain/profile';
 import { DELETE_WORD, feedbackMailto, isDeleteConfirmed } from '@/domain/settings';
+import { feedback, getSettings, setSettings, subscribe } from '@/lib/feedback';
 import { useAuth } from '@/store/auth';
 import { useNotifications } from '@/store/notifications';
 import { useProfile } from '@/store/profile';
@@ -23,13 +24,14 @@ const VERSION = Constants.expoConfig?.version ?? '1.0.0';
 
 type Dialog = 'signOut' | 'time' | 'deleteWarn' | 'deleteType' | null;
 
-/** TI-SCR-07 설정. 알림, 순위, 도움말, 계정. (FR-003, FR-004, FR-032, FR-033, FR-050~052, FR-067) */
+/** TI-SCR-07 설정. 알림, 순위, 소리와 진동, 도움말, 계정. (FR-003, FR-004, FR-032, FR-033, FR-050~052, FR-067, FR-073) */
 export default function SettingsScreen() {
   const { email, signOut, deleteAccount } = useAuth();
   const { pendingCount, syncState, clearLocal: clearTodos } = useTodos();
   const { profile, update, clearLocal: clearProfile } = useProfile();
   const { permission, request } = useNotifications();
   const [dialog, setDialog] = useState<Dialog>(null);
+  const fb = useSyncExternalStore(subscribe, getSettings, getSettings);
   const [typed, setTyped] = useState('');
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -105,6 +107,39 @@ export default function SettingsScreen() {
                 <Chip label="매운맛" selected={profile?.voice !== 'mild'} onPress={() => update({ voice: 'spicy' })} disabled={!profile} />
                 <Chip label="순한맛" selected={profile?.voice === 'mild'} onPress={() => update({ voice: 'mild' })} disabled={!profile} />
               </View>
+            }
+          />
+        </Group>
+
+        <Group label="소리와 진동">
+          <SettingRow
+            first
+            label="효과음"
+            hint="옷 입히기, 사기 같은 순간에 짧은 소리가 나요. 무음 모드에서는 안 나요"
+            right={
+              <Toggle
+                value={fb.sound}
+                onChange={(sound) => {
+                  setSettings({ ...fb, sound });
+                  if (sound) feedback.tap();
+                }}
+                label="효과음"
+              />
+            }
+          />
+          <SettingRow
+            label="진동"
+            hint={Platform.OS === 'web' ? '진동은 휴대폰 앱에서만 돼요' : '누를 때 가볍게 떨려요'}
+            right={
+              <Toggle
+                value={fb.haptics && Platform.OS !== 'web'}
+                onChange={(haptics) => {
+                  setSettings({ ...fb, haptics });
+                  if (haptics) feedback.tap();
+                }}
+                label="진동"
+                disabled={Platform.OS === 'web'}
+              />
             }
           />
         </Group>
