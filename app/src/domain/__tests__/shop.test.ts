@@ -1,0 +1,52 @@
+import { canBuy, ITEMS, ownedCodes, resolveLook, SLOTS, defaultItem } from '../shop';
+
+describe('상점 물건 목록', () => {
+  it('칸마다 기본 물건이 정확히 하나 있다', () => {
+    for (const slot of SLOTS) {
+      expect(ITEMS.filter((i) => i.slot === slot && i.price === 0)).toHaveLength(1);
+    }
+  });
+
+  it('물건 코드는 겹치지 않는다', () => {
+    expect(new Set(ITEMS.map((i) => i.code)).size).toBe(ITEMS.length);
+  });
+
+  it('도장 글자는 도장 안에 들어가도록 3자 이하다', () => {
+    for (const item of ITEMS.filter((i) => i.slot === 'stampWord')) expect(item.value.length).toBeLessThanOrEqual(3);
+  });
+});
+
+describe('사기 (TC-063)', () => {
+  const owned = ownedCodes(['ink-blue']);
+
+  it('잔고가 값 이상이면 살 수 있다', () => {
+    expect(canBuy('ink-green', 1500, owned)).toEqual({ ok: true });
+  });
+
+  it('모자라면 얼마가 모자란지 알려준다', () => {
+    expect(canBuy('ink-gold', 1000, owned)).toEqual({ ok: false, reason: 'short', short: 3000 });
+  });
+
+  it('이미 가진 물건과 기본 물건은 다시 살 수 없다', () => {
+    expect(canBuy('ink-blue', 9999, owned)).toMatchObject({ ok: false, reason: 'owned' });
+    expect(canBuy('ink-red', 9999, owned)).toMatchObject({ ok: false, reason: 'owned' });
+  });
+
+  it('모르는 코드는 살 수 없다', () => {
+    expect(canBuy('ink-rainbow', 9999, owned)).toMatchObject({ ok: false, reason: 'unknown' });
+  });
+});
+
+describe('착용 (TC-064)', () => {
+  it('가진 물건을 착용하면 그 물건으로 보인다', () => {
+    const look = resolveLook({ stampInk: 'ink-blue' }, ownedCodes(['ink-blue']));
+    expect(look.stampInk.code).toBe('ink-blue');
+    expect(look.bubble.code).toBe(defaultItem('bubble').code);
+  });
+
+  it('가지지 않은 물건이나 다른 칸의 물건은 기본 물건으로 되돌린다', () => {
+    const look = resolveLook({ stampInk: 'ink-gold', stampWord: 'ink-blue' }, ownedCodes(['ink-blue']));
+    expect(look.stampInk.code).toBe('ink-red');
+    expect(look.stampWord.code).toBe('word-wannap');
+  });
+});
