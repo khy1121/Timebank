@@ -225,6 +225,8 @@ type Store = {
   remove: (id: string) => boolean;
   /** 상점 물건 사기. 잔고가 모자라거나 이미 가졌으면 false (FR-063) */
   buy: (itemCode: string) => boolean;
+  /** 여러 개를 한 번에 산다. 합계가 잔고를 넘거나 하나라도 살 수 없으면 아무것도 사지 않는다 (FR-072) */
+  buyAll: (itemCodes: string[]) => boolean;
   /** 이 기기에 저장된 사본을 지운다. 로그아웃할 때 쓴다. (FR-003) */
   clearLocal: () => Promise<void>;
 };
@@ -425,6 +427,22 @@ export function TodosProvider({ children }: { children: ReactNode }) {
         const at = now();
         putTodo({ ...todo, updatedAt: at, deletedAt: at });
         return false;
+      },
+      buyAll: (itemCodes) => {
+        const items = itemCodes.map(itemOf);
+        if (items.some((i) => !i)) return false;
+        const total = items.reduce((s, i) => s + i!.price, 0);
+        if (total > wallet.balance) return false;
+        // 잔고는 합계로 확인했으니 하나씩은 잠김·이미 가짐만 본다
+        if (!itemCodes.every((c) => canBuy(c, Number.MAX_SAFE_INTEGER, owned).ok)) return false;
+        const at = now();
+        for (const item of items) {
+          dispatch({
+            type: 'putPurchase',
+            purchase: { id: Crypto.randomUUID(), itemCode: item!.code, price: item!.price, purchasedOn: today, updatedAt: at, deletedAt: null },
+          });
+        }
+        return true;
       },
       buy: (itemCode) => {
         const item = itemOf(itemCode);
