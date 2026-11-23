@@ -24,3 +24,10 @@ export function homeMessage(summary: Summary, views: TodoView[]): string | null 
   }
   return null;
 }
+
+/** 첫 실행 안내의 장마다 보여줄 제목과 설명. 금액은 화면에서 계산값을 그린다. (FR-050) */
+export const GUIDE_PAGES = [
+  { title: '할 일에 원금을 걸어요', body: '중요한 일일수록 엽전을 많이 걸어요. 엽전 하나가 1,000냥이에요.' },
+  { title: '미루면 하루 10%씩 불어나요', body: '기한을 넘긴 날부터 이자가 붙어요. 이자에도 이자가 붙어서 갈수록 빨라져요.' },
+  { title: '끝내면 상환돼요', body: '끝낸 할 일에는 완납 도장이 찍혀요. 냥은 앱 안에서만 쓰는 단위라 실제 돈은 오가지 않아요.' },
+] as const;
