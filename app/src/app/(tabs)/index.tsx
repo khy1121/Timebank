@@ -21,6 +21,7 @@ import { feedback } from '@/lib/feedback';
 import { useGroups } from '@/store/groups';
 import { useOpenProofs } from '@/store/openProofs';
 import { useProfile } from '@/store/profile';
+import { useCredit } from '@/store/credit';
 import { useStanding } from '@/store/standing';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
@@ -34,6 +35,7 @@ type View_ = 'open' | 'done';
 export default function HomeScreen() {
   const { todos, today, repay, undoRepay, account, repayments, settlementFor } = useTodos();
   const standing = useStanding();
+  const { info: credit } = useCredit();
   const { groups } = useGroups();
   const openProofs = useOpenProofs();
   const { needsOnboarding } = useProfile();
@@ -99,10 +101,8 @@ export default function HomeScreen() {
           <SummaryCard
             summary={summary}
             account={account}
-            status={standing.status}
             message={message}
-            current={standing.current}
-            change={standing.change}
+            credit={credit}
             onPress={() => router.navigate('/standing')}
             onGrade={() => setGradeOpen(true)}
             today={today}
@@ -189,7 +189,7 @@ export default function HomeScreen() {
           ) : null}
           <Button label="+ 할 일 추가" onPress={() => router.push('/todo/new')} />
         </View>
-        <GradeSheet visible={gradeOpen} grade={summary.grade} totalInterest={summary.totalInterest} onClose={() => setGradeOpen(false)} />
+        <GradeSheet visible={gradeOpen} score={credit?.score ?? null} onClose={() => setGradeOpen(false)} />
       </SafeAreaView>
     </HomeBackground>
   );

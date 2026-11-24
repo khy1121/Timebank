@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AuthProvider, useAuth } from '@/store/auth';
+import { CreditProvider } from '@/store/credit';
 import { FriendsProvider } from '@/store/friends';
 import { GroupsProvider } from '@/store/groups';
 import { NotificationsProvider } from '@/store/notifications';
@@ -37,9 +38,11 @@ export default function RootLayout() {
         <TodosProvider>
           <NotificationsProvider>
             <StandingProvider>
+            <CreditProvider>
               <StatusBar style="dark" />
               <UsageTracker />
               <Screens />
+            </CreditProvider>
             </StandingProvider>
           </NotificationsProvider>
         </TodosProvider>
@@ -70,7 +73,8 @@ function Screens() {
         <Stack.Screen name="settings" />
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="closet" />
-        <Stack.Screen name="status-guide" />
+        <Stack.Screen name="credit" />
+        <Stack.Screen name="grades" />
         <Stack.Screen name="group-new" />
         <Stack.Screen name="group-join" />
         <Stack.Screen name="group/[id]" />

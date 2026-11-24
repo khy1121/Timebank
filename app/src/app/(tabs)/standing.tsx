@@ -1,151 +1,133 @@
-import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Amount } from '@/components/Amount';
-import { BarChart } from '@/components/BarChart';
+import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
-import { SpeechBubble } from '@/components/SpeechBubble';
-import { StatusStamp } from '@/components/StatusStamp';
+import { GradeBadge } from '@/components/GradeBadge';
 import { TopBar } from '@/components/TopBar';
-import { dayOfMonth, weekdayLabel } from '@/domain/dates';
-import { formatAmount } from '@/domain/interest';
-import { dailyScores, MIN_PARTICIPANTS, STATUS, topPercent, weeklyBars } from '@/domain/standing';
-import { track } from '@/lib/events';
+import { signed, titleOf, type BoardRow } from '@/domain/credit';
+import { useCredit } from '@/store/credit';
 import { useFriends } from '@/store/friends';
-import { useScoreBreakdown, useStanding } from '@/store/standing';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
-import { color, radius, stroke, type } from '@/theme/tokens';
+import { color, stroke, type } from '@/theme/tokens';
 
-type Range = 'week' | 'month';
+type Board = 'global' | 'friends';
 
-/** TI-SCR-11 이번 주 순위. 상태, 등수, 지난주 대비, 주간·월간 차트, 점수 설명. 상태 기준은 TI-SCR-12로 뺐다. (FR-065~069) */
+/**
+ * TI-SCR-11 순위 탭 (FR-101, FR-102). 첫 화면은 순위표(전체 / 친구)이고, 맨 위의 내 점수 카드를 누르면 내 신용(TI-SCR-20).
+ * 전체 순위표의 다른 사람 이름은 서버가 첫 글자만 보낸다. 피그마 144:3335, 144:3436
+ */
 export default function StandingScreen() {
-  const { weeks, current, change, status, message, failed } = useStanding();
-  const { repayments, today } = useTodos();
+  const { info, global, friends, loaded, failed, refresh } = useCredit();
   const { incomingCount } = useFriends();
-  const breakdown = useScoreBreakdown();
-  const [range, setRange] = useState<Range>('week');
+  const { account } = useTodos();
+  const [board, setBoard] = useState<Board>('global');
 
-  // 순위를 받아 온 뒤 한 번 남긴다 (상태별 재방문율을 보려고)
-  const viewed = current ? `${current.weekEnd}:${current.rank}` : null;
-  useEffect(() => {
-    if (!viewed || !current) return;
-    track('standing_view', { status, rank: current.rank, participants: current.participants });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewed]);
+  useFocusEffect(
+    useCallback(() => {
+      refresh();
+    }, [refresh]),
+  );
 
-  const days = dailyScores(repayments, today);
-  const monthly = weeklyBars(weeks);
-  const gap = current ? current.topScore - current.score : 0;
+  const rows = board === 'global' ? global : friends;
+  const myRank = rows.find((r) => r.isMe)?.rank;
+  const caption =
+    board === 'global'
+      ? info
+        ? `신용 점수가 높은 순서예요. ${info.participants}명 중 ${info.rank}등이에요.`
+        : '신용 점수가 높은 순서예요.'
+      : friends.length > 1
+        ? `나와 친구 ${friends.length - 1}명 중 ${myRank ?? '-'}등이에요.`
+        : '친구를 추가하면 친구끼리 순위를 볼 수 있어요.';
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <TopBar lead="none" title="순위" action={incomingCount > 0 ? `친구 ${incomingCount}` : '친구'} onAction={() => router.push('/friends')} />
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.hero}>
-          <StatusStamp code={status} size="l" />
-          {current ? (
-            <>
-              <Text style={[type.title, styles.ink]}>
-                {current.participants}명 중 {current.rank}등
-              </Text>
-              <Text style={[type.body, styles.muted]}>
-                {current.participants >= MIN_PARTICIPANTS ? `상위 ${topPercent(current.rank, current.participants)}%예요. ` : ''}
-                {change.text}
-              </Text>
-              {gap > 0 ? <Text style={[type.caption, styles.muted]}>1등보다 {formatAmount(gap)}냥 뒤처졌어요</Text> : null}
-            </>
-          ) : (
-            <Text style={[type.body, styles.muted]}>{failed ? '순위를 받아 오지 못했어요. 연결되면 다시 받아요.' : '순위를 불러오는 중이에요.'}</Text>
-          )}
-        </View>
-
-        <SpeechBubble text={message} />
-
-        <View style={styles.section}>
-          <View style={styles.tabs} accessibilityRole="radiogroup">
-            <Chip label="주간" selected={range === 'week'} onPress={() => setRange('week')} />
-            <Chip label="월간" selected={range === 'month'} onPress={() => setRange('month')} />
-          </View>
-          <View style={styles.card}>
-            {range === 'week' ? (
-              <>
-                <Text style={[type.label, styles.ink]}>최근 7일, 하루에 번 냥에서 낸 이자를 뺀 값</Text>
-                <BarChart
-                  signed
-                  bars={days.map((d) => ({
-                    key: d.date,
-                    value: d.score,
-                    label: d.date === today ? '오늘' : weekdayLabel(d.date),
-                    caption: d.score === 0 ? '' : formatAmount(d.score),
-                  }))}
-                  summary={`최근 7일 하루별 점수: ${days.map((d) => `${dayOfMonth(d.date)}일 ${formatAmount(d.score)}`).join(', ')}`}
-                />
-              </>
-            ) : (
-              <>
-                <Text style={[type.label, styles.ink]}>최근 {monthly.length}주, 주마다 몇 등이었는지</Text>
-                {monthly.length ? (
-                  <BarChart
-                    bars={monthly.map((b, i) => ({
-                      key: b.weekEnd,
-                      value: b.value,
-                      label: i === monthly.length - 1 ? '이번 주' : `${monthly.length - 1 - i}주 전`,
-                      caption: b.label,
-                    }))}
-                    summary={`주별 순위: ${monthly.map((b) => b.label).join(', ')}`}
-                  />
-                ) : (
-                  <Text style={[type.body, styles.muted]}>아직 기록이 없어요.</Text>
-                )}
-              </>
-            )}
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={[type.headline, styles.ink]} accessibilityRole="header">
-            이번 주 점수
-          </Text>
-          <View style={styles.card}>
-            <Row label="기한 안에 갚아서 번 냥" value={breakdown.earned} />
-            <Row label="연체로 낸 이자" value={-breakdown.paid} />
-            <Row label="지금 붙고 있는 이자" value={-breakdown.accruing} />
-            <View style={styles.divider} />
-            <View style={styles.row}>
-              <Text style={[type.headline, styles.ink]}>점수</Text>
-              <Amount value={breakdown.total} tone={breakdown.total < 0 ? 'debt' : 'ink'} />
+        <Pressable
+          onPress={() => router.push('/credit')}
+          accessibilityRole="button"
+          accessibilityLabel={info ? `내 신용 ${info.score}점, ${titleOf(info.score, account.state === 'bankrupt')}. 자세히 보기` : '내 신용 보기'}
+          style={({ pressed }) => [styles.myCard, pressed && styles.pressed]}>
+          {info ? <GradeBadge score={info.score} /> : null}
+          <View style={styles.flex}>
+            <View style={styles.scoreRow}>
+              <Text style={[type.numberM, styles.ink]}>{info ? `${info.score}점` : '…'}</Text>
+              {info ? <Text style={[type.label, { color: info.weekDelta < 0 ? color.debtFg : color.okFg }]}>이번 주 {signed(info.weekDelta)}</Text> : null}
             </View>
-            <Text style={[type.caption, styles.muted]}>
-              순위는 서버에 저장된 기록으로 매겨요. 방금 한 일은 서버에 올라간 뒤에 순위에 반영돼요.
+            <Text style={[type.caption, styles.secondary]} numberOfLines={1}>
+              {info ? `${titleOf(info.score, account.state === 'bankrupt')}, 전체 ${info.rank}등` : failed ? '점수를 받아 오지 못했어요' : '불러오는 중이에요'}
             </Text>
           </View>
-        </View>
-
-        <Pressable
-          onPress={() => router.push('/status-guide')}
-          accessibilityRole="button"
-          accessibilityLabel={`왜 ${STATUS[status].label}인가요? 상태 기준 14개 보기`}
-          style={({ pressed }) => [styles.why, pressed && styles.pressed]}>
-          <View style={styles.whyText}>
-            <Text style={[type.label, styles.ink]}>왜 &quot;{STATUS[status].label}&quot;인가요?</Text>
-            <Text style={[type.caption, styles.muted]}>{STATUS[status].rule}</Text>
-          </View>
-          <Text style={[type.label, styles.link]}>기준 14개 ›</Text>
+          <Text style={[type.label, styles.secondary]}>내 신용 ›</Text>
         </Pressable>
+
+        <View style={styles.tabs} accessibilityRole="tablist">
+          <Chip label="전체" selected={board === 'global'} onPress={() => setBoard('global')} grow />
+          <Chip label="친구" selected={board === 'friends'} onPress={() => setBoard('friends')} grow />
+        </View>
+        <Text style={[type.caption, styles.secondary]}>{caption}</Text>
+
+        {!loaded ? (
+          <Text style={[type.caption, styles.muted]}>{failed ? '순위를 받아 오지 못했어요. 연결되면 다시 받아요.' : '순위를 불러오는 중이에요.'}</Text>
+        ) : board === 'friends' && friends.length <= 1 ? (
+          <View style={styles.empty}>
+            <Text style={[type.headline, styles.ink]}>아직 친구가 없어요</Text>
+            <Text style={[type.body, styles.secondary]}>친구 코드를 보내거나 그룹원에게 친구 신청을 해 보세요.</Text>
+            <Button label="친구 추가" variant="secondary" onPress={() => router.push('/friends')} />
+          </View>
+        ) : (
+          <BoardList rows={rows} board={board} />
+        )}
+
+        {board === 'global' ? <Text style={[type.caption, styles.muted]}>전체 순위표에서는 다른 사람의 이름을 첫 글자만 보여 줘요.</Text> : null}
+        <Text style={[type.caption, styles.muted]}>순위표 점수는 매일 밤 12시에 확정해요. 오늘 오르내린 점수는 내 신용 카드에 먼저 보이고, 순위표에는 내일 반영돼요.</Text>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function Row({ label, value }: { label: string; value: number }) {
+function BoardList({ rows, board }: { rows: BoardRow[]; board: Board }) {
   return (
-    <View style={styles.row}>
-      <Text style={[type.body, styles.muted]}>{label}</Text>
-      <Amount value={value} prefix={value > 0 ? '+' : ''} tone={value < 0 ? 'debt' : 'ink'} />
+    <View style={styles.list}>
+      {rows.map((r, i) => {
+        // 위 20명 다음에 내가 붙어 있으면 사이를 띄운다
+        const gap = i > 0 && r.rank - rows[i - 1].rank > 1 && r.isMe;
+        const open = board === 'friends' && !r.isMe && r.userId;
+        const body = (
+          <>
+            <Text style={[type.label, styles.rank, r.rank <= 3 && styles.top]}>{r.rank}</Text>
+            <View style={styles.flex}>
+              <Text style={[type.label, styles.ink]} numberOfLines={1}>
+                {r.isMe ? `${r.name} (나)` : r.name}
+              </Text>
+              <Text style={[type.caption, { color: r.weekDelta < 0 ? color.debtFg : r.weekDelta > 0 ? color.okFg : color.textTertiary }]}>
+                이번 주 {signed(r.weekDelta)}
+              </Text>
+            </View>
+            <GradeBadge score={r.score} size="s" />
+            <Text style={[type.label, styles.ink, styles.score]}>{r.score}</Text>
+          </>
+        );
+        return (
+          <View key={`${r.rank}-${r.name}-${i}`}>
+            {gap ? <Text style={[type.caption, styles.dots]}>⋯</Text> : null}
+            {open ? (
+              <Pressable
+                onPress={() => router.push({ pathname: '/friend/[id]', params: { id: r.userId! } })}
+                accessibilityRole="button"
+                style={[styles.row, i > 0 && styles.rowBorder]}>
+                {body}
+              </Pressable>
+            ) : (
+              <View style={[styles.row, i > 0 && styles.rowBorder, r.isMe && styles.mine]}>{body}</View>
+            )}
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -153,33 +135,21 @@ function Row({ label, value }: { label: string; value: number }) {
 const styles = StyleSheet.create({
   safe: layout.screen,
   content: layout.content,
-  hero: {
-    backgroundColor: color.bgSurface,
-    borderRadius: radius.xl,
-    borderWidth: stroke.outline,
-    borderColor: color.inkOutline,
-    padding: 20,
-    gap: 8,
-  },
-  section: { gap: 10 },
+  flex: { flex: 1, minWidth: 0 },
+  pressed: { opacity: 0.8 },
+  myCard: { ...layout.card, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 },
+  scoreRow: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
   tabs: { flexDirection: 'row', gap: 8 },
-  card: { ...layout.panel, padding: 16, gap: 12 },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  divider: { height: 1, backgroundColor: color.borderDefault },
-  why: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: color.bgSurface,
-    borderRadius: radius.lg,
-    borderWidth: stroke.hairline,
-    borderColor: color.borderDefault,
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-  },
-  whyText: { flex: 1, gap: 2 },
-  link: { color: color.brandPrimary },
-  pressed: { backgroundColor: color.bgSunken },
+  list: layout.list,
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 },
+  rowBorder: { borderTopWidth: stroke.hairline, borderTopColor: color.borderDefault },
+  mine: { backgroundColor: color.brandSoft },
+  rank: { width: 24, color: color.textTertiary },
+  top: { color: color.accentCoinDeep },
+  score: { width: 44, textAlign: 'right' },
+  dots: { textAlign: 'center', color: color.textTertiary, paddingVertical: 4 },
+  empty: { ...layout.panel, gap: 10, padding: 20 },
   ink: { color: color.textPrimary },
-  muted: { color: color.textSecondary },
+  secondary: { color: color.textSecondary },
+  muted: { color: color.textTertiary },
 });

@@ -1,0 +1,140 @@
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { BarChart } from '@/components/BarChart';
+import { Button } from '@/components/Button';
+import { Chip } from '@/components/Chip';
+import { GRADE_TONE, GradeBadge } from '@/components/GradeBadge';
+import { Mascot } from '@/components/Mascot';
+import { TopBar } from '@/components/TopBar';
+import { gradeOf, nextStep, partItems, signed, tagOf, titleOf, voiceLine } from '@/domain/credit';
+import { dayOfMonth, weekdayLabel } from '@/domain/dates';
+import { useCredit } from '@/store/credit';
+import { useProfile } from '@/store/profile';
+import { useTodos } from '@/store/todos';
+import * as layout from '@/theme/layout';
+import { color, radius, type } from '@/theme/tokens';
+
+/** TI-SCR-20 내 신용 (FR-097~100). 순위 탭의 내 점수 카드, 홈의 신용 카드에서 온다. 피그마 111:254, 111:353 */
+export default function CreditScreen() {
+  const { info, failed, refresh } = useCredit();
+  const { today, account } = useTodos();
+  const { profile } = useProfile();
+  const [range, setRange] = useState<'week' | 'month'>('week');
+
+  useFocusEffect(
+    useCallback(() => {
+      refresh();
+    }, [refresh]),
+  );
+
+  if (!info) {
+    return (
+      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+        <TopBar title="내 신용" onLead={() => router.back()} />
+        <View style={styles.content}>
+          <Text style={[type.body, styles.secondary]}>{failed ? '신용 점수를 받아 오지 못했어요. 연결되면 다시 받아요.' : '불러오는 중이에요.'}</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const bankrupt = account.state === 'bankrupt';
+  const g = gradeOf(info.score);
+  const step = nextStep(info.score);
+  const tag = tagOf(info, today);
+  const items = partItems(info.weekParts);
+  const tone = GRADE_TONE[g.tone];
+  const bars =
+    range === 'week'
+      ? info.week.map((d) => ({ key: d.day, value: d.delta, label: d.day === today ? '오늘' : weekdayLabel(d.day), caption: d.delta ? signed(d.delta) : undefined }))
+      : info.weeks.map((w, i) => ({ key: w.weekEnd, value: w.score, label: i === info.weeks.length - 1 ? '이번 주' : `${dayOfMonth(w.weekEnd)}일`, caption: String(w.score) }));
+
+  return (
+    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+      <TopBar title="내 신용" onLead={() => router.back()} />
+      <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.hero}>
+          <Mascot size={88} />
+          <View style={[styles.title, { backgroundColor: tone.bg, borderColor: tone.fg }]}>
+            <Text style={[type.label, { color: tone.fg }]}>{titleOf(info.score, bankrupt)}</Text>
+          </View>
+        </View>
+
+        <View style={styles.scoreRow}>
+          <Text style={[type.numberXL, styles.ink]} accessibilityLabel={`${info.score}점`}>
+            {info.score}
+            <Text style={[type.unitL, styles.ink]}>점</Text>
+          </Text>
+          <View style={[styles.chip, { backgroundColor: info.weekDelta < 0 ? color.debtBg : color.okBg }]}>
+            <Text style={[type.label, { color: info.weekDelta < 0 ? color.debtFg : color.okFg }]}>{info.weekDelta < 0 ? '▼' : '▲'} {Math.abs(info.weekDelta)}</Text>
+          </View>
+          <View style={styles.flex} />
+          <GradeBadge score={info.score} />
+        </View>
+        {tag ? <Text style={[type.label, { color: tag === '전망: 긍정적' ? color.okFg : tag === '신규 고객' ? color.brandPrimary : color.debtFg }]}>{tag}</Text> : null}
+        <Text style={[type.body, styles.secondary]}>
+          {g.desc}. {voiceLine(info.score, profile?.voice ?? 'spicy')}
+        </Text>
+
+        <View style={styles.section}>
+          <View style={styles.track} accessibilityLabel={step.next ? `${step.next}까지 ${step.points}점` : '가장 높은 등급'}>
+            <View style={[styles.fill, { width: `${Math.round(Math.max(0.04, step.progress) * 100)}%` }]} />
+          </View>
+          <View style={styles.between}>
+            <Text style={[type.label, styles.ink]}>{g.code}</Text>
+            <Text style={[type.caption, styles.secondary]}>{step.next ? `${step.next}까지 ${step.points}점` : '가장 높은 등급이에요'}</Text>
+          </View>
+        </View>
+
+        <View style={styles.panel}>
+          <View style={styles.tabs}>
+            <Chip label="주간" selected={range === 'week'} onPress={() => setRange('week')} grow />
+            <Chip label="월간" selected={range === 'month'} onPress={() => setRange('month')} grow />
+          </View>
+          <BarChart
+            bars={bars}
+            signed={range === 'week'}
+            summary={range === 'week' ? '최근 7일 하루별 점수 변화' : '최근 5주 주말 점수'}
+          />
+          <Text style={[type.caption, styles.muted]}>{range === 'week' ? '최근 7일, 하루에 오르내린 점수' : '최근 5주, 주마다 점수'}</Text>
+        </View>
+
+        <View style={styles.parts} accessibilityLabel={`이번 주 ${items.map((i) => `${i.label} ${signed(i.value)}`).join(', ')}`}>
+          {items.map((i) => (
+            <View key={i.label} style={styles.part}>
+              <Text style={[type.headline, { color: i.value < 0 ? color.debtFg : i.value > 0 ? color.okFg : color.textSecondary }]}>{signed(i.value)}</Text>
+              <Text style={[type.caption, styles.secondary]}>{i.label}</Text>
+            </View>
+          ))}
+        </View>
+
+        <Button label="등급표" variant="secondary" onPress={() => router.push('/grades')} />
+        <Text style={[type.caption, styles.muted]}>점수는 서버에 저장된 기록으로 매겨요. 방금 한 일은 서버에 올라간 뒤에 반영돼요.</Text>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safe: layout.screen,
+  content: layout.content,
+  section: layout.section,
+  flex: { flex: 1 },
+  hero: { alignItems: 'center', gap: 8 },
+  title: { paddingHorizontal: 14, paddingVertical: 4, borderRadius: radius.full, borderWidth: 1.5 },
+  scoreRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  chip: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.full },
+  track: { height: 12, borderRadius: radius.full, backgroundColor: color.bgSunken, overflow: 'hidden' },
+  fill: { height: '100%', borderRadius: radius.full, backgroundColor: color.brandPrimary },
+  between: { flexDirection: 'row', justifyContent: 'space-between' },
+  panel: { ...layout.panel, padding: 12, gap: 10 },
+  tabs: { flexDirection: 'row', gap: 8 },
+  parts: { ...layout.panel, flexDirection: 'row', paddingVertical: 12 },
+  part: { flex: 1, alignItems: 'center', gap: 2 },
+  ink: { color: color.textPrimary },
+  secondary: { color: color.textSecondary },
+  muted: { color: color.textTertiary },
+});
