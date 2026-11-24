@@ -16,6 +16,7 @@ import { clearEvents, flush, track } from '@/lib/events';
 import { feedback, getSettings, setSettings, subscribe } from '@/lib/feedback';
 import { useAuth } from '@/store/auth';
 import { useNotifications } from '@/store/notifications';
+import { useFriends } from '@/store/friends';
 import { useProfile } from '@/store/profile';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
@@ -32,6 +33,7 @@ export default function SettingsScreen() {
   const { pendingCount, syncState, clearLocal: clearTodos } = useTodos();
   const { profile, update, clearLocal: clearProfile } = useProfile();
   const { permission, request } = useNotifications();
+  const { me } = useFriends();
   const [dialog, setDialog] = useState<Dialog>(null);
   const fb = useSyncExternalStore(subscribe, getSettings, getSettings);
   const [typed, setTyped] = useState('');
@@ -177,7 +179,8 @@ export default function SettingsScreen() {
         </Group>
 
         <Group label="계정">
-          <SettingRow first label={email ?? '로그인 정보 없음'} tone="muted" />
+          <SettingRow first label="친구에게 보일 이름" value={me?.name ?? ''} onPress={() => router.push({ pathname: '/friends', params: { editName: '1' } })} />
+          <SettingRow label={email ?? '로그인 정보 없음'} tone="muted" />
           <SettingRow label={syncText} tone={pendingCount > 0 && syncState !== 'syncing' ? 'danger' : 'muted'} />
           <SettingRow label="로그아웃" onPress={() => setDialog('signOut')} />
           <SettingRow label="계정 삭제" hint="모든 할 일과 내역이 지워져요" tone="danger" onPress={() => setDialog('deleteWarn')} />

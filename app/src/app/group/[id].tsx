@@ -21,7 +21,9 @@ import {
   type Vote,
 } from '@/domain/groups';
 import { josa } from '@/domain/korean';
+import { type FriendState } from '@/domain/friends';
 import { feedback } from '@/lib/feedback';
+import { useFriends } from '@/store/friends';
 import { useGroups } from '@/store/groups';
 import * as layout from '@/theme/layout';
 import { color, radius, stroke, type } from '@/theme/tokens';
@@ -55,6 +57,8 @@ export default function GroupScreen() {
     markSeen,
     pot: fetchPot,
   } = useGroups();
+  const { states: fetchFriendStates, sendToUser } = useFriends();
+  const [friendStates, setFriendStates] = useState<Record<string, FriendState>>({});
   const group = myGroups.find((g) => g.id === id);
   const [tab, setTab] = useState<Tab>('feed');
   const [feed, setFeed] = useState<Feed | null>(null);
@@ -116,8 +120,16 @@ export default function GroupScreen() {
 
   const loadMembers = useCallback(() => {
     if (!id) return;
-    fetchMembers(id).then((r) => (r.ok ? setMembers(r.value) : setMessage(r.message)));
-  }, [id, fetchMembers]);
+    fetchMembers(id).then((r) => {
+      if (!r.ok) {
+        setMessage(r.message);
+        return;
+      }
+      setMembers(r.value);
+      // 그룹원과의 친구 상태(친구 신청 버튼)
+      fetchFriendStates(r.value.filter((m) => !m.isMe).map((m) => m.userId)).then(setFriendStates);
+    });
+  }, [id, fetchMembers, fetchFriendStates]);
 
   // 화면에 들어올 때마다 새로 받고, 본 시각을 남긴다(그룹 목록의 새 인증 수가 0이 된다)
   useFocusEffect(
@@ -212,6 +224,16 @@ export default function GroupScreen() {
       {tab === 'members' ? (
         <MemberList
           rows={members}
+          friendStates={friendStates}
+          onFriend={async (m) => {
+            const r = await sendToUser(m.userId, 'group');
+            if (!r.ok) setMessage(r.message);
+            else {
+              setNotice(r.value === 'friends' ? `${m.nickname}님과 친구가 됐어요` : `${m.nickname}님에게 친구 신청을 보냈어요`);
+              feedback.buy();
+            }
+            loadMembers();
+          }}
           onToggleBlock={async (m) => {
             const r = m.blocked ? await unblock(m.userId) : await block(m.userId);
             if (!r.ok) setMessage(r.message);
@@ -338,7 +360,19 @@ function StandingList({ rows }: { rows: GroupStanding[] | null }) {
   );
 }
 
-function MemberList({ rows, onToggleBlock }: { rows: Member[] | null; onToggleBlock: (m: Member) => void }) {
+const FRIEND_LABEL: Partial<Record<FriendState, string>> = { none: '친구 신청', received: '친구 수락', sent: '신청함', friend: '친구' };
+
+function MemberList({
+  rows,
+  friendStates,
+  onFriend,
+  onToggleBlock,
+}: {
+  rows: Member[] | null;
+  friendStates: Record<string, FriendState>;
+  onFriend: (m: Member) => void;
+  onToggleBlock: (m: Member) => void;
+}) {
   if (!rows) return <Text style={[type.caption, styles.muted]}>그룹원을 불러오는 중이에요</Text>;
   return (
     <View style={styles.list}>
@@ -351,6 +385,15 @@ function MemberList({ rows, onToggleBlock }: { rows: Member[] | null; onToggleBl
             </Text>
             {m.status ? <StatusStamp code={m.status} /> : <Text style={[type.caption, styles.muted]}>이번 주 상태 없음</Text>}
           </View>
+          {!m.isMe && !m.blocked && friendStates[m.userId] && FRIEND_LABEL[friendStates[m.userId]] ? (
+            friendStates[m.userId] === 'none' || friendStates[m.userId] === 'received' ? (
+              <Pressable onPress={() => onFriend(m)} accessibilityRole="button" hitSlop={8} style={styles.friendPill}>
+                <Text style={[type.label, styles.onBrand]}>{FRIEND_LABEL[friendStates[m.userId]]}</Text>
+              </Pressable>
+            ) : (
+              <Text style={[type.label, styles.muted]}>{FRIEND_LABEL[friendStates[m.userId]]}</Text>
+            )
+          ) : null}
           {!m.isMe ? (
             <Pressable onPress={() => onToggleBlock(m)} accessibilityRole="button" hitSlop={8}>
               <Text style={[type.label, m.blocked ? styles.brand : styles.muted]}>{m.blocked ? '차단 풀기' : '차단'}</Text>
@@ -372,6 +415,8 @@ const styles = StyleSheet.create({
   secondary: { color: color.textSecondary },
   muted: { color: color.textTertiary },
   brand: { color: color.brandPrimary },
+  onBrand: { color: color.textOnPrimary },
+  friendPill: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: radius.full, backgroundColor: color.brandPrimary },
   error: { color: color.debtFg },
   errorBox: { padding: 12, borderRadius: radius.md, backgroundColor: color.debtBg },
   pot: { gap: 2, padding: 14, borderRadius: radius.lg, backgroundColor: color.mascotCream, borderWidth: stroke.hairline, borderColor: color.borderDefault },

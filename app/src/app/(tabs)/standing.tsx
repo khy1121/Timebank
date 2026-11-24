@@ -13,6 +13,7 @@ import { dayOfMonth, weekdayLabel } from '@/domain/dates';
 import { formatAmount } from '@/domain/interest';
 import { dailyScores, MIN_PARTICIPANTS, STATUS, topPercent, weeklyBars } from '@/domain/standing';
 import { track } from '@/lib/events';
+import { useFriends } from '@/store/friends';
 import { useScoreBreakdown, useStanding } from '@/store/standing';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
@@ -24,6 +25,7 @@ type Range = 'week' | 'month';
 export default function StandingScreen() {
   const { weeks, current, change, status, message, failed } = useStanding();
   const { repayments, today } = useTodos();
+  const { incomingCount } = useFriends();
   const breakdown = useScoreBreakdown();
   const [range, setRange] = useState<Range>('week');
 
@@ -41,7 +43,7 @@ export default function StandingScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
-      <TopBar lead="none" title="순위" />
+      <TopBar lead="none" title="순위" action={incomingCount > 0 ? `친구 ${incomingCount}` : '친구'} onAction={() => router.push('/friends')} />
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.hero}>
           <StatusStamp code={status} size="l" />
