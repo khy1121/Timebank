@@ -23,6 +23,14 @@ import * as layout from '@/theme/layout';
 import { color, inputType, radius, stroke, themed, type } from '@/theme/tokens';
 import { goBack } from '@/lib/navigation';
 
+/** 동네 창구부터 은행원 말투 (FR-111) */
+const BANKER_VOICE_STAGE = 2;
+const VOICE_HINT = {
+  spicy: '매운맛: 내 신용과 마스코트가 독하게 말해요',
+  mild: '순한맛: 내 신용과 마스코트가 다정하게 말해요',
+  banker: '은행원: 창구 직원처럼 정중하게 말해요',
+} as const;
+
 const CONTACT = process.env.EXPO_PUBLIC_CONTACT_EMAIL ?? '';
 const VERSION = Constants.expoConfig?.version ?? '1.0.0';
 
@@ -30,6 +38,7 @@ type Dialog = 'signOut' | 'time' | 'deleteWarn' | 'deleteType' | null;
 
 /** TI-SCR-07 설정. 알림, 신용, 소리와 진동, 도움말, 계정. (FR-003, FR-004, FR-032, FR-033, FR-050~052, FR-067, FR-073) */
 export default function SettingsScreen() {
+  const bankStage = useTodos().account.bankStage;
   const { email, signOut, deleteAccount } = useAuth();
   const { pendingCount, syncState, clearLocal: clearTodos } = useTodos();
   const { profile, update, clearLocal: clearProfile } = useProfile();
@@ -119,10 +128,10 @@ export default function SettingsScreen() {
           <SettingRow
             first
             label="말투"
-            hint={profile?.voice === 'mild' ? '순한맛: 내 신용과 마스코트가 다정하게 말해요' : '매운맛: 내 신용과 마스코트가 독하게 말해요'}
+            hint={VOICE_HINT[profile?.voice ?? 'spicy']}
             right={
               <View style={styles.voice} accessibilityRole="radiogroup">
-                <Chip label="매운맛" selected={profile?.voice !== 'mild'} onPress={() => {
+                <Chip label="매운맛" selected={profile?.voice !== 'mild' && profile?.voice !== 'banker'} onPress={() => {
                     update({ voice: 'spicy' });
                     track('voice_change', { voice: 'spicy' });
                   }} disabled={!profile} />
@@ -130,6 +139,16 @@ export default function SettingsScreen() {
                     update({ voice: 'mild' });
                     track('voice_change', { voice: 'mild' });
                   }} disabled={!profile} />
+                <Chip
+                  label={bankStage >= BANKER_VOICE_STAGE ? '은행원' : '🔒 은행원'}
+                  a11yLabel={bankStage >= BANKER_VOICE_STAGE ? '은행원 말투' : '은행원 말투, 동네 창구를 열면'}
+                  selected={profile?.voice === 'banker'}
+                  disabled={!profile || bankStage < BANKER_VOICE_STAGE}
+                  onPress={() => {
+                    update({ voice: 'banker' });
+                    track('voice_change', { voice: 'banker' });
+                  }}
+                />
               </View>
             }
           />

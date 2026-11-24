@@ -90,7 +90,7 @@ export function profileFromRow(row: ProfileRow): Profile {
     onboardedAt: row.onboarded_at,
     signupSource: SOURCES.includes(row.signup_source as SignupSource) ? (row.signup_source as SignupSource) : 'unknown',
     equipped: equippedFromRow(row.equipped),
-    voice: row.voice === 'mild' ? 'mild' : 'spicy',
+    voice: row.voice === 'mild' || row.voice === 'banker' ? row.voice : 'spicy',
     signupDate: row.created_at ? localDate(row.created_at) : null,
     pushFriends: row.push_friends ?? true,
     nameplate: (NAMEPLATES as string[]).includes(row.nameplate ?? '') ? (row.nameplate as Nameplate) : 'none',

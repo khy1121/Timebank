@@ -172,7 +172,8 @@ export function statusOf(sig: Signals): StatusCode {
   return ranked ? 'mediocre' : 'waiting';
 }
 
-export type Voice = 'spicy' | 'mild';
+/** 말투: 매운맛, 순한맛, 은행원(동네 창구 혜택, FR-111) */
+export type Voice = 'spicy' | 'mild' | 'banker';
 
 /** 상태마다 마스코트 한마디. 숫자는 실제 값을 넣는다. */
 export function statusMessage(code: StatusCode, sig: Signals, voice: Voice): string {
@@ -211,7 +212,23 @@ export function statusMessage(code: StatusCode, sig: Signals, voice: Voice): str
     mediocre: '중간쯤이에요. 하나만 더 끝내면 올라가요.',
     waiting: '아직 겨룰 사람이 적어요. 지난주의 나와 비교해 볼게요.',
   };
-  return (voice === 'mild' ? mild : spicy)[code];
+  const banker: Record<StatusCode, string> = {
+    newbie: '처음 오셨군요, 고객님. 첫 주는 실적을 보지 않고 통장만 만들어 드립니다.',
+    bankrupt: '고객님, 연체 이자가 한도에 이르렀습니다. 오늘 한 건만 상환해 주시겠습니까?',
+    dormant: `${sig.daysSinceActivity}일째 거래가 없으십니다. 그사이 연체 이자는 계속 붙고 있습니다.`,
+    debtPile: `연체 ${sig.overdueCount}건이 확인됩니다. 가장 오래된 건부터 정리해 드릴까요?`,
+    slothful: `이번 주 실적이 하위 ${100 - top + 1}%로 집계됩니다. 상환 계획을 다시 세워 보시지요.`,
+    lazy: '상환이 조금씩 밀리고 있습니다. 오늘 한 건만 처리해 주십시오.',
+    cramming: '막판 상환이 많으셨습니다. 다음 주에는 미리 처리해 주시면 감사하겠습니다.',
+    dabbling: '등록만 하시고 상환 실적이 없습니다. 한 건만 처리해 주시겠습니까?',
+    workaholic: '실적이 매우 우수하십니다. 가끔은 쉬셔도 신용에 문제없습니다.',
+    diligent: `상위 ${top}% 우수 고객이십니다. 늘 감사드립니다.`,
+    sharp: `이번 주 ${sig.repaidThisWeek}건 모두 기한 안에 상환하셨습니다. 최우수 고객이십니다.`,
+    sincere: above > 0 ? `성실하게 거래 중이십니다. 위로 ${above}분 남아 계십니다.` : '성실하게 거래 중이십니다. 지금처럼만 이용해 주십시오.',
+    mediocre: '평균 수준의 실적이십니다. 한 건만 더 상환하시면 순위가 오릅니다.',
+    waiting: '아직 비교할 고객이 적습니다. 지난주 실적과 비교해 드리겠습니다.',
+  };
+  return (voice === 'mild' ? mild : voice === 'banker' ? banker : spicy)[code];
 }
 
 export type RankChange = { kind: 'up' | 'down' | 'same' | 'new'; steps: number; text: string };

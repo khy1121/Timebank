@@ -12,7 +12,7 @@ export const MAX_SCORE = 1000;
 export type GradeCode = 'AAA' | 'AA' | 'A' | 'BBB' | 'BB' | 'B' | 'CCC' | 'CC' | 'D';
 /** 색 다섯 가지: gold(AAA), good(AA·A), info(BBB·BB, 파랑), warn(B·CCC), bad(CC·D) */
 export type GradeTone = 'gold' | 'good' | 'info' | 'warn' | 'bad';
-export type Voice = 'spicy' | 'mild';
+export type Voice = 'spicy' | 'mild' | 'banker';
 
 export type Grade = {
   code: GradeCode;
@@ -23,19 +23,21 @@ export type Grade = {
   tone: GradeTone;
   spicy: string;
   mild: string;
+  /** 은행원 말투 (동네 창구 혜택) */
+  banker: string;
 };
 
 /** 높은 등급부터. 신용점수기획서 3절 */
 export const GRADES: Grade[] = [
-  { code: 'AAA', min: 950, title: '갓생 재벌', desc: '성실함이 넘쳐흐르는 최상위 인간', tone: 'gold', spicy: '더 올라갈 데가 없어요. 이제 지키는 게 일이에요.', mild: '가장 높은 등급이에요. 정말 대단해요.' },
-  { code: 'AA', min: 850, title: '성실 우량주', desc: '믿고 투자할 수 있는 성실한 인간', tone: 'good', spicy: '믿고 맡길 만해요. 한 번만 삐끗하면 A예요.', mild: '아주 잘하고 있어요. 조금만 더 하면 AAA예요.' },
-  { code: 'A', min: 750, title: '성실 우량주', desc: '시키지 않아도 알아서 해냄', tone: 'good', spicy: '꽤 하네요. 근데 위에 두 칸 남았어요.', mild: '꾸준히 잘하고 있어요.' },
-  { code: 'BBB', min: 650, title: '신용 적격자', desc: '꾸준함이 습관으로 자리 잡는 중', tone: 'info', spicy: '나쁘지 않아요. 딱 거기까지지만요.', mild: '습관이 붙고 있어요. 이대로 가요.' },
-  { code: 'BB', min: 550, title: '신용 적격자', desc: '어느 정도 인간 구실을 하는 중', tone: 'info', spicy: '딱 평균이에요. 여기서 멈출 건 아니죠?', mild: '시작하기 좋은 자리예요.' },
-  { code: 'B', min: 425, title: '성실 불량주', desc: '의욕 대비 실적이 저조함', tone: 'warn', spicy: '계획은 거창한데 한 게 없네요.', mild: '조금 밀렸어요. 오늘 하나만 끝내 봐요.' },
-  { code: 'CCC', min: 300, title: '성실 불량주', desc: '오늘의 할 일을 내일로 돌려막기', tone: 'warn', spicy: '오늘 할 일을 내일의 나한테 떠넘기는 중이에요.', mild: '미룬 일이 쌓였어요. 가벼운 것부터 해 봐요.' },
-  { code: 'CC', min: 150, title: '성실 부도', desc: '밀린 할 일이 감당하기 어려운 수준', tone: 'bad', spicy: '밀린 게 산더미예요. 어디서부터 손댈지도 모르겠죠?', mild: '많이 밀렸어요. 가장 오래된 것 하나만 정리해요.' },
-  { code: 'D', min: 0, title: '성실 부도', desc: '성실도 부도 처리. 신뢰 회복이 시급함', tone: 'bad', spicy: '부도 처리됐어요. 바닥이니까 올라갈 일만 남았네요.', mild: '다시 시작하면 돼요. 하나만 끝내 봐요.' },
+  { code: 'AAA', min: 950, title: '갓생 재벌', desc: '성실함이 넘쳐흐르는 최상위 인간', tone: 'gold', spicy: '더 올라갈 데가 없어요. 이제 지키는 게 일이에요.', mild: '가장 높은 등급이에요. 정말 대단해요.', banker: '최고 등급 고객이십니다. 특별히 모시겠습니다.' },
+  { code: 'AA', min: 850, title: '성실 우량주', desc: '믿고 투자할 수 있는 성실한 인간', tone: 'good', spicy: '믿고 맡길 만해요. 한 번만 삐끗하면 A예요.', mild: '아주 잘하고 있어요. 조금만 더 하면 AAA예요.', banker: '우량 고객이십니다. 한 단계만 더 오르시면 최고 등급입니다.' },
+  { code: 'A', min: 750, title: '성실 우량주', desc: '시키지 않아도 알아서 해냄', tone: 'good', spicy: '꽤 하네요. 근데 위에 두 칸 남았어요.', mild: '꾸준히 잘하고 있어요.', banker: '신용 상태가 좋으십니다. 꾸준한 거래 감사드립니다.' },
+  { code: 'BBB', min: 650, title: '신용 적격자', desc: '꾸준함이 습관으로 자리 잡는 중', tone: 'info', spicy: '나쁘지 않아요. 딱 거기까지지만요.', mild: '습관이 붙고 있어요. 이대로 가요.', banker: '안정적으로 거래하고 계십니다. 이대로 유지해 주십시오.' },
+  { code: 'BB', min: 550, title: '신용 적격자', desc: '어느 정도 인간 구실을 하는 중', tone: 'info', spicy: '딱 평균이에요. 여기서 멈출 건 아니죠?', mild: '시작하기 좋은 자리예요.', banker: '보통 등급이십니다. 기한 안 상환이 늘면 등급이 오릅니다.' },
+  { code: 'B', min: 425, title: '성실 불량주', desc: '의욕 대비 실적이 저조함', tone: 'warn', spicy: '계획은 거창한데 한 게 없네요.', mild: '조금 밀렸어요. 오늘 하나만 끝내 봐요.', banker: '최근 상환이 늦어지고 있습니다. 오늘 한 건만 처리해 주시겠습니까?' },
+  { code: 'CCC', min: 300, title: '성실 불량주', desc: '오늘의 할 일을 내일로 돌려막기', tone: 'warn', spicy: '오늘 할 일을 내일의 나한테 떠넘기는 중이에요.', mild: '미룬 일이 쌓였어요. 가벼운 것부터 해 봐요.', banker: '연체가 쌓이고 있습니다. 가장 가벼운 건부터 정리해 드릴까요?' },
+  { code: 'CC', min: 150, title: '성실 부도', desc: '밀린 할 일이 감당하기 어려운 수준', tone: 'bad', spicy: '밀린 게 산더미예요. 어디서부터 손댈지도 모르겠죠?', mild: '많이 밀렸어요. 가장 오래된 것 하나만 정리해요.', banker: '연체가 많아 신용 관리가 필요합니다. 오래된 건부터 상환해 주십시오.' },
+  { code: 'D', min: 0, title: '성실 부도', desc: '성실도 부도 처리. 신뢰 회복이 시급함', tone: 'bad', spicy: '부도 처리됐어요. 바닥이니까 올라갈 일만 남았네요.', mild: '다시 시작하면 돼요. 하나만 끝내 봐요.', banker: '부도 등급이십니다. 한 건부터 다시 시작하시면 회복을 도와드리겠습니다.' },
 ];
 
 export const BANKRUPT_TITLE = '갓생 파산자';
@@ -71,7 +73,7 @@ export function nextStep(score: number): { next: GradeCode | null; points: numbe
 
 export function voiceLine(score: number, voice: Voice): string {
   const g = gradeOf(score);
-  return voice === 'mild' ? g.mild : g.spicy;
+  return voice === 'mild' ? g.mild : voice === 'banker' ? g.banker : g.spicy;
 }
 
 // ---------------------------------------------------------------------------
