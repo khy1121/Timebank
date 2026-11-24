@@ -45,6 +45,20 @@ const AuthContext = createContext<Auth | null>(null);
 
 const NOT_CONFIGURED: Result = { ok: false, message: '서버 연결 정보가 없어요. .env 파일을 확인해 주세요.' };
 
+/** 내가 올린 인증 사진 파일을 모두 지운다. 실패해도 계정 삭제는 계속한다 */
+async function removeMyProofPhotos(userId: string | undefined) {
+  if (!userId) return;
+  const { data, error } = await supabase.from('proofs').select('photo_path').eq('user_id', userId);
+  if (error) {
+    console.warn('인증 사진 목록을 받지 못했어요', error.message);
+    return;
+  }
+  const paths = (data ?? []).map((r: { photo_path: string }) => r.photo_path);
+  if (paths.length === 0) return;
+  const { error: removeError } = await supabase.storage.from('proofs').remove(paths);
+  if (removeError) console.warn('인증 사진을 지우지 못했어요', removeError.message);
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
@@ -145,6 +159,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       deleteAccount: async () => {
         if (!isSupabaseConfigured) return NOT_CONFIGURED;
+        // 계정과 함께 인증 행은 지워지지만 저장소의 사진 파일은 남는다. 혼자 쓰던 그룹이면 지울 사람이 없으므로 먼저 지운다 (FR-004, NFR-009)
+        await removeMyProofPhotos(session?.user.id);
         const { error } = await supabase.rpc('delete_account');
         if (error) {
           console.warn('계정을 삭제하지 못했어요', error);
