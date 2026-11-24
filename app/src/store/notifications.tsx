@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AppState } from 'react-native';
 
+import { perksOf } from '@/domain/bank';
 import { planNotifications } from '@/domain/notify';
 import { parseTime } from '@/domain/profile';
 import {
@@ -36,7 +37,8 @@ const NotificationsContext = createContext<Store | null>(null);
 export function NotificationsProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();
   const { profile } = useProfile();
-  const { todos, today, hydrated } = useTodos();
+  const { todos, today, hydrated, account } = useTodos();
+  const bankStage = account.bankStage;
   const { groups } = useGroups();
   const askedForFriends = useRef(false);
   const [permission, setPermission] = useState<NotifyPermission>('undetermined');
@@ -100,8 +102,11 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     }
     if (!hydrated) return;
     const now = new Date();
-    replaceScheduled(planNotifications(todos, { date: today, minutes: now.getHours() * 60 + now.getMinutes() }, parseTime(notifyTime)));
-  }, [signedIn, enabled, permission, notifyTime, hydrated, todos, today]);
+    const perks = perksOf(bankStage);
+    replaceScheduled(
+      planNotifications(todos, { date: today, minutes: now.getHours() * 60 + now.getMinutes() }, parseTime(notifyTime), { dueEve: perks.dueEveAlert, twice: perks.notifyTimes === 2 }),
+    );
+  }, [signedIn, enabled, permission, notifyTime, hydrated, todos, today, bankStage]);
 
   // 알림을 누르면 할 일 알림은 그 할 일로, 그룹 알림은 그 그룹으로, 친구 신청 알림은 친구 화면으로 간다
   useEffect(() => {

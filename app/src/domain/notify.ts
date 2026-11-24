@@ -8,9 +8,15 @@ import { rewardFor } from './wallet';
  * - 기한 당일: 오늘 끝내면 돌려받는 냥
  * - 연체 1~7일째 매일, 그 뒤 10·14·21일째: 원금에서 깎인 냥과 지금 끝내면 돌려받는 냥
  * - 같은 날 연체된 할 일이 여럿이면 한 번에 묶는다
+ * - 은행 혜택(FR-111): 엽전 가판대부터 기한 전날 알림과, 기한 당일 저녁에 한 번 더(하루 두 번)
  */
 
-export type NotifyKind = 'due' | 'overdue' | 'overdueDigest';
+export type NotifyKind = 'due' | 'dueEve' | 'dueLate' | 'overdue' | 'overdueDigest';
+
+/** 은행 혜택으로 더 받는 알림 */
+export type NotifyExtras = { dueEve: boolean; twice: boolean };
+/** 하루 두 번째 알림 시각. 첫 알림이 이보다 늦으면 두 번째는 걸지 않는다 */
+export const SECOND_ALERT: TimeOfDay = { hour: 21, minute: 0 };
 
 export type PlannedNotification = {
   /** 같은 알림을 구분하는 값 */
@@ -51,9 +57,11 @@ export function overdueMessage(title: string, principal: number, days: number): 
   return { title: `연체 ${days}일째`, body: `"${title}" 원금 ${won(principal)} 중 ${won(fee)}이 깎였어요. 오늘 끝내면 ${won(back)} 돌려받아요.` };
 }
 
-export function planNotifications(todos: Todo[], now: Clock, time: TimeOfDay): PlannedNotification[] {
+export function planNotifications(todos: Todo[], now: Clock, time: TimeOfDay, extras: NotifyExtras = { dueEve: false, twice: false }): PlannedNotification[] {
   const at = time.hour * 60 + time.minute;
   const isFuture = (date: DateString) => date > now.date || (date === now.date && at > now.minutes);
+  const second = SECOND_ALERT.hour * 60 + SECOND_ALERT.minute;
+  const isFutureAt = (date: DateString, minutes: number) => date > now.date || (date === now.date && minutes > now.minutes);
   const base = { hour: time.hour, minute: time.minute };
   const planned: PlannedNotification[] = [];
   // 날짜별 연체 할 일
@@ -72,6 +80,22 @@ export function planNotifications(todos: Todo[], now: Clock, time: TimeOfDay): P
         date: todo.dueDate,
         title: '오늘까지예요',
         body: `"${todo.title}" 오늘 끝내면 ${won(principal + rewardFor(principal))}을 돌려받아요. 넘기면 원금이 깎여요.`,
+      });
+    }
+
+    const eve = addDays(todo.dueDate, -1);
+    if (extras.dueEve && isFuture(eve)) {
+      planned.push({ ...base, key: `${todo.id}:dueEve`, todoId: todo.id, kind: 'dueEve', date: eve, title: '내일까지예요', body: `"${todo.title}" 내일이 기한이에요. 오늘 미리 끝내 둘까요?` });
+    }
+    if (extras.twice && second > at && isFutureAt(todo.dueDate, second)) {
+      planned.push({
+        ...SECOND_ALERT,
+        key: `${todo.id}:dueLate`,
+        todoId: todo.id,
+        kind: 'dueLate',
+        date: todo.dueDate,
+        title: '오늘 자정까지예요',
+        body: `"${todo.title}" 아직 남았어요. 자정이 지나면 원금이 깎여요.`,
       });
     }
 
