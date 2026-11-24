@@ -47,7 +47,7 @@ export default function TodoDetailScreen() {
   const overdue = v.state === 'overdue';
   const group = todo.stakeGroupId ? groups.find((g) => g.id === todo.stakeGroupId) : undefined;
   const inGroup = !!todo.stakeGroupId;
-  const preview = completionPreview(v.principal, v.overdueDays, v.interest, account.streak, inGroup);
+  const preview = completionPreview(v.principal, v.overdueDays, v.interest, account.streak, inGroup, account.bankStage);
   // 기한 안이면 끝냈을 때 돌아올 냥(그룹이면 인정받았을 때)
   const payout = preview.pending ? preview.promised : preview.back;
   const refund = removeRefundFor(todo.id);
