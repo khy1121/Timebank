@@ -20,7 +20,7 @@ type Dialog = 'remove' | 'block' | null;
 /** TI-SCR-23 친구 프로필 (FR-106, FR-107). 이름과 숫자 기록만 보인다. 피그마 155:3591 */
 export default function FriendScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { friends, profile, remove } = useFriends();
+  const { friends, profile, remove, cheer, cheeredToday } = useFriends();
   const { block } = useGroups();
   const { today } = useTodos();
   const known = friends.find((f) => f.userId === id);
@@ -28,6 +28,23 @@ export default function FriendScreen() {
   const [data, setData] = useState<{ id: string; value: FriendProfile | null } | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [dialog, setDialog] = useState<Dialog>(null);
+  const [cheered, setCheered] = useState(false);
+
+  useEffect(() => {
+    if (!id) return;
+    cheeredToday().then((s) => setCheered(s.has(id)));
+  }, [id, cheeredToday]);
+
+  const sendCheer = async () => {
+    if (!id || cheered) return;
+    const r = await cheer(id);
+    if (!r.ok) {
+      setMessage(r.message);
+      return;
+    }
+    setCheered(r.value !== 'not_friend');
+    setMessage(r.value === 'sent' ? `${name}님에게 응원을 보냈어요` : r.value === 'already' ? '오늘은 이미 응원했어요. 내일 또 보내요' : '친구가 아니라 보낼 수 없어요');
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -112,6 +129,9 @@ export default function FriendScreen() {
                 </View>
               </View>
             ) : null}
+
+            <Button label={cheered ? '오늘 응원했어요' : '응원 보내기'} onPress={sendCheer} disabled={cheered} />
+            <Text style={[type.caption, styles.muted]}>같은 친구에게 하루 한 번 보낼 수 있어요. 친구 알림을 끈 사람에게는 알림이 가지 않아요.</Text>
 
             <View style={styles.footer}>
               <Button label="친구 끊기" variant="secondary" onPress={() => setDialog('remove')} />
