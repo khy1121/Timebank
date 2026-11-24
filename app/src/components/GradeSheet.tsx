@@ -1,41 +1,43 @@
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { formatAmount, gradeLevel, gradeTable } from '@/domain/interest';
+import { gradeOf, gradeRange, GRADES } from '@/domain/credit';
 import { color, radius, stroke, type } from '@/theme/tokens';
 
 import { Button } from './Button';
+import { GRADE_TONE } from './GradeBadge';
 
-type Props = { visible: boolean; grade: number; totalInterest: number; onClose: () => void };
+type Props = { visible: boolean; score: number | null; onClose: () => void };
 
-const LEVEL_COLOR = { good: color.okFg, warn: color.accentCoinDeep, bad: color.debtFg } as const;
-const TABLE = gradeTable();
-
-/** 신용등급 기준표. 홈 요약 카드의 "신용 N등급"을 누르면 아래에서 뜬다. (FR-025, 화면설계서 6절) */
-export function GradeSheet({ visible, grade, totalInterest, onClose }: Props) {
+/** 신용등급 기준표. 홈 요약 카드의 "신용 AA"를 누르면 아래에서 뜬다. (FR-098) */
+export function GradeSheet({ visible, score, onClose }: Props) {
+  const mine = score === null ? null : gradeOf(score).code;
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="닫기">
         <Pressable style={styles.sheet} onPress={() => {}} accessibilityViewIsModal>
           <View style={styles.head}>
             <Text style={[type.headline, styles.ink]} accessibilityRole="header">
-              신용등급 기준
+              신용등급
             </Text>
             <Text style={[type.caption, styles.muted]}>
-              연체된 할 일에 붙은 이자를 모두 더해 정해요. 지금은 {formatAmount(totalInterest)}냥이라 {grade}등급이에요.
+              끝내면 오르고 미루면 깎여요.{score === null ? '' : ` 지금은 ${score}점이라 ${mine}예요.`}
             </Text>
           </View>
           <View style={styles.list}>
-            {TABLE.map((row, i) => {
-              const mine = row.grade === grade;
+            {GRADES.map((g, i) => {
+              const r = gradeRange(g.code);
+              const me = g.code === mine;
               return (
                 <View
-                  key={row.grade}
-                  style={[styles.row, i > 0 && styles.rowBorder, mine && styles.rowMine]}
+                  key={g.code}
+                  style={[styles.row, i > 0 && styles.rowBorder, me && styles.rowMine]}
                   accessible
-                  accessibilityLabel={`${row.grade}등급, 이자 ${row.label}${mine ? ', 지금 내 등급' : ''}`}>
-                  <Text style={[type.label, styles.grade, { color: LEVEL_COLOR[gradeLevel(row.grade)] }]}>{row.grade}등급</Text>
-                  <Text style={[type.caption, styles.flex, styles.ink]}>{row.label}</Text>
-                  {mine ? <Text style={[type.caption, styles.me]}>지금</Text> : null}
+                  accessibilityLabel={`${g.code}, ${r.min}점에서 ${r.max}점, ${g.title}${me ? ', 지금 내 등급' : ''}`}>
+                  <Text style={[type.label, styles.grade, { color: GRADE_TONE[g.tone].fg }]}>{g.code}</Text>
+                  <Text style={[type.caption, styles.flex, styles.ink]}>
+                    {r.min}~{r.max.toLocaleString('ko-KR')}점, {g.title}
+                  </Text>
+                  {me ? <Text style={[type.caption, styles.me]}>지금</Text> : null}
                 </View>
               );
             })}
@@ -62,7 +64,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, paddingHorizontal: 12 },
   rowBorder: { borderTopWidth: stroke.hairline, borderTopColor: color.borderDefault },
   rowMine: { backgroundColor: color.brandSoft },
-  grade: { width: 52 },
+  grade: { width: 40 },
   flex: { flex: 1 },
   ink: { color: color.textPrimary },
   muted: { color: color.textSecondary },
