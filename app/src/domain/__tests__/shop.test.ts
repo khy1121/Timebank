@@ -66,7 +66,14 @@ describe('내 은행 (TC-070)', () => {
 
   it('가진 은행 중 가장 높은 단계가 지금 단계', () => {
     expect(bankStage(ownedCodes(['bank-1', 'bank-2']))).toBe(2);
-    expect(nextBank(ownedCodes(['bank-1', 'bank-2', 'bank-3', 'bank-4']))).toBeNull();
+    // bank-4는 처음부터 본점이라 5단계. 읍내 금고(bank-vault)가 4단계로 새로 들어왔다
+    expect(bankStage(ownedCodes(['bank-1', 'bank-2', 'bank-3', 'bank-4']))).toBe(5);
+    expect(nextBank(ownedCodes(['bank-1', 'bank-2', 'bank-3']))?.code).toBe('bank-vault');
+    expect(nextBank(ownedCodes(['bank-1', 'bank-2', 'bank-3', 'bank-vault', 'bank-4']))?.code).toBe('bank-central');
+    expect(nextBank(ownedCodes(['bank-1', 'bank-2', 'bank-3', 'bank-vault', 'bank-4', 'bank-central']))).toBeNull();
+  });
+  it('조건을 못 채운 은행은 못 연다', () => {
+    expect(canBuy('bank-1', 99999, ownedCodes([]), false)).toEqual({ ok: false, reason: 'condition' });
   });
 
   it('은행 단계가 모자라면 옷이 잠겨 있다', () => {
