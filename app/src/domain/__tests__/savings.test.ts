@@ -10,6 +10,7 @@ import {
   SIGNUP_GRANT,
   type AccountInput,
   type StakedTodo,
+  shopLockReason,
 } from '../savings';
 
 const T0 = '2026-11-01';
@@ -262,5 +263,13 @@ describe('상환 내역 도장 (TI-SAV 12절)', () => {
     expect(settlementOf(repaid({ settledOn: '2026-11-09' }), 'g1', new Set(), today).stamp).toBe('pending');
     expect(settlementOf(repaid({ settledOn: '2026-11-08' }), 'g1', new Set(), today)).toEqual({ stamp: 'forfeit', amount: -3000, verified: false });
     expect(settlementOf(repaid({ overdueDays: 1, interest: 300 }), 'g1', new Set(['r1']), today).stamp).toBe('forfeit');
+  });
+});
+
+describe('상점 잠김 (시간적금기획서 4.6)', () => {
+  it('보통이면 null, 빚이면 빚 안내, 파산 중이면 회생까지 남은 날', () => {
+    expect(shopLockReason({ state: 'normal', netWorth: 100, rehabOn: null }, '2026-11-24')).toBeNull();
+    expect(shopLockReason({ state: 'debt', netWorth: -1, rehabOn: null }, '2026-11-24')).toBe('빚이 있어서 상점을 쓸 수 없어요');
+    expect(shopLockReason({ state: 'bankrupt', netWorth: 0, rehabOn: '2026-11-29' }, '2026-11-24')).toBe('파산 중이라 상점이 잠겼어요. 회생까지 5일');
   });
 });

@@ -336,3 +336,13 @@ export function completionPreview(principal: number, overdueDays: number, lateFe
   }
   return { back: principal + gained, gained, lost: 0, bonus, pending: false, promised: 0, forfeit: false };
 }
+
+/**
+ * 상점을 못 쓰는 까닭. 쓸 수 있으면 null (시간적금기획서 4.6)
+ * 파산 중이거나 순자산이 마이너스면 잠긴다. 탭·잔고 칩·상점 화면이 같은 문구를 쓴다.
+ */
+export function shopLockReason(a: Pick<Account, 'state' | 'netWorth' | 'rehabOn'>, today: DateString): string | null {
+  if (a.state === 'bankrupt' && a.rehabOn) return `파산 중이라 상점이 잠겼어요. 회생까지 ${Math.max(0, diffDays(today, a.rehabOn))}일`;
+  if (a.state !== 'normal' || a.netWorth < 0) return '빚이 있어서 상점을 쓸 수 없어요';
+  return null;
+}
