@@ -10,7 +10,7 @@ const TONE: Record<GroupTheme, { fg: string; bg: string }> = live(() => ({
   reading: { fg: color.accentCoinDeep, bg: color.mascotCream },
   cooking: { fg: color.accentCheek, bg: color.debtBg },
   habit: { fg: color.accentSprout, bg: color.okBg },
-  work: { fg: color.inkOutline, bg: color.bgSunken },
+  work: { fg: color.textPrimary, bg: color.bgSunken },
   hobby: { fg: color.accentCheek, bg: color.mascotCream },
   etc: { fg: color.textSecondary, bg: color.bgSunken },
 }));

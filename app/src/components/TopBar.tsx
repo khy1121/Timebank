@@ -48,6 +48,6 @@ const styles = themed(() => ({
   bar: { height: 56, flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 12, paddingRight: 16 },
   barTab: { paddingLeft: 16 },
   lead: { width: 32, height: 44, alignItems: 'center', justifyContent: 'center' },
-  glyph: { fontSize: 26, lineHeight: 30, color: color.inkOutline, fontFamily: type.body.fontFamily },
+  glyph: { fontSize: 26, lineHeight: 30, color: color.textPrimary, fontFamily: type.body.fontFamily },
   title: { flex: 1, color: color.textPrimary },
 }));

@@ -10,7 +10,7 @@ const STYLE = live(() => ({
   // 외곽선이 없는 테마(말랑 저금통)에서는 카드 바탕과 구분되게 한 단계 짙은 바탕을 쓴다
   secondary: stroke.outline === 0
     ? { face: color.bgSunken, pressed: color.borderDefault, fg: color.textPrimary, outlined: false }
-    : { face: color.bgSurface, pressed: color.bgSunken, fg: color.inkOutline, outlined: true },
+    : { face: color.bgSurface, pressed: color.bgSunken, fg: color.textPrimary, outlined: true },
   danger: { face: color.debtFg, pressed: color.debtPressed, fg: color.textOnPrimary, outlined: false },
   kakao: { face: color.kakaoYellow, pressed: color.kakaoYellowPressed, fg: color.kakaoLabel, outlined: false },
 }) as const);

@@ -189,7 +189,7 @@ const styles = themed(() => ({
     borderColor: color.inkOutline,
     backgroundColor: color.bgSurface,
   },
-  code: { color: color.inkOutline, letterSpacing: 6 },
+  code: { color: color.textPrimary, letterSpacing: 6 },
   list: layout.list,
   themeField: { gap: 8 },
   themes: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },

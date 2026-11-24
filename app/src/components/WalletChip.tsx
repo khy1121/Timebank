@@ -50,6 +50,6 @@ const styles = themed(() => ({
     marginRight: 2,
   },
   hole: { width: 6, height: 6, borderRadius: 1, borderWidth: 1.5, borderColor: color.inkOutline, backgroundColor: color.mascotCream },
-  amount: { color: color.inkOutline, fontFamily: type.numberM.fontFamily },
-  unit: { color: color.inkOutline, opacity: 0.7 },
+  amount: { color: color.textPrimary, fontFamily: type.numberM.fontFamily },
+  unit: { color: color.textPrimary, opacity: 0.7 },
 }));

@@ -141,7 +141,7 @@ const styles = themed(() => ({
     borderRadius: radius.md,
     paddingVertical: 14,
     paddingHorizontal: 16,
-    color: color.inkOutline,
+    color: color.textPrimary,
     letterSpacing: 8,
     textAlign: 'center',
   },

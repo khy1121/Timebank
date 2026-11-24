@@ -277,5 +277,5 @@ const styles = themed(() => ({
     backgroundColor: color.bgSunken,
   },
   stepperOff: { opacity: 0.35 },
-  stepperGlyph: { fontSize: 24, lineHeight: 28, color: color.inkOutline, fontFamily: type.body.fontFamily },
+  stepperGlyph: { fontSize: 24, lineHeight: 28, color: color.textPrimary, fontFamily: type.body.fontFamily },
 }));
