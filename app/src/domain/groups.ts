@@ -310,18 +310,18 @@ export function withVote(p: Proof, vote: Vote | null): Proof {
   return { ...p, approvals, doubts, myVote: vote };
 }
 
-export type MemberRow = { user_id: string; nickname: string; is_owner: boolean; is_me: boolean; joined_at: string; status_code: string | null; blocked: boolean };
-export type Member = { userId: string; nickname: string; isOwner: boolean; isMe: boolean; status: StatusCode | null; blocked: boolean };
+export type MemberRow = { user_id: string; nickname: string; is_owner: boolean; is_me: boolean; joined_at: string; status_code: string | null; blocked: boolean; credit_score?: number | null };
+export type Member = { userId: string; nickname: string; isOwner: boolean; isMe: boolean; status: StatusCode | null; blocked: boolean; creditScore: number | null };
 
 export function memberFromRow(r: MemberRow): Member {
-  return { userId: r.user_id, nickname: r.nickname, isOwner: r.is_owner, isMe: r.is_me, status: toStatusCode(r.status_code), blocked: r.blocked };
+  return { userId: r.user_id, nickname: r.nickname, isOwner: r.is_owner, isMe: r.is_me, status: toStatusCode(r.status_code), blocked: r.blocked, creditScore: r.credit_score ?? null };
 }
 
-export type GroupStandingRow = { user_id: string; nickname: string; is_me: boolean; status_code: string | null; score: number; passed: number; rank: number };
-export type GroupStanding = { userId: string; nickname: string; isMe: boolean; status: StatusCode | null; score: number; passed: number; rank: number };
+export type GroupStandingRow = { user_id: string; nickname: string; is_me: boolean; status_code: string | null; score: number; passed: number; rank: number; credit_score?: number | null };
+export type GroupStanding = { userId: string; nickname: string; isMe: boolean; status: StatusCode | null; score: number; passed: number; rank: number; creditScore: number | null };
 
 export function groupStandingFromRow(r: GroupStandingRow): GroupStanding {
-  return { userId: r.user_id, nickname: r.nickname, isMe: r.is_me, status: toStatusCode(r.status_code), score: r.score, passed: r.passed, rank: r.rank };
+  return { userId: r.user_id, nickname: r.nickname, isMe: r.is_me, status: toStatusCode(r.status_code), score: r.score, passed: r.passed, rank: r.rank, creditScore: r.credit_score ?? null };
 }
 
 export function passedLabel(n: number): string {

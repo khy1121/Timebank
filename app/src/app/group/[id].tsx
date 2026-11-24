@@ -7,11 +7,10 @@ import { ActionSheet, type SheetAction } from '@/components/ActionSheet';
 import { Chip } from '@/components/Chip';
 import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { ProofCard } from '@/components/ProofCard';
-import { StatusStamp } from '@/components/StatusStamp';
+import { GradeBadge } from '@/components/GradeBadge';
 import { ThemeBadge } from '@/components/ThemeBadge';
 import { TopBar } from '@/components/TopBar';
 import {
-  passedLabel,
   REPORT_REASONS,
   votingOpen,
   withVote,
@@ -335,7 +334,7 @@ function StandingList({ rows }: { rows: GroupStanding[] | null }) {
     <View style={styles.section}>
       <Text style={[type.headline, styles.ink]}>이번 주 그룹 순위</Text>
       <Text style={[type.caption, styles.secondary]}>
-        친구가 인정한 상환만 점수에 들어가요. 늦게 갚아 낸 이자와 지금 붙고 있는 이자는 인증과 상관없이 빠져요.
+        이번 주에 친구에게 인정받은 인증 횟수로 겨뤄요. 같으면 먼저 채운 사람이 위예요.
       </Text>
       <View style={styles.list}>
         {rows.map((r, i) => (
@@ -343,15 +342,15 @@ function StandingList({ rows }: { rows: GroupStanding[] | null }) {
             key={r.userId}
             style={[styles.rankRow, i > 0 && styles.rowBorder, r.isMe && styles.mine]}
             accessible
-            accessibilityLabel={`${r.rank}등 ${r.nickname}${r.isMe ? ', 나' : ''}. ${r.score}점. ${passedLabel(r.passed)}`}>
+            accessibilityLabel={`${r.rank}등 ${r.nickname}${r.isMe ? ', 나' : ''}. 인증 ${r.passed}번`}>
             <Text style={[type.numberM, styles.rank]}>{r.rank}</Text>
             <View style={styles.who}>
               <Text style={[type.label, styles.ink]}>{r.isMe ? `${r.nickname} (나)` : r.nickname}</Text>
-              {r.status ? <StatusStamp code={r.status} /> : null}
+              {r.creditScore !== null ? <GradeBadge score={r.creditScore} size="s" /> : null}
             </View>
             <View style={styles.score}>
-              <Text style={[type.headline, { color: r.score < 0 ? color.debtFg : color.textPrimary }]}>{r.score.toLocaleString('ko-KR')}점</Text>
-              <Text style={[type.caption, styles.muted]}>{passedLabel(r.passed)}</Text>
+              <Text style={[type.headline, styles.ink]}>인증 {r.passed}번</Text>
+              {r.passed === 0 ? <Text style={[type.caption, styles.muted]}>이번 주에 인정받은 인증이 없어요</Text> : null}
             </View>
           </View>
         ))}
@@ -383,7 +382,7 @@ function MemberList({
               {m.isMe ? `${m.nickname} (나)` : m.nickname}
               {m.isOwner ? '  방장' : ''}
             </Text>
-            {m.status ? <StatusStamp code={m.status} /> : <Text style={[type.caption, styles.muted]}>이번 주 상태 없음</Text>}
+            {m.creditScore !== null ? <GradeBadge score={m.creditScore} size="s" /> : null}
           </View>
           {!m.isMe && !m.blocked && friendStates[m.userId] && FRIEND_LABEL[friendStates[m.userId]] ? (
             friendStates[m.userId] === 'none' || friendStates[m.userId] === 'received' ? (
