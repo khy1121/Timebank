@@ -88,7 +88,7 @@ export default function SettingsScreen() {
           <SettingRow
             first
             label="알림 받기"
-            hint={unsupported ? '알림은 휴대폰 앱에서만 받을 수 있어요' : '기한 당일과 이자가 붙기 시작한 날에 알려요'}
+            hint={unsupported ? '알림은 휴대폰 앱에서만 받을 수 있어요' : '기한 당일과, 연체된 동안 원금이 얼마나 깎였는지 알려요'}
             right={<Toggle value={notifyOn} onChange={toggleNotify} label="알림 받기" disabled={unsupported || !profile} />}
           />
           <SettingRow
