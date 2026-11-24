@@ -29,15 +29,15 @@ import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
 import { color, radius, stroke, themed, type } from '@/theme/tokens';
 
-// 단계 순서. 읍내 금고(4)와 중앙은행(6)은 그림을 새로 그리기 전까지 가까운 단계 그림을 쓴다 (상점기획서 11.6절 미결 3)
+// 단계 순서. 본점 그림 파일은 처음부터 bank-4라 이름을 그대로 둔다
 const BANK_ART = [
   require('@/assets/images/bank/bank-0.png'),
   require('@/assets/images/bank/bank-1.png'),
   require('@/assets/images/bank/bank-2.png'),
   require('@/assets/images/bank/bank-3.png'),
-  require('@/assets/images/bank/bank-3.png'),
+  require('@/assets/images/bank/bank-vault.png'),
   require('@/assets/images/bank/bank-4.png'),
-  require('@/assets/images/bank/bank-4.png'),
+  require('@/assets/images/bank/bank-central.png'),
 ];
 
 /** TI-SCR-10 상점. 잔고와 연속 기록, 내 은행, 옷장 입구, 꾸미기. (FR-060~064, FR-070) */
