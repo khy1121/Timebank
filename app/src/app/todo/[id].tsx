@@ -20,6 +20,7 @@ import { useGroups } from '@/store/groups';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
 import { color, radius, stroke, themed, type } from '@/theme/tokens';
+import { goBack } from '@/lib/navigation';
 
 /** TI-SCR-05 할 일 상세. 지금 끝내면 돌려받는 냥과 깎이는 원금을 보여준다 (시간적금기획서 4.4, 피그마 71:523) */
 export default function TodoDetailScreen() {
@@ -35,7 +36,7 @@ export default function TodoDetailScreen() {
   if (!todo) {
     return (
       <SafeAreaView style={styles.safe}>
-        <TopBar onLead={() => router.back()} />
+        <TopBar onLead={goBack} />
         <View style={styles.missing}>
           <SpeechBubble text="이미 처리했거나 없는 할 일이에요." />
         </View>
@@ -69,7 +70,7 @@ export default function TodoDetailScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <TopBar
-        onLead={() => router.back()}
+        onLead={goBack}
         action="수정"
         onAction={() => router.push({ pathname: '/todo-edit/[id]', params: { id: todo.id } })}
       />
@@ -160,7 +161,7 @@ export default function TodoDetailScreen() {
             else feedback.buy();
             // 홈에서 상환할 때와 같이, 그룹에 들어가 있으면 바로 인증을 권한다 (FR-078)
             if (repaymentId && (inGroup || groups.length > 0)) router.replace({ pathname: '/proof', params: { repaymentId } });
-            else router.back();
+            else goBack();
           }}
         />
         <Button label={freeDelete ? '지우기' : '포기하기'} variant="secondary" onPress={() => setAskDelete(true)} />
@@ -203,7 +204,7 @@ export default function TodoDetailScreen() {
         onConfirm={() => {
           setAskDelete(false);
           remove(todo.id);
-          router.back();
+          goBack();
         }}
         onCancel={() => setAskDelete(false)}
       />

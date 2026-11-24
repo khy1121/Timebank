@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -8,6 +7,7 @@ import { BANKRUPT_TITLE, gradeOf, gradeRange, GRADES } from '@/domain/credit';
 import { useCredit } from '@/store/credit';
 import * as layout from '@/theme/layout';
 import { color, stroke, themed, type } from '@/theme/tokens';
+import { goBack } from '@/lib/navigation';
 
 /** TI-SCR-12 등급표 (FR-098). 아홉 등급, 칭호, 한 줄 설명, 점수 구간. 피그마 111:444 */
 export default function GradesScreen() {
@@ -15,7 +15,7 @@ export default function GradesScreen() {
   const mine = info ? gradeOf(info.score).code : null;
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <TopBar title="등급표" onLead={() => router.back()} />
+      <TopBar title="등급표" onLead={goBack} />
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={[type.body, styles.secondary]}>끝내면 점수가 오르고 미루면 깎여요. 점수에 따라 등급과 칭호가 정해져요.</Text>
         <View style={styles.list}>

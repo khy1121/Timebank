@@ -16,6 +16,7 @@ import { useGroups } from '@/store/groups';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
 import { color, radius, stroke, themed, type } from '@/theme/tokens';
+import { goBack } from '@/lib/navigation';
 
 /** TI-SCR-15 그룹 만들기 (FR-075). 만들면 초대 코드를 보여준다. 피그마 53:1594 */
 export default function NewGroupScreen() {
@@ -83,7 +84,7 @@ export default function NewGroupScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <TopBar title="그룹 만들기" onLead={() => router.back()} />
+      <TopBar title="그룹 만들기" onLead={goBack} />
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <TextField label="그룹 이름" value={name} onChangeText={setName} maxLength={GROUP_NAME_MAX} placeholder="예: 스터디 4인방" error={nameErr} />
