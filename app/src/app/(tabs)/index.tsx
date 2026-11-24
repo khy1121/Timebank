@@ -16,7 +16,7 @@ import { TodoTicket } from '@/components/TodoTicket';
 import { WalletChip } from '@/components/WalletChip';
 import { sortViews, summarize, viewOf } from '@/domain/interest';
 import { homeMessage, repayMessage } from '@/domain/messages';
-import { repayEffect } from '@/domain/wallet';
+import { completionPreview, shopLockReason } from '@/domain/savings';
 import { feedback } from '@/lib/feedback';
 import { useGroups } from '@/store/groups';
 import { useOpenProofs } from '@/store/openProofs';
@@ -32,12 +32,14 @@ type View_ = 'open' | 'done';
 
 /** TI-SCR-03 홈 (v4): 요약 카드 하나와 할 일 목록. 피그마 57:1847, 57:2021 */
 export default function HomeScreen() {
-  const { todos, today, repay, undoRepay, wallet, repayments } = useTodos();
+  const { todos, today, repay, undoRepay, account, repayments, settlementFor } = useTodos();
   const standing = useStanding();
   const { groups } = useGroups();
   const openProofs = useOpenProofs();
   const { needsOnboarding } = useProfile();
   const [lastRepaid, setLastRepaid] = useState<{ id: string; text: string } | null>(null);
+  // 상점이 잠겼을 때 잔고 칩을 누르면 잠깐 띄우는 안내
+  const [lockNote, setLockNote] = useState<string | null>(null);
   const [showing, setShowing] = useState<View_>('open');
   const [gradeOpen, setGradeOpen] = useState(false);
 
@@ -45,6 +47,12 @@ export default function HomeScreen() {
     const open = todos.filter((t) => t.status === 'open');
     return { summary: summarize(todos, today), views: sortViews(open.map((t) => viewOf(t, today))) };
   }, [todos, today]);
+
+  useEffect(() => {
+    if (!lockNote) return;
+    const timer = setTimeout(() => setLockNote(null), 3000);
+    return () => clearTimeout(timer);
+  }, [lockNote]);
 
   useEffect(() => {
     if (!lastRepaid) return;
@@ -67,7 +75,14 @@ export default function HomeScreen() {
             <Text style={[type.title, styles.title]} accessibilityRole="header">
               할 일 이자
             </Text>
-            <WalletChip balance={wallet.balance} onPress={() => router.navigate('/shop')} />
+            <WalletChip
+              balance={account.cash}
+              onPress={() => {
+                const lock = shopLockReason(account, today);
+                if (lock) setLockNote(lock);
+                else router.navigate('/shop');
+              }}
+            />
             <Pressable onPress={() => router.push('/settings')} accessibilityRole="button" accessibilityLabel="설정" hitSlop={12}>
               <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
                 <Circle cx={12} cy={12} r={3} stroke={color.inkOutline} strokeWidth={2} />
@@ -83,13 +98,27 @@ export default function HomeScreen() {
 
           <SummaryCard
             summary={summary}
+            account={account}
             status={standing.status}
             message={message}
             current={standing.current}
             change={standing.change}
             onPress={() => router.navigate('/standing')}
             onGrade={() => setGradeOpen(true)}
+            today={today}
           />
+
+          {account.state !== 'normal' ? (
+            <Pressable
+              onPress={() => router.push('/bankrupt')}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.debtBanner, pressed && styles.pressed]}>
+              <Text style={[type.label, styles.debtText]}>
+                {account.state === 'bankrupt' ? '파산 중이에요. 회생까지 남은 날 보기' : '순자산이 마이너스예요. 빚 갚는 법 보기'}
+              </Text>
+              <Text style={[type.label, styles.debtText]}>›</Text>
+            </Pressable>
+          ) : null}
 
           <View style={layout.section}>
             <View style={styles.filters} accessibilityRole="tablist">
@@ -101,6 +130,7 @@ export default function HomeScreen() {
               <HistoryList
                 repayments={repayments}
                 today={today}
+                settlementFor={settlementFor}
                 canProof={(id) => openProofs.has(id)}
                 onProof={(repaymentId) => router.push({ pathname: '/proof', params: { repaymentId } })}
               />
@@ -119,12 +149,12 @@ export default function HomeScreen() {
                     key={v.todo.id}
                     view={v}
                     onRepay={() => {
-                      // 잔고가 0 아래로 내려가지 않으므로 실제로 빠지는 이자는 잔고만큼까지다
-                      const effect = repayEffect(v.principal, v.overdueDays, v.interest, wallet.streak);
+                      const stake = todos.find((t) => t.id === v.todo.id)?.stakeGroupId ?? null;
+                      const preview = completionPreview(v.principal, v.overdueDays, v.interest, account.streak, !!stake);
                       const repaymentId = repay(v.todo.id);
-                      if (effect.gained > 0) feedback.buy();
+                      if (preview.gained > 0) feedback.buy();
                       else feedback.tap();
-                      setLastRepaid({ id: v.todo.id, text: repayMessage({ ...effect, lost: Math.min(effect.lost, wallet.balance) }) });
+                      setLastRepaid({ id: v.todo.id, text: repayMessage(preview, v.principal) });
                       // 그룹에 들어가 있으면 바로 인증을 권한다. 건너뛸 수 있다 (FR-078)
                       if (repaymentId && groups.length > 0) router.push({ pathname: '/proof', params: { repaymentId } });
                     }}
@@ -137,6 +167,16 @@ export default function HomeScreen() {
         </ScrollView>
 
         <View style={styles.footer}>
+          {lockNote && !lastRepaid ? (
+            <Snackbar
+              text={lockNote}
+              actionLabel={account.state === 'bankrupt' ? '자세히' : '빚 보기'}
+              onAction={() => {
+                setLockNote(null);
+                router.push('/bankrupt');
+              }}
+            />
+          ) : null}
           {lastRepaid ? (
             <Snackbar
               text={lastRepaid.text}
@@ -169,4 +209,16 @@ const styles = StyleSheet.create({
   center: { textAlign: 'center' },
   // 배경 무늬 위에서도 버튼 영역이 구분되도록 바탕색을 깐다
   footer: layout.footer,
+  debtBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    backgroundColor: color.debtBg,
+  },
+  debtText: { color: color.debtFg },
+  pressed: { opacity: 0.8 },
 });

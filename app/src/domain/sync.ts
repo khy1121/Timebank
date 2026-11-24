@@ -1,5 +1,7 @@
+import type { DateString } from './dates';
 import type { Todo } from './interest';
 import type { Repayment } from './records';
+import type { Bankruptcy, Extension, PotPayout } from './savings';
 import type { Purchase } from './wallet';
 
 /**
@@ -9,7 +11,11 @@ import type { Purchase } from './wallet';
  */
 
 export type SyncMeta = { updatedAt: string; deletedAt: string | null };
-export type StoredTodo = Todo & SyncMeta;
+/**
+ * createdAt: 기기에서 등록한 시각(1시간 무료 수정, 원금을 건 날). 예전 사본에는 없을 수 있다.
+ * stakeGroupId: 그룹 보증금으로 걸었으면 그 그룹 (시간적금기획서 4.7)
+ */
+export type StoredTodo = Todo & SyncMeta & { createdAt?: string; stakeGroupId?: string | null };
 export type StoredRepayment = Repayment & SyncMeta;
 export type StoredPurchase = Purchase & SyncMeta;
 
@@ -59,6 +65,8 @@ export type TodoRow = {
   status: string;
   updated_at: string;
   deleted_at: string | null;
+  created_at?: string | null;
+  stake_group_id?: string | null;
 };
 
 export type RepaymentRow = {
@@ -83,6 +91,8 @@ export function todoFromRow(row: TodoRow): StoredTodo {
     status: row.status as Todo['status'],
     updatedAt: row.updated_at,
     deletedAt: row.deleted_at,
+    createdAt: row.created_at ?? undefined,
+    stakeGroupId: row.stake_group_id ?? null,
   };
 }
 
@@ -96,6 +106,8 @@ export function todoToParams(todo: StoredTodo) {
     p_status: todo.status,
     p_updated_at: todo.updatedAt,
     p_deleted_at: todo.deletedAt,
+    p_created_at: todo.createdAt ?? null,
+    p_stake_group_id: todo.stakeGroupId ?? null,
   };
 }
 
@@ -160,4 +172,74 @@ export function purchaseToParams(p: StoredPurchase) {
     p_updated_at: p.updatedAt,
     p_deleted_at: p.deletedAt,
   };
+}
+
+// ---------------------------------------------------------------------------
+// 장부 사건: 기한 연장, 파산, 금고 배당 (시간적금기획서 4.3, 4.6, 4.7)
+// ---------------------------------------------------------------------------
+
+export type LedgerEventKind = 'extend' | 'bankrupt' | 'payout';
+
+export type LedgerEvent = {
+  id: string;
+  kind: LedgerEventKind;
+  /** extend: 미룬 할 일 */
+  todoId: string | null;
+  /** extend: 미룬 날 수 */
+  days: number | null;
+  /** extend: 수수료, payout: 받은 냥 (모두 양수) */
+  amount: number;
+  happenedOn: DateString;
+};
+export type StoredLedgerEvent = LedgerEvent & SyncMeta;
+
+export type LedgerEventRow = {
+  id: string;
+  kind: string;
+  todo_id: string | null;
+  days: number | null;
+  amount: number;
+  happened_on: string;
+  updated_at: string;
+  deleted_at: string | null;
+};
+
+export function ledgerEventFromRow(row: LedgerEventRow): StoredLedgerEvent {
+  return {
+    id: row.id,
+    kind: row.kind as LedgerEventKind,
+    todoId: row.todo_id,
+    days: row.days,
+    amount: row.amount,
+    happenedOn: row.happened_on,
+    updatedAt: row.updated_at,
+    deletedAt: row.deleted_at,
+  };
+}
+
+/** upsert_ledger_event 함수에 넘길 값. 금고 배당은 서버만 넣으므로 올리지 않는다 */
+export function ledgerEventToParams(e: StoredLedgerEvent) {
+  return {
+    p_id: e.id,
+    p_kind: e.kind,
+    p_todo_id: e.todoId,
+    p_days: e.days,
+    p_amount: e.amount,
+    p_happened_on: e.happenedOn,
+    p_updated_at: e.updatedAt,
+    p_deleted_at: e.deletedAt,
+  };
+}
+
+/** 장부 사건을 계산에 쓰는 세 가지로 나눈다 */
+export function splitLedgerEvents(events: LedgerEvent[]): { extensions: Extension[]; bankruptcies: Bankruptcy[]; payouts: PotPayout[] } {
+  const extensions: Extension[] = [];
+  const bankruptcies: Bankruptcy[] = [];
+  const payouts: PotPayout[] = [];
+  for (const e of events) {
+    if (e.kind === 'extend' && e.todoId && e.days) extensions.push({ id: e.id, todoId: e.todoId, days: e.days, fee: e.amount, on: e.happenedOn });
+    else if (e.kind === 'bankrupt') bankruptcies.push({ id: e.id, on: e.happenedOn });
+    else if (e.kind === 'payout') payouts.push({ id: e.id, amount: e.amount, on: e.happenedOn });
+  }
+  return { extensions, bankruptcies, payouts };
 }

@@ -7,9 +7,12 @@ import { addDays, diffDays, formatKoreanDate } from '@/domain/dates';
 import { principalOf, type Importance, type Todo } from '@/domain/interest';
 import { inputRuleHint } from '@/domain/messages';
 import { canChangeDueDate, TITLE_MAX, validateInput, type TodoInput } from '@/domain/records';
+import { groupBonus } from '@/domain/savings';
+import { rewardFor } from '@/domain/wallet';
+import { useGroups } from '@/store/groups';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
-import { color, radius, stroke, type } from '@/theme/tokens';
+import { color, inputType, radius, stroke, type } from '@/theme/tokens';
 
 import { Amount } from './Amount';
 import { Chip } from './Chip';
@@ -25,9 +28,18 @@ const QUICK = [
   { label: '일주일 뒤', offset: 7 },
 ] as const;
 
-/** TI-SCR-04 할 일 입력. original이 있으면 수정이다. (FR-010, 011, 020) */
+/**
+ * TI-SCR-04 할 일 입력. original이 있으면 수정이다. (FR-010, 011, 020)
+ * 등록하면 원금을 건다. 그룹에 들어가 있으면 보증금을 걸 그룹을 고른다(기본 첫 그룹). 피그마 71:421
+ * 수정에서 기한을 미루면 연장 수수료를 확인받는다 (시간적금기획서 4.3, 피그마 71:600)
+ */
 export function TodoForm({ original }: { original?: Todo }) {
-  const { today, add, update } = useTodos();
+  const { today, add, update, account, extendFeeFor } = useTodos();
+  const { groups } = useGroups();
+  // 그룹이 있으면 보증금으로 거는 것이 기본이다. null이면 혼자 한다
+  const [stake, setStake] = useState<string | null | undefined>(undefined);
+  const stakeGroupId = stake === undefined ? (groups[0]?.id ?? null) : stake;
+  const [askFee, setAskFee] = useState<number | null>(null);
   const [title, setTitle] = useState(original?.title ?? '');
   const [importance, setImportance] = useState<Importance>(original?.importance ?? 3);
   const [dueDate, setDueDate] = useState(original?.dueDate ?? addDays(today, 1));
@@ -43,11 +55,24 @@ export function TodoForm({ original }: { original?: Todo }) {
     : title.trim().length > 0;
   const offset = diffDays(today, dueDate);
 
+  const fee = original ? extendFeeFor(original.id, input) : 0;
+  const extendDays = original ? diffDays(original.dueDate, dueDate) : 0;
+  const back = principal + rewardFor(principal) + (stakeGroupId ? groupBonus(principal) : 0);
+
+  const commit = () => {
+    if (original) update(original.id, input);
+    else add(input, stakeGroupId);
+    router.back();
+  };
+
   const save = () => {
     if (errors.length) return;
-    if (original) update(original.id, input);
-    else add(input);
-    router.back();
+    // 기한을 미루면 수수료를 먼저 확인받는다
+    if (fee > 0) {
+      setAskFee(fee);
+      return;
+    }
+    commit();
   };
 
   const close = () => {
@@ -61,7 +86,7 @@ export function TodoForm({ original }: { original?: Todo }) {
         lead="close"
         title={original ? '할 일 수정' : '할 일 추가'}
         onLead={close}
-        action="저장"
+        action={original ? '저장' : '걸기'}
         onAction={save}
         actionDisabled={errors.length > 0}
       />
@@ -82,7 +107,7 @@ export function TodoForm({ original }: { original?: Todo }) {
               returnKeyType="done"
               accessibilityLabel="할 일 제목"
               style={[
-                type.body,
+                inputType.body,
                 styles.input,
                 { borderColor: focused ? color.brandPrimary : title ? color.inkOutline : color.borderDefault },
               ]}
@@ -142,9 +167,44 @@ export function TodoForm({ original }: { original?: Todo }) {
             </View>
           </View>
 
-          <SpeechBubble text={inputRuleHint(principal)} />
+          {!original && groups.length > 0 ? (
+            <View style={styles.field}>
+              <Text style={[type.headline, styles.question]}>그룹에 걸까요?</Text>
+              <View style={styles.rowWrap} accessibilityRole="radiogroup">
+                {groups.map((g) => (
+                  <Chip key={g.id} label={g.name} a11yLabel={`${g.name}에 보증금으로 걸기`} selected={stakeGroupId === g.id} onPress={() => setStake(g.id)} />
+                ))}
+                <Chip label="혼자 하기" selected={stakeGroupId === null} onPress={() => setStake(null)} />
+              </View>
+              <Text style={[type.caption, styles.muted]}>
+                {stakeGroupId
+                  ? `친구가 인정하면 ${back.toLocaleString('ko-KR')}냥을 돌려받아요. 인정을 못 받으면 보증금은 그룹 금고로 가요.`
+                  : `기한 안에 끝내면 ${back.toLocaleString('ko-KR')}냥을 돌려받아요.`}
+              </Text>
+            </View>
+          ) : null}
+
+          {original && fee > 0 ? (
+            <Text style={[type.label, styles.locked]}>
+              기한을 {extendDays}일 미루면 연장 수수료 {fee.toLocaleString('ko-KR')}냥이 통장에서 빠져요.
+            </Text>
+          ) : null}
+
+          <SpeechBubble text={inputRuleHint(principal, original ? Number.MAX_SAFE_INTEGER : account.cash)} />
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <ConfirmSheet
+        visible={askFee !== null}
+        title={`기한을 ${extendDays}일 미룰까요?`}
+        message={`연장 수수료 ${(askFee ?? 0).toLocaleString('ko-KR')}냥이 통장에서 빠져요. 미룬 하루마다 원금의 5%예요. 그냥 늦게 끝내면 원금이 하루 10%씩 깎여요.`}
+        confirmLabel={`${(askFee ?? 0).toLocaleString('ko-KR')}냥 내고 미루기`}
+        onConfirm={() => {
+          setAskFee(null);
+          commit();
+        }}
+        onCancel={() => setAskFee(null)}
+      />
 
       <ConfirmSheet
         visible={askDiscard}

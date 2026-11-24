@@ -1,20 +1,26 @@
 import { GUIDE_PAGES, repayMessage, shopMessage } from '../messages';
+import { completionPreview } from '../savings';
 
-describe('상환 직후 문구 (TC-064)', () => {
-  it('번 냥을 알려준다', () => {
-    expect(repayMessage({ gained: 300, bonus: false, lost: 0 })).toBe('완납! 300냥 벌었어요');
+describe('끝낸 직후 문구 (TC-064, 시간적금기획서 4.4)', () => {
+  it('기한 안: 돌아온 냥과 번 냥', () => {
+    expect(repayMessage(completionPreview(3000, 0, 0, 0, false), 3000)).toBe('적립! 3,300냥이 돌아왔어요 (+300)');
   });
 
-  it('보너스가 붙으면 보너스라고 알려준다', () => {
-    expect(repayMessage({ gained: 1300, bonus: true, lost: 0 })).toBe('완납! 연속 기록 보너스까지 1,300냥 벌었어요');
+  it('연속 기록 보너스', () => {
+    expect(repayMessage(completionPreview(3000, 0, 0, 4, false), 3000)).toBe('적립! 연속 기록 보너스까지 4,300냥이 돌아왔어요');
   });
 
-  it('연체 상환이면 빠진 이자를 알려준다', () => {
-    expect(repayMessage({ gained: 0, bonus: false, lost: 630 })).toBe('완납했어요. 이자 630냥이 잔고에서 빠졌어요');
+  it('늦게: 연체료를 빼고 돌아온 냥', () => {
+    expect(repayMessage(completionPreview(3000, 3, 993, 0, false), 3000)).toBe('연체료 993냥을 빼고 2,007냥이 돌아왔어요');
   });
 
-  it('잔고가 0이라 빠진 것이 없으면 완납만 알려준다', () => {
-    expect(repayMessage({ gained: 0, bonus: false, lost: 0 })).toBe('완납 처리했어요');
+  it('원금보다 연체료가 크면 통장에서 빠진 냥', () => {
+    expect(repayMessage(completionPreview(3000, 10, 4781, 0, false), 3000)).toBe('원금을 다 잃고 1,781냥이 통장에서 빠졌어요');
+  });
+
+  it('그룹 보증금: 기한 안이면 인정 대기, 늦으면 금고로', () => {
+    expect(repayMessage(completionPreview(3000, 0, 0, 0, true), 3000)).toBe('적립 대기! 친구가 인정하면 3,450냥이 돌아와요');
+    expect(repayMessage(completionPreview(3000, 1, 300, 0, true), 3000)).toBe('늦어서 보증금 3,000냥은 그룹 금고로 갔어요');
   });
 });
 

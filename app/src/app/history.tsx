@@ -10,7 +10,7 @@ import * as layout from '@/theme/layout';
 
 /** TI-SCR-06 상환 내역 (FR-016, FR-024) */
 export default function HistoryScreen() {
-  const { repayments, today } = useTodos();
+  const { repayments, today, settlementFor } = useTodos();
   const openProofs = useOpenProofs();
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
@@ -19,6 +19,7 @@ export default function HistoryScreen() {
         <HistoryList
           repayments={repayments}
           today={today}
+          settlementFor={settlementFor}
           canProof={(id) => openProofs.has(id)}
           onProof={(repaymentId) => router.push({ pathname: '/proof', params: { repaymentId } })}
         />

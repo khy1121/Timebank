@@ -48,11 +48,13 @@ export const WEAR_TABS: WearSlot[] = ['head', 'face', 'body'];
 export const BANK_NAMES = ['길가 좌판', '엽전 가판대', '동네 창구', '시장 지점', '시간은행 본점'] as const;
 
 export const ITEMS: ShopItem[] = [
-  { code: 'ink-red', slot: 'stampInk', name: '인주 빨강', price: 0, value: 'inkRed' },
+  // 적립 도장의 잉크. 빨강은 연체 도장과 헷갈려서 팔지 않는다 (시간적금기획서 12절)
+  { code: 'ink-brand', slot: 'stampInk', name: '파랑', price: 0, value: 'brandPrimary' },
   { code: 'ink-blue', slot: 'stampInk', name: '남색', price: 1500, value: 'inkBlue' },
   { code: 'ink-green', slot: 'stampInk', name: '초록', price: 1500, value: 'inkGreen' },
   { code: 'ink-gold', slot: 'stampInk', name: '금박', price: 4000, value: 'inkGold' },
-  { code: 'word-wannap', slot: 'stampWord', name: '완납', price: 0, value: '완납' },
+  { code: 'word-jeokrip', slot: 'stampWord', name: '적립', price: 0, value: '적립' },
+  { code: 'word-wannap', slot: 'stampWord', name: '완납', price: 500, value: '완납' },
   { code: 'word-haenaem', slot: 'stampWord', name: '해냄', price: 2000, value: '해냄' },
   { code: 'word-choego', slot: 'stampWord', name: '최고', price: 2000, value: '최고' },
   { code: 'word-kkeut', slot: 'stampWord', name: '끝!', price: 3000, value: '끝!' },

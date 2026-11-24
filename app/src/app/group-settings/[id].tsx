@@ -5,10 +5,12 @@ import { ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
+import { Chip } from '@/components/Chip';
 import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { SettingRow } from '@/components/SettingRow';
+import { ThemeBadge } from '@/components/ThemeBadge';
 import { TopBar } from '@/components/TopBar';
-import { inviteMessage, MAX_MEMBERS, type Member } from '@/domain/groups';
+import { GROUP_THEMES, inviteMessage, MAX_MEMBERS, type Member } from '@/domain/groups';
 import { josa } from '@/domain/korean';
 import { useGroups } from '@/store/groups';
 import * as layout from '@/theme/layout';
@@ -19,7 +21,7 @@ type Dialog = { kind: 'leave' } | { kind: 'rotate' } | { kind: 'kick'; member: M
 /** TI-SCR-19 그룹 설정: 초대 코드, 그룹원 내보내기, 나가기 (FR-076, FR-077) */
 export default function GroupSettingsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { groups: myGroups, members: fetchMembers, leave, rotateCode, kick, refresh } = useGroups();
+  const { groups: myGroups, members: fetchMembers, leave, rotateCode, kick, refresh, setTheme } = useGroups();
   const group = myGroups.find((g) => g.id === id);
   const [members, setMembers] = useState<Member[] | null>(null);
   const [dialog, setDialog] = useState<Dialog>(null);
@@ -81,6 +83,28 @@ export default function GroupSettingsScreen() {
             {message}
           </Text>
         ) : null}
+
+        <View style={styles.themeField}>
+          <Text style={[type.label, styles.secondary]}>테마</Text>
+          {group.isOwner ? (
+            <View style={styles.themes} accessibilityRole="radiogroup">
+              {GROUP_THEMES.map((t) => (
+                <Chip
+                  key={t.code}
+                  label={t.label}
+                  selected={group.theme === t.code}
+                  onPress={async () => {
+                    if (group.theme === t.code) return;
+                    const r = await setTheme(group.id, t.code, null);
+                    if (!r.ok) setMessage(r.message);
+                  }}
+                />
+              ))}
+            </View>
+          ) : (
+            <ThemeBadge theme={group.theme} label={group.themeLabel} />
+          )}
+        </View>
 
         <Text style={[type.label, styles.secondary]}>그룹원</Text>
         <View style={styles.list}>
@@ -167,4 +191,6 @@ const styles = StyleSheet.create({
   },
   code: { color: color.inkOutline, letterSpacing: 6 },
   list: layout.list,
+  themeField: { gap: 8 },
+  themes: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
 });

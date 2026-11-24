@@ -19,7 +19,7 @@ import { useNotifications } from '@/store/notifications';
 import { useProfile } from '@/store/profile';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
-import { color, radius, stroke, type } from '@/theme/tokens';
+import { color, inputType, radius, stroke, type } from '@/theme/tokens';
 
 const CONTACT = process.env.EXPO_PUBLIC_CONTACT_EMAIL ?? '';
 const VERSION = Constants.expoConfig?.version ?? '1.0.0';
@@ -88,7 +88,7 @@ export default function SettingsScreen() {
           <SettingRow
             first
             label="알림 받기"
-            hint={unsupported ? '알림은 휴대폰 앱에서만 받을 수 있어요' : '기한 당일과 이자가 붙기 시작한 날에 알려요'}
+            hint={unsupported ? '알림은 휴대폰 앱에서만 받을 수 있어요' : '기한 당일과, 연체된 동안 원금이 얼마나 깎였는지 알려요'}
             right={<Toggle value={notifyOn} onChange={toggleNotify} label="알림 받기" disabled={unsupported || !profile} />}
           />
           <SettingRow
@@ -264,7 +264,7 @@ export default function SettingsScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                   accessibilityLabel={`${DELETE_WORD}라고 입력`}
-                  style={[type.body, styles.input]}
+                  style={[inputType.body, styles.input]}
                 />
                 {deleteError ? (
                   <Text style={[type.label, styles.error]} accessibilityRole="alert">

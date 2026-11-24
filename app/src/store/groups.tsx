@@ -6,6 +6,7 @@ import {
   base64ToBytes,
   groupErrorMessage,
   groupFromRow,
+  toTheme,
   groupStandingFromRow,
   memberFromRow,
   photoPath,
@@ -13,6 +14,7 @@ import {
   proofFromRow,
   type FeedRow,
   type GroupPreviewRow,
+  type GroupTheme,
   type GroupStanding,
   type GroupStandingRow,
   type Member,
@@ -37,7 +39,7 @@ import { useAuth } from './auth';
 
 export type Result<T = void> = { ok: true; value: T } | { ok: false; message: string };
 
-export type GroupPreview = { id: string; name: string; members: number; ownerNickname: string | null; isMember: boolean };
+export type GroupPreview = { id: string; name: string; members: number; ownerNickname: string | null; isMember: boolean; theme: GroupTheme; themeLabel: string | null };
 
 export type PostProofInput = {
   repaymentId: string;
@@ -59,7 +61,9 @@ type Store = {
   /** 인증 이용 수칙에 동의했는가 (FR-083) */
   rulesAgreed: boolean;
   refresh: () => Promise<void>;
-  create: (name: string, nickname: string) => Promise<Result<{ id: string; code: string }>>;
+  create: (name: string, nickname: string, theme?: GroupTheme, themeLabel?: string | null) => Promise<Result<{ id: string; code: string }>>;
+  /** 방장이 그룹 테마를 바꾼다 */
+  setTheme: (groupId: string, theme: GroupTheme, themeLabel: string | null) => Promise<Result>;
   preview: (code: string) => Promise<Result<GroupPreview | null>>;
   join: (code: string, nickname: string) => Promise<Result<string>>;
   leave: (groupId: string) => Promise<Result>;
@@ -68,6 +72,8 @@ type Store = {
   markSeen: (groupId: string) => void;
   feed: (groupId: string, before?: string) => Promise<Result<Proof[]>>;
   standing: (groupId: string) => Promise<Result<GroupStanding[]>>;
+  /** 이번 주 금고: 지난주에서 넘어온 냥 + 이번 주 몰수된 보증금 (시간적금기획서 4.7) */
+  pot: (groupId: string) => Promise<number>;
   members: (groupId: string) => Promise<Result<Member[]>>;
   photoUrls: (paths: string[]) => Promise<Record<string, string>>;
   vote: (proofId: string, vote: Vote | null) => Promise<Result>;
@@ -161,8 +167,11 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
     };
 
     return {
-      create: async (name, nickname) => {
-        const r = await call<{ id: string; invite_code: string }[]>('create_group', { p_name: name.trim(), p_nickname: nickname.trim() }, '그룹을 만들지 못했어요. 잠시 뒤에 다시 해 주세요');
+      create: async (name, nickname, theme = 'etc', themeLabel = null) => {
+        const r = await call<{ id: string; invite_code: string }[]>(
+          'create_group',
+          { p_name: name.trim(), p_nickname: nickname.trim(), p_theme: theme, p_theme_label: themeLabel },
+          '그룹을 만들지 못했어요. 잠시 뒤에 다시 해 주세요');
         if (!r.ok) return r;
         const row = r.value[0];
         track('group_create');
@@ -176,7 +185,9 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
         const row = r.value[0];
         return {
           ok: true,
-          value: row ? { id: row.id, name: row.name, members: row.members, ownerNickname: row.owner_nickname, isMember: row.is_member } : null,
+          value: row
+            ? { id: row.id, name: row.name, members: row.members, ownerNickname: row.owner_nickname, isMember: row.is_member, theme: toTheme(row.theme), themeLabel: row.theme_label ?? null }
+            : null,
         };
       },
 
@@ -223,6 +234,17 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
       feed: async (groupId, before) => {
         const r = await call<FeedRow[]>('group_feed', { p_group_id: groupId, p_before: before ?? null, p_limit: 20 }, '인증을 받아 오지 못했어요');
         return r.ok ? { ok: true, value: (r.value ?? []).map(proofFromRow) } : r;
+      },
+
+      pot: async (groupId) => {
+        const r = await call<number>('group_pot_now', { p_group_id: groupId }, '금고를 받아 오지 못했어요');
+        return r.ok ? (r.value ?? 0) : 0;
+      },
+
+      setTheme: async (groupId, theme, themeLabel) => {
+        const r = await call<void>('set_group_theme', { p_group_id: groupId, p_theme: theme, p_theme_label: themeLabel }, '테마를 바꾸지 못했어요');
+        if (r.ok) await refresh();
+        return r;
       },
 
       standing: async (groupId) => {

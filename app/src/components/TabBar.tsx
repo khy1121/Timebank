@@ -41,7 +41,15 @@ const TABS: Record<string, { label: string; icon: (c: string) => React.ReactNode
 };
 
 /** 아래 탭 4개: 할 일, 순위, 그룹, 상점 */
-export function TabBar({ state, navigateToTab, insets, badges }: BottomTabBarProps & { badges?: Record<string, number> }) {
+/** blocked: 지금 들어갈 수 없는 탭과 그 까닭. 누르면 옮기지 않고 onBlocked로 알린다 (상점 잠김) */
+export function TabBar({
+  state,
+  navigateToTab,
+  insets,
+  badges,
+  blocked,
+  onBlocked,
+}: BottomTabBarProps & { badges?: Record<string, number>; blocked?: Record<string, string>; onBlocked?: (reason: string) => void }) {
   return (
     <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, 10) }]} accessibilityRole="tablist">
       {state.routes.map((route, i) => {
@@ -57,7 +65,9 @@ export function TabBar({ state, navigateToTab, insets, badges }: BottomTabBarPro
             accessibilityState={{ selected: focused }}
             accessibilityLabel={badge ? `${tab.label}. 새 소식 ${badge}개` : tab.label}
             onPress={() => {
-              if (!focused) navigateToTab(route.key);
+              const reason = blocked?.[route.name];
+              if (reason && !focused) onBlocked?.(reason);
+              else if (!focused) navigateToTab(route.key);
             }}
             style={styles.item}>
             <View>

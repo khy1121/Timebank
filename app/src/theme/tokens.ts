@@ -82,3 +82,17 @@ export const type = {
   unitS: t(font.medium, 12, 24),
   stamp: t(font.extraBold, 15, 18, 0.3),
 } as const;
+
+/**
+ * 한 줄 입력칸 글자. iOS는 한 줄 TextInput에 lineHeight를 주면 글자가 세로 가운데보다 아래로 처진다.
+ * 그래서 줄 높이를 빼고, 안드로이드는 글꼴 여백을 없애고 가운데로 맞춘다. (2026-11-24 휴대폰 확인)
+ */
+const oneLine = ({ lineHeight: _lineHeight, ...rest }: TextStyle): TextStyle => ({
+  ...rest,
+  includeFontPadding: false,
+  textAlignVertical: 'center',
+});
+export const inputType = {
+  body: oneLine(type.body),
+  title: oneLine(type.title),
+} as const;

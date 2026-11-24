@@ -78,12 +78,13 @@ export function nicknameError(nickname: string): string | null {
  * 인증 상태 (FR-079)
  * - 인정이 1개 이상이고 의심보다 많으면 바로 통과
  * - 올린 지 24시간 안이면 대기
- * - 24시간이 지났을 때 의심이 없으면 통과, 있으면 불인정
+ * - 24시간이 지나도 통과하지 못했으면 불인정. 자동 통과는 없다 (시간적금기획서 4.7)
+ * 서버 함수 proof_state(migrations/0014)와 같은 규칙이다.
  */
 export function proofState(createdAt: string, approvals: number, doubts: number, now: Date): ProofState {
   if (approvals >= 1 && approvals > doubts) return 'passed';
   if (now.getTime() < Date.parse(createdAt) + WINDOW_MS) return 'pending';
-  return doubts === 0 ? 'passed' : 'rejected';
+  return 'rejected';
 }
 
 /** 투표를 닫기까지 남은 시간(올림, 시간 단위). 지났으면 0 */
@@ -130,13 +131,13 @@ export const STATE_LABEL: Record<ProofState, string> = { pending: '대기', pass
 /** 인증 카드 아래 한 줄 설명 */
 export function proofNote(p: { state: ProofState; createdAt: string; doubts: number; onTime: boolean; principal: number; hidden: boolean }, now: Date): string {
   if (p.hidden) return '신고가 쌓여 그룹원에게 숨겨졌어요';
-  if (p.state === 'rejected') return '그룹 순위에 세지 않아요';
+  if (p.state === 'rejected') return '인정을 못 받아 그룹 순위에 세지 않아요';
   if (p.state === 'passed') {
     const bonus = proofBonus(p.principal, p.onTime);
     return bonus > 0 ? `+${bonus.toLocaleString('ko-KR')}냥 보너스` : '통과했어요';
   }
   const h = hoursLeft(p.createdAt, now);
-  return p.doubts > 0 ? `${h}시간 안에 인정이 의심보다 많아야 해요` : `자동 통과까지 ${h}시간`;
+  return p.doubts > 0 ? `${h}시간 안에 인정이 의심보다 많아야 해요` : `${h}시간 안에 인정 1명이 필요해요`;
 }
 
 /** "2시간 전" 같은 표시 */
@@ -184,11 +185,65 @@ export function toStatusCode(v: string | null | undefined): StatusCode | null {
 // 서버 행 ↔ 앱
 // ---------------------------------------------------------------------------
 
-export type MyGroupRow = { id: string; name: string; invite_code: string; is_owner: boolean; members: number; new_proofs: number; joined_at: string };
-export type MyGroup = { id: string; name: string; inviteCode: string; isOwner: boolean; members: number; newProofs: number };
+// ---------------------------------------------------------------------------
+// 그룹 테마 (시간적금기획서 11절)
+// ---------------------------------------------------------------------------
+
+export type GroupTheme = 'study' | 'workout' | 'reading' | 'cooking' | 'habit' | 'work' | 'hobby' | 'etc';
+
+/** 고르는 순서이기도 하다. proof: 인증 화면에서 "~을 사진으로 보여 주세요" 앞에 쓰는 말 */
+export const GROUP_THEMES: { code: GroupTheme; label: string; proof: string }[] = [
+  { code: 'study', label: '공부', proof: '공부한 노트나 화면' },
+  { code: 'workout', label: '운동', proof: '운동한 모습이나 기록' },
+  { code: 'reading', label: '독서', proof: '읽은 책과 쪽수' },
+  { code: 'cooking', label: '요리', proof: '만든 요리' },
+  { code: 'habit', label: '생활 습관', proof: '해낸 모습' },
+  { code: 'work', label: '일', proof: '끝낸 결과물' },
+  { code: 'hobby', label: '취미', proof: '만들거나 한 모습' },
+  { code: 'etc', label: '기타', proof: '끝낸 모습' },
+];
+
+export const THEME_LABEL_MAX = 10;
+
+export function toTheme(v: string | null | undefined): GroupTheme {
+  return GROUP_THEMES.some((t) => t.code === v) ? (v as GroupTheme) : 'etc';
+}
+
+/** 화면에 보여줄 테마 이름. 기타에 이름을 적었으면 그 이름 */
+export function themeName(theme: GroupTheme, label: string | null | undefined): string {
+  if (theme === 'etc' && label && label.trim()) return label.trim();
+  return GROUP_THEMES.find((t) => t.code === theme)!.label;
+}
+
+/** 인증 화면 안내: 그룹 테마에 맞는 사진 */
+export function proofHint(theme: GroupTheme): string {
+  return GROUP_THEMES.find((t) => t.code === theme)!.proof;
+}
+
+export type MyGroupRow = {
+  id: string;
+  name: string;
+  invite_code: string;
+  is_owner: boolean;
+  members: number;
+  new_proofs: number;
+  joined_at: string;
+  theme?: string | null;
+  theme_label?: string | null;
+};
+export type MyGroup = { id: string; name: string; inviteCode: string; isOwner: boolean; members: number; newProofs: number; theme: GroupTheme; themeLabel: string | null };
 
 export function groupFromRow(r: MyGroupRow): MyGroup {
-  return { id: r.id, name: r.name, inviteCode: r.invite_code, isOwner: r.is_owner, members: r.members, newProofs: r.new_proofs };
+  return {
+    id: r.id,
+    name: r.name,
+    inviteCode: r.invite_code,
+    isOwner: r.is_owner,
+    members: r.members,
+    newProofs: r.new_proofs,
+    theme: toTheme(r.theme),
+    themeLabel: r.theme_label ?? null,
+  };
 }
 
 export type FeedRow = {
@@ -273,7 +328,15 @@ export function passedLabel(n: number): string {
   return n > 0 ? `인증 ${n}개 통과` : '통과한 인증 없음';
 }
 
-export type GroupPreviewRow = { id: string; name: string; members: number; owner_nickname: string | null; is_member: boolean };
+export type GroupPreviewRow = {
+  id: string;
+  name: string;
+  members: number;
+  owner_nickname: string | null;
+  is_member: boolean;
+  theme?: string | null;
+  theme_label?: string | null;
+};
 
 // ---------------------------------------------------------------------------
 // 사진 올리기: base64 → 바이트. 저장소는 바이트를 받는다.

@@ -22,7 +22,9 @@ export type EventName =
   | 'group_leave'
   | 'proof_post'
   | 'proof_vote'
-  | 'proof_report';
+  | 'proof_report'
+  | 'extend'
+  | 'bankrupt';
 
 export type EventProps = Record<string, string | number | boolean>;
 
@@ -35,7 +37,7 @@ export const QUEUE_LIMIT = 500;
 
 const ALLOWED_KEYS: Record<EventName, string[]> = {
   app_open: [],
-  todo_create: ['importance', 'days_until_due'],
+  todo_create: ['importance', 'days_until_due', 'group', 'negative'],
   repay: ['on_time', 'overdue_days', 'interest', 'streak'],
   repay_undo: [],
   forgive: ['overdue_days', 'interest'],
@@ -51,6 +53,8 @@ const ALLOWED_KEYS: Record<EventName, string[]> = {
   proof_post: ['group_count', 'on_time'],
   proof_vote: ['vote'],
   proof_report: ['reason'],
+  extend: ['days', 'fee'],
+  bankrupt: ['auto'],
 };
 
 /** 정해진 키만 남기고, 글자 값은 짧게 자른다. 제목 같은 것이 섞여 들어가지 않게 한다 */
