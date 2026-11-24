@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AuthProvider, useAuth } from '@/store/auth';
+import { FriendsProvider } from '@/store/friends';
 import { GroupsProvider } from '@/store/groups';
 import { NotificationsProvider } from '@/store/notifications';
 import { ProfileProvider } from '@/store/profile';
@@ -32,6 +33,7 @@ export default function RootLayout() {
     <AuthProvider>
       <ProfileProvider>
         <GroupsProvider>
+        <FriendsProvider>
         <TodosProvider>
           <NotificationsProvider>
             <StandingProvider>
@@ -41,6 +43,7 @@ export default function RootLayout() {
             </StandingProvider>
           </NotificationsProvider>
         </TodosProvider>
+        </FriendsProvider>
         </GroupsProvider>
       </ProfileProvider>
     </AuthProvider>
@@ -72,6 +75,8 @@ function Screens() {
         <Stack.Screen name="group-join" />
         <Stack.Screen name="group/[id]" />
         <Stack.Screen name="group-settings/[id]" />
+        <Stack.Screen name="friends" />
+        <Stack.Screen name="friend/[id]" />
         <Stack.Screen name="proof" options={{ presentation: 'modal' }} />
         <Stack.Screen name="bankrupt" options={{ presentation: 'modal' }} />
         <Stack.Screen name="todo/new" />
