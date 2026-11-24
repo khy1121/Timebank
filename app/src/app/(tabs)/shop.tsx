@@ -179,7 +179,7 @@ function BankCard({ owned, balance, progress, onOpen }: { owned: Set<string>; ba
       {next && nextDef ? (
         <>
           <View style={styles.need}>
-            <Text style={[type.label, styles.ink]}>{next.name}을 열려면</Text>
+            <Text style={[type.label, styles.ink]}>{josa(next.name, '을', '를')} 열려면</Text>
             <NeedRow done={conditionDone} text={progress?.text ?? '조건 없음'} ratio={progress && progress.target ? progress.current / progress.target : 1} />
             <NeedRow done={enoughCoins} text={`${formatAmount(Math.min(balance, next.price))} / ${formatAmount(next.price)}냥`} ratio={ratio} />
           </View>
