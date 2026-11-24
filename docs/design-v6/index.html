@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>v6 시안 열 가지 · 할 일 이자</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri@latest/dist/galmuri.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gaegu:wght@700&family=Hahmlet:wght@800&family=Inter+Tight:wght@300&family=Jua&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0}
+body{font-family:'Pretendard',sans-serif;background:#F6F6F4;color:#1A1A1A;line-height:1.6;word-break:keep-all;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:56px 20px 96px}
+h1{font-size:clamp(34px,6vw,60px);line-height:1.1;font-weight:800;letter-spacing:-.02em}
+.lede{font-size:19px;max-width:36em;margin-top:18px}
+h2{font-size:26px;margin:72px 0 20px;font-weight:800}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:28px}
+.tile{display:block;text-decoration:none;color:inherit}
+.tile .face{height:150px;display:flex;align-items:flex-end;padding:18px 22px}
+.tile .face b{font-family:var(--f);font-weight:var(--w);font-size:38px;line-height:1.05}
+.tile p{margin-top:14px}.tile small{display:block;color:#666;margin-top:6px;font-size:14px}
+.tile span{display:inline-block;margin-top:10px;font-weight:700;text-decoration:underline;text-underline-offset:4px}
+.drop{border-top:1px solid #CCC;padding-top:16px;max-width:44em}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:15px}
+th,td{text-align:left;padding:12px 14px 12px 0;border-top:1px solid #CCC;vertical-align:top}
+th{font-size:13px;color:#666;font-weight:600}
+.talk{display:grid;gap:18px;max-width:46em}
+.talk b{display:block;font-size:14px;color:#666}
+.pick{background:#1A1A1A;color:#fff;padding:28px;margin-top:20px;max-width:46em}
+.pick b{font-size:22px;display:block;margin-bottom:8px}
+ul{padding-left:20px;max-width:46em}li{margin:6px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>할 일 이자, 새 얼굴 열 가지</h1>
+  <p class="lede">같은 화면 세 장(홈, 할 일 상세, 순위)과 같은 컴포넌트를 열 가지 방식으로 그렸습니다. 기능은 모두 같습니다. 01부터 05까지는 종이와 도트에서 출발했고, 06부터 10까지는 화면 짜임부터 서로 다르게 잡았습니다.</p>
+
+  <h2>열 가지 방향</h2>
+  <div class="tiles">
+    <a class="tile" href="01-passbook.html"><div class="face" style="background:#EEF3EC;color:#22302C;border:1px solid #22302C;--f:'Pretendard';--w:800"><b>시간 통장</b></div><p>할 일 하나가 통장 한 줄이다. 걸고, 끝내고, 돌려받는 일이 날짜와 도장과 숫자로만 찍힌다.</p><small>은행 종이 통장, 도트 프린터로 찍힌 숫자, 창구 도장</small><span>01 열어 보기</span></a>
+    <a class="tile" href="02-notebook.html"><div class="face" style="background:#FFE55C;color:#2B2F3A;border:2px solid #2B2F3A;--f:'Gaegu';--w:700"><b>방학 숙제 공책</b></div><p>미루기를 처음 배운 곳은 방학 숙제다. 모눈 공책에 손으로 적고, 형광펜으로 긋고, 다 하면 도장을 받는다.</p><small>모눈 공책, 용돈 기입장, 형광펜, "참 잘했어요" 도장</small><span>02 열어 보기</span></a>
+    <a class="tile" href="03-banknote.html"><div class="face" style="background:#1B2350;color:#FAFAFC;border:1px solid #1B2350;outline:1px solid #C9A24B;outline-offset:-6px;--f:'Hahmlet';--w:800"><b>냥 지폐</b></div><p>냥은 화폐다. 그러니 진짜 돈처럼 찍는다. 잔액은 한 장의 지폐이고, 새싹 동전이 그 초상이다.</p><small>지폐의 물결무늬, 일련번호, 명조 숫자, 붉은 낙관</small><span>03 열어 보기</span></a>
+    <a class="tile" href="04-arcade.html"><div class="face" style="background:#2B4BFF;color:#fff;border:3px solid #14142B;box-shadow:6px 6px 0 #14142B;--f:'Galmuri11';--w:700"><b>오락실 저금통</b></div><p>냥은 점수고 할 일은 판이다. 굵은 테두리와 도트 글자로, 끝낼 때마다 동전 소리가 날 것 같은 화면.</p><small>휴대용 게임기, 오락실 점수판, 도트 글꼴</small><span>04 열어 보기</span></a>
+    <a class="tile" href="05-giro.html"><div class="face" style="background:#fff;color:#000;border:1.5px solid #E8486B;--f:'Black Han Sans';--w:400"><b>지로 고지서</b></div><p>미루면 날아오는 것은 고지서다. 분홍 줄, 칸마다 한 자씩 들어간 숫자, 크고 검은 글자로 "이만큼 걸려 있다"를 정면으로 보여 준다.</p><small>지로 용지의 분홍 줄과 숫자 칸, 납부 도장, 절취선</small><span>05 열어 보기</span></a>
+    <a class="tile" href="06-clay.html"><div class="face" style="background:#FF7A45;color:#fff;border-radius:28px;box-shadow:inset 0 -8px 0 rgba(58,42,30,.18),inset 0 4px 0 rgba(255,255,255,.4);--f:'Jua';--w:400"><b>말랑 저금통</b></div><p>마스코트가 화면의 주인이다. 새싹 동전이 언덕 위에 서 있고, 할 일은 손가락으로 꾹 누르고 싶은 말랑한 덩어리다.</p><small>찰흙 장난감, 젤리, 다마고치처럼 키우는 화면</small><span>06 열어 보기</span></a>
+    <a class="tile" href="07-blackcard.html"><div class="face" style="background:linear-gradient(125deg,#2E2E2E,#111 45%,#2A2A2A 55%,#0F0F0F);color:#D4AF6A;border-radius:16px;--f:'Pretendard';--w:200"><b>블랙 카드</b></div><p>시간을 아끼는 사람만 갖는 카드. 검은 화면에 금색 숫자 하나, 나머지는 가늘고 조용하다.</p><small>프리미엄 신용카드, 금박, 호텔 멤버십</small><span>07 열어 보기</span></a>
+    <a class="tile" href="08-chat.html"><div class="face" style="background:#DCE6F2;color:#1B2430;border-radius:4px 28px 28px 28px;--f:'Pretendard';--w:800"><b>독촉 문자</b></div><p>은행이 문자를 보낸다. 할 일은 말풍선으로 오고, 끝냈다고 답하면 냥이 들어온다. 새 할 일은 메시지를 쓰듯 적는다.</p><small>메신저 대화방, 은행 알림 문자, 빠른 답장 단추</small><span>08 열어 보기</span></a>
+    <a class="tile" href="09-glass.html"><div class="face" style="background:radial-gradient(60% 60% at 10% 10%,#FFD9A0 0,transparent 65%),radial-gradient(60% 60% at 95% 20%,#FF9EB5 0,transparent 65%),radial-gradient(80% 70% at 55% 100%,#9AD0FF 0,transparent 65%),#F6F2FF;color:#1D1B2E;border-radius:28px;--f:'Pretendard';--w:800"><b>유리 위젯</b></div><p>해 뜰 무렵 하늘 위에 반투명한 타일을 얹었다. 잔액, 신용, 순위, 할 일이 저마다 한 칸씩 차지하는 위젯 판이다.</p><small>휴대폰 홈 화면 위젯, 21st.dev의 벤토 그리드와 유리 효과, 진행 고리</small><span>09 열어 보기</span></a>
+    <a class="tile" href="10-clock.html"><div class="face" style="background:#E9E9E6;color:#111;border-bottom:6px solid #FF5A1F;--f:'Inter Tight','Pretendard';--w:300"><b>탁상시계</b></div><p>시간이 돈이라면 화면의 주인은 시계다. 가장 가까운 마감까지 남은 시간이 가장 크게 보이고, 주황색 단추 하나만 눈에 띈다.</p><small>옛 탁상시계와 계산기의 회색 몸통, 검은 눈금, 주황색 둥근 단추</small><span>10 열어 보기</span></a>
+  </div>
+
+  <h2>회의에서 떨어진 방향</h2>
+  <p class="drop"><b>말랑한 핀테크.</b> 둥근 흰 카드, 파란 버튼, 옅은 그림자로 깔끔하게 다듬는 방향이었습니다. 대표가 "지금 화면을 조금 고친 것과 무엇이 다르냐"고 물었고, 디자이너도 어느 앱에 붙여도 되는 얼굴이라고 답해 그리지 않았습니다.</p>
+
+  <h2>한눈에 견주기</h2>
+  <div class="scroll"><table>
+    <tr><th>방향</th><th>앱의 생각과 맞는 정도</th><th>새 글꼴</th><th>새 그림</th><th>코드 바꿀 양</th><th>가장 큰 위험</th></tr>
+    <tr><td><b>01 시간 통장</b></td><td>적금이라는 구조와 가장 잘 맞음</td><td>1개 (숫자만)</td><td>없음</td><td>가장 적음</td><td>익숙해서 심심할 수 있음</td></tr>
+    <tr><td><b>02 방학 숙제 공책</b></td><td>미루기의 기억과 맞음, 돈의 무게는 약함</td><td>2개</td><td>모눈 바탕 1장</td><td>보통</td><td>손글씨가 작으면 읽기 어려움</td></tr>
+    <tr><td><b>03 냥 지폐</b></td><td>냥이라는 화폐에 무게를 줌</td><td>1개</td><td>무늬 타일, 초상 그림</td><td>보통</td><td>장식이 번지면 금방 지저분해짐</td></tr>
+    <tr><td><b>04 오락실 저금통</b></td><td>상점, 옷장, 순위와 한 세계가 됨</td><td>2개</td><td>마스코트와 옷을 도트로 (나중에 해도 됨)</td><td>적음</td><td>진지한 사용자에게 유치할 수 있음</td></tr>
+    <tr><td><b>05 지로 고지서</b></td><td>"미루면 돈을 버린다"와 가장 곧바로 맞음</td><td>3개</td><td>없음</td><td>보통</td><td>매일 보기에 스트레스일 수 있음</td></tr>
+    <tr><td><b>06 말랑 저금통</b></td><td>마스코트, 옷장, 상점이 주인공이 됨</td><td>2개</td><td>없음 (지금 마스코트 그대로)</td><td>보통, 홈 구조가 바뀜</td><td>할 일 목록이 아래로 밀림</td></tr>
+    <tr><td><b>07 블랙 카드</b></td><td>신용등급을 자랑거리로 만듦</td><td>1개 (숫자만)</td><td>없음</td><td>보통, 색 전부</td><td>마스코트가 설 자리가 없음</td></tr>
+    <tr><td><b>08 독촉 문자</b></td><td>알림과 앱이 같은 말투로 이어짐</td><td>없음</td><td>없음</td><td>가장 많음, 홈을 새로 만듦</td><td>할 일이 많으면 대화가 길어짐</td></tr>
+    <tr><td><b>09 유리 위젯</b></td><td>요즘 앱처럼 보임, 앱만의 생각은 약함</td><td>1개 (숫자만)</td><td>하늘 바탕 1장</td><td>보통</td><td>느린 기기에서 흐림 효과가 버벅임</td></tr>
+    <tr><td><b>10 탁상시계</b></td><td>돈이 아니라 시간을 그린 유일한 방향</td><td>2개</td><td>없음</td><td>보통</td><td>귀여움이 없어 상점과 따로 놂</td></tr>
+  </table></div>
+
+  <h2>회의 요약</h2>
+  <div class="talk">
+    <div><b>대표</b>처음 다섯은 통장, 지폐, 고지서가 모두 종이라 서로 닮았다는 말을 들었어요. 그래서 뒤의 다섯은 장난감, 카드, 대화방, 위젯, 시계처럼 물건부터 다르게 골랐습니다. 계속 열게 만드는 힘은 오락실과 말랑 저금통, 한 번 보고 기억나는 힘은 탁상시계와 지로 고지서가 커요.</div>
+    <div><b>CTO</b>어느 쪽이든 "이 방향의 한 가지"를 컴포넌트 하나로 묶을 수 있어야 합니다. 통장 줄, 칸 숫자, 굵은 테두리는 그게 되고, 지폐 무늬와 손글씨는 규칙을 더 단단히 써야 해요.</div>
+    <div><b>엔지니어</b>코드로는 오락실, 통장, 탁상시계가 가볍고 독촉 문자가 가장 무겁습니다. 오락실은 그림을 도트로 다시 그리는 일이 따로 있는데, 처음에는 지금 마스코트를 액자 칸에 넣어 쓰고 나중에 바꿔도 됩니다.</div>
+    <div><b>디자이너</b>21st.dev 컴포넌트를 훑어보니 요즘 흐름은 굴러가는 숫자, 미끄러지는 탭, 유리 효과였습니다. 숫자가 굴러 올라가는 움직임과 변화량 표시는 다섯 방향 모두에 넣었고, 유리와 빛 효과는 어느 방향에도 쓰지 않았습니다.</div>
+  </div>
+
+  <div class="pick"><b>에이전시 추천 세 가지</b>재미와 계속 쓰는 힘을 원하면 04 오락실 저금통, 세련되고 오래 가는 얼굴을 원하면 10 탁상시계, 마스코트와 상점을 앞세우려면 06 말랑 저금통을 권합니다. 셋은 서로 가장 멀리 떨어져 있어 고르기도 쉽습니다.</div>
+
+  <h2>고른 다음 할 일</h2>
+  <ul>
+    <li>피그마 "화면 v6" 쪽에 색, 글자, 컴포넌트를 먼저 만든다.</li>
+    <li>v4의 화면 30장을 기능별 여섯 묶음(시작, 할 일, 순위, 그룹, 상점, 설정)으로 같은 기능 그대로 다시 그린다.</li>
+    <li>확정되면 앱 코드의 색 토큰과 컴포넌트를 바꾼다.</li>
+  </ul>
+</div>
+</body>
+</html>
