@@ -12,6 +12,7 @@ export type EventName =
   | 'repay_undo'
   | 'forgive'
   | 'notify_toggle'
+  | 'push_friends_toggle'
   | 'item_buy'
   | 'standing_view'
   | 'voice_change'
@@ -39,6 +40,7 @@ const ALLOWED_KEYS: Record<EventName, string[]> = {
   repay_undo: [],
   forgive: ['overdue_days', 'interest'],
   notify_toggle: ['enabled'],
+  push_friends_toggle: ['enabled'],
   item_buy: ['item_code', 'price'],
   standing_view: ['status', 'rank', 'participants'],
   voice_change: ['voice'],
