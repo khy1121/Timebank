@@ -87,6 +87,20 @@ const NO_POSTED: ReadonlyMap<string, ReadonlySet<string>> = new Map();
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const fail = (message: string): Result<never> => ({ ok: false, message });
 
+/**
+ * 주인 없는 인증 사진 파일을 서버에서 지우게 한다. 결과를 기다리지 않는다.
+ * 앱이 켜질 때는 10분에 한 번만 부르고, 나가기·내보내기 뒤에는 바로 부른다.
+ */
+let lastSweep = 0;
+function sweepPhotos(force = false) {
+  const now = Date.now();
+  if (!force && now - lastSweep < 10 * 60 * 1000) return;
+  lastSweep = now;
+  supabase.functions.invoke('cleanup-proof-photos').then(({ error }) => {
+    if (error) console.warn('남은 사진을 정리하지 못했어요', error.message);
+  });
+}
+
 export function GroupsProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();
   const userId = session?.user.id ?? null;
@@ -126,6 +140,7 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!userId) return;
     refresh();
+    sweepPhotos();
     const sub = AppState.addEventListener('change', (s) => {
       if (s === 'active') refresh();
     });
@@ -176,12 +191,17 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
         const r = await call<void>('leave_group', { p_group_id: groupId }, '나가지 못했어요. 잠시 뒤에 다시 해 주세요');
         if (r.ok) {
           track('group_leave');
+          sweepPhotos(true);
           await refresh();
         }
         return r;
       },
 
-      kick: (groupId, uid) => call<void>('kick_member', { p_group_id: groupId, p_user_id: uid }, '내보내지 못했어요'),
+      kick: async (groupId, uid) => {
+        const r = await call<void>('kick_member', { p_group_id: groupId, p_user_id: uid }, '내보내지 못했어요');
+        if (r.ok) sweepPhotos(true);
+        return r;
+      },
 
       rotateCode: async (groupId) => {
         const r = await call<string>('rotate_invite_code', { p_group_id: groupId }, '초대 코드를 바꾸지 못했어요');
