@@ -310,7 +310,8 @@ const styles = StyleSheet.create({
   tabs: { flexDirection: 'row', gap: 8 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   tile: {
-    width: '31.5%',
+    // 세 칸 + 간격 10 두 개가 좁은 휴대폰(375)에서도 한 줄에 들어가게
+    width: '31%',
     alignItems: 'center',
     gap: 4,
     paddingVertical: 10,
