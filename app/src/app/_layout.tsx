@@ -104,6 +104,7 @@ function Screens() {
         <Stack.Screen name="grades" />
         <Stack.Screen name="bundles" />
         <Stack.Screen name="statement" />
+        <Stack.Screen name="share-card" />
         <Stack.Screen name="group-new" />
         <Stack.Screen name="group-join" />
         <Stack.Screen name="group/[id]" />
