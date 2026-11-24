@@ -96,3 +96,19 @@ describe('홈 배경과 도장 모양 (TC-064)', () => {
     expect(lockLabel(itemOf('bg-night')!, ownedCodes(['bank-1', 'bank-2', 'bank-3']))).toBeNull();
   });
 });
+
+describe('테마 (FR-112)', () => {
+  it('기본은 말랑 저금통, 나머지는 은행을 열어야 산다', () => {
+    expect(defaultItem('theme').value).toBe('mallang');
+    expect(lockLabel(itemOf('theme-timebank')!, ownedCodes([]))).toBe('동네 창구를 열면');
+    expect(lockLabel(itemOf('theme-arcade')!, ownedCodes(['bank-1', 'bank-2', 'bank-3', 'bank-vault']))).toBe('시간은행 본점을 열면');
+    expect(lockLabel(itemOf('theme-arcade')!, ownedCodes(['bank-1', 'bank-2', 'bank-3', 'bank-vault', 'bank-4']))).toBeNull();
+  });
+  it('상점 진열에서 홈 배경은 빠지고 테마가 맨 앞', () => {
+    expect(SLOTS[0]).toBe('theme');
+    expect(SLOTS).not.toContain('background');
+  });
+  it('가지지 않은 테마를 골라 두면 기본 테마로', () => {
+    expect(resolveLook({ theme: 'theme-arcade' }, ownedCodes([])).theme.value).toBe('mallang');
+  });
+});

@@ -5,6 +5,7 @@ import { color } from '@/theme/tokens';
 
 import { useProfile } from './profile';
 import { useTodos } from './todos';
+import { toThemeCode, type ThemeCode } from '@/theme/themes';
 
 export type ColorToken = keyof typeof color;
 
@@ -26,6 +27,8 @@ export function useLook(): {
   bubbleColor: string;
   /** 홈 배경 그림 이름 (bg-coins 등) */
   background: string;
+  /** 고른 테마 (FR-112) */
+  theme: ThemeCode;
 } {
   const { profile } = useProfile();
   const { owned } = useTodos();
@@ -37,6 +40,7 @@ export function useLook(): {
     stampWord: items.stampWord.value,
     stampShape: toShape(items.stampShape.value),
     background: items.background.value,
+    theme: toThemeCode(items.theme.value),
     bubbleColor: tokenColor(items.bubble.value, color.bubbleCream),
   };
 }

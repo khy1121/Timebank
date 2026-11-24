@@ -11,7 +11,7 @@ import { josa } from './korean';
 
 export { BANK_NAMES };
 
-export type DecorSlot = 'stampInk' | 'stampWord' | 'stampShape' | 'bubble' | 'background';
+export type DecorSlot = 'theme' | 'stampInk' | 'stampWord' | 'stampShape' | 'bubble' | 'background';
 export type WearSlot = 'head' | 'face' | 'body';
 export type Slot = DecorSlot | WearSlot | 'bank';
 
@@ -34,6 +34,7 @@ export const SLOT_LABEL: Record<Slot, string> = {
   stampWord: '도장 글자',
   stampShape: '도장 모양',
   bubble: '말풍선 색',
+  theme: '테마',
   background: '홈 배경',
   head: '머리',
   face: '얼굴',
@@ -41,8 +42,8 @@ export const SLOT_LABEL: Record<Slot, string> = {
   bank: '내 은행',
 };
 
-/** 상점 화면에 칸째로 진열하는 꾸미기 */
-export const SLOTS: DecorSlot[] = ['background', 'stampInk', 'stampWord', 'stampShape', 'bubble'];
+/** 상점 화면에 칸째로 진열하는 꾸미기. 홈 배경은 테마로 바뀌어 진열하지 않는다(보류, 상점기획서 11.3절) */
+export const SLOTS: DecorSlot[] = ['theme', 'stampInk', 'stampWord', 'stampShape', 'bubble'];
 /** 옷장에서 입히는 칸. 그리는 순서(아래 → 위)이기도 하다: 몸 위에 얼굴(안경), 그 위에 머리 */
 export const WEAR_SLOTS: WearSlot[] = ['body', 'face', 'head'];
 /** 옷장 서랍의 탭 순서 */
@@ -50,7 +51,7 @@ export const WEAR_TABS: WearSlot[] = ['head', 'face', 'body'];
 
 export const ITEMS: ShopItem[] = [
   // 적립 도장의 잉크. 빨강은 연체 도장과 헷갈려서 팔지 않는다 (시간적금기획서 12절)
-  { code: 'ink-brand', slot: 'stampInk', name: '파랑', price: 0, value: 'brandPrimary' },
+  { code: 'ink-brand', slot: 'stampInk', name: '기본', price: 0, value: 'brandPrimary' },
   { code: 'ink-blue', slot: 'stampInk', name: '남색', price: 1500, value: 'inkBlue' },
   { code: 'ink-green', slot: 'stampInk', name: '초록', price: 1500, value: 'inkGreen' },
   { code: 'ink-gold', slot: 'stampInk', name: '금박', price: 4000, value: 'inkGold' },
@@ -71,6 +72,13 @@ export const ITEMS: ShopItem[] = [
   { code: 'bg-hanji', slot: 'background', name: '한지', price: 3000, value: 'bg-hanji' },
   { code: 'bg-clouds', slot: 'background', name: '구름 무늬', price: 5000, value: 'bg-clouds', needsBank: 1 },
   { code: 'bg-night', slot: 'background', name: '밤하늘 별', price: 10000, value: 'bg-night', needsBank: 3 },
+
+  // 테마: 앱 전체의 색·글꼴·모서리·테두리·그림자 (FR-112). 냥으로만 산다. 값은 theme/themes.ts의 코드
+  { code: 'theme-mallang', slot: 'theme', name: '말랑 저금통', price: 0, value: 'mallang' },
+  { code: 'theme-timebank', slot: 'theme', name: '시간 통장', price: 20000, value: 'timebank', needsBank: 2 },
+  { code: 'theme-giro', slot: 'theme', name: '지로 고지서', price: 30000, value: 'giro', needsBank: 3 },
+  { code: 'theme-notebook', slot: 'theme', name: '방학 숙제 공책', price: 40000, value: 'notebook', needsBank: 4 },
+  { code: 'theme-arcade', slot: 'theme', name: '오락실 저금통', price: 50000, value: 'arcade', needsBank: 5 },
 
   { code: 'head-none', slot: 'head', name: '안 씀', price: 0, value: '' },
   { code: 'head-beanie', slot: 'head', name: '털모자', price: 2500, value: 'beanie' },
@@ -127,7 +135,7 @@ export function lockLabel(item: ShopItem, owned: Set<string>): string | null {
 
 export type Look = Record<DecorSlot | WearSlot, ShopItem>;
 
-const LOOK_SLOTS: (DecorSlot | WearSlot)[] = ['stampInk', 'stampWord', 'stampShape', 'bubble', 'background', 'head', 'face', 'body'];
+const LOOK_SLOTS: (DecorSlot | WearSlot)[] = ['theme', 'stampInk', 'stampWord', 'stampShape', 'bubble', 'background', 'head', 'face', 'body'];
 
 /** 칸마다 실제로 쓰는 물건. 가지지 않았거나 모르는 코드면 기본 물건으로 되돌린다. */
 export function resolveLook(equipped: Equipped, owned: Set<string>): Look {
