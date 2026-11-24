@@ -180,9 +180,9 @@ function BankCard({ owned, balance, onOpen }: { owned: Set<string>; balance: num
 }
 
 function Preview({ item }: { item: ShopItem }) {
-  if (item.slot === 'stampInk') return <Stamp kind="repaid" size={48} ink={tokenColor(item.value, color.inkRed)} />;
-  if (item.slot === 'stampWord') return <Stamp kind="repaid" size={48} word={item.value} />;
-  if (item.slot === 'stampShape') return <Stamp kind="repaid" size={48} shape={toShape(item.value)} />;
+  if (item.slot === 'stampInk') return <Stamp kind="saved" size={48} ink={tokenColor(item.value, color.inkRed)} />;
+  if (item.slot === 'stampWord') return <Stamp kind="saved" size={48} word={item.value} />;
+  if (item.slot === 'stampShape') return <Stamp kind="saved" size={48} shape={toShape(item.value)} />;
   if (item.slot === 'background') return <Image source={BACKGROUNDS[item.value]} style={styles.bgThumb} contentFit="cover" accessible={false} />;
   return (
     <View style={[styles.bubble, { backgroundColor: tokenColor(item.value, color.bubbleCream) }]}>

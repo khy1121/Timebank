@@ -154,7 +154,7 @@ function GrowthFigure() {
 function RepaidFigure() {
   return (
     <View style={styles.repaid}>
-      <Stamp kind="repaid" size={112} />
+      <Stamp kind="saved" size={112} />
     </View>
   );
 }
