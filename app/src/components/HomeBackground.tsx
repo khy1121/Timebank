@@ -31,7 +31,8 @@ export function HomeBackground({ children }: { children: ReactNode }) {
   const rows = Math.ceil(size.h / TILE);
   return (
     <View style={styles.fill} onLayout={(e) => setSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
-      <View style={[StyleSheet.absoluteFill, { opacity: OPACITY[background] ?? 0.07 }]} pointerEvents="none" accessible={false}>
+      {/* 마지막 줄·칸의 타일이 화면 밖으로 넘친다. 잘라 두지 않으면 웹에서 창이 뜰 때 화면이 옆으로 밀린다 */}
+      <View style={[StyleSheet.absoluteFill, styles.clip, { opacity: OPACITY[background] ?? 0.07 }]} pointerEvents="none" accessible={false}>
         {Array.from({ length: rows * cols }, (_, i) => (
           <Image
             key={i}
@@ -49,5 +50,6 @@ export function HomeBackground({ children }: { children: ReactNode }) {
 
 const styles = StyleSheet.create({
   fill: { flex: 1, backgroundColor: color.bgPage },
+  clip: { overflow: 'hidden' },
   tile: { position: 'absolute', width: TILE, height: TILE },
 });
