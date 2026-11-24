@@ -1,4 +1,5 @@
 import { debtFor, formatAmount, type Summary, type TodoView } from './interest';
+import type { CompletionPreview } from './savings';
 
 /**
  * 마스코트 문구. 미리 정한 문구에서 고르며 인공지능을 쓰지 않는다. (FR-055)
@@ -12,8 +13,13 @@ export const SOURCE_QUESTION = '어디서 알게 되셨어요? 고르지 않아�
 export const EMPTY_LIST = '미룰 일이 하나도 없네요. 할 일을 추가해 보세요.';
 
 /** 할 일 입력 화면의 규칙 안내. 원금에 따라 첫날 이자가 달라진다. */
-export function inputRuleHint(principal: number): string {
-  return `기한을 넘기면 하루에 ${formatAmount(Math.floor(principal / 10))}냥씩 붙기 시작해요.`;
+/** 할 일 등록 화면의 마스코트 안내. 원금을 걸면 통장이 어떻게 되는지 알려준다 (시간적금기획서 4.2) */
+export function inputRuleHint(principal: number, cash: number): string {
+  if (cash < principal) {
+    const after = cash - principal;
+    return `${formatAmount(principal)}냥을 걸면 통장이 ${after < 0 ? '−' : ''}${formatAmount(Math.abs(after))}냥이 돼요. 기한 안에 끝내면 돌아와요.`;
+  }
+  return `${formatAmount(principal)}냥을 걸어요. 기한을 넘기면 원금이 하루에 ${formatAmount(Math.floor(principal / 10))}냥씩 깎여요.`;
 }
 
 /** 홈에서 목록 위에 보여줄 한마디. 보여줄 말이 없으면 null. */
@@ -46,12 +52,14 @@ export const GUIDE_PAGES = [
   },
 ] as const;
 
-/** 상환 직후 화면 아래 알림 띠 문구. 잔고가 어떻게 바뀌었는지 알려준다. (FR-060~062) */
-export function repayMessage(effect: { gained: number; bonus: boolean; lost: number }): string {
-  if (effect.bonus) return `완납! 연속 기록 보너스까지 ${formatAmount(effect.gained)}냥 벌었어요`;
-  if (effect.gained > 0) return `완납! ${formatAmount(effect.gained)}냥 벌었어요`;
-  if (effect.lost > 0) return `완납했어요. 이자 ${formatAmount(effect.lost)}냥이 잔고에서 빠졌어요`;
-  return '완납 처리했어요';
+/** 끝낸 직후 화면 아래 알림 띠 문구. 통장이 어떻게 바뀌었는지 알려준다. (시간적금기획서 4.4, 4.7) */
+export function repayMessage(p: CompletionPreview, principal: number): string {
+  if (p.pending) return `적립 대기! 친구가 인정하면 ${formatAmount(p.promised)}냥이 돌아와요`;
+  if (p.forfeit) return `늦어서 보증금 ${formatAmount(principal)}냥은 그룹 금고로 갔어요`;
+  if (p.bonus) return `적립! 연속 기록 보너스까지 ${formatAmount(p.back)}냥이 돌아왔어요`;
+  if (p.gained > 0) return `적립! ${formatAmount(p.back)}냥이 돌아왔어요 (+${formatAmount(p.gained)})`;
+  if (p.back < 0) return `원금을 다 잃고 ${formatAmount(-p.back)}냥이 통장에서 빠졌어요`;
+  return `연체료 ${formatAmount(p.lost)}냥을 빼고 ${formatAmount(p.back)}냥이 돌아왔어요`;
 }
 
 /** 상점 위쪽 마스코트 한마디 */

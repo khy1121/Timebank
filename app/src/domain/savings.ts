@@ -302,3 +302,37 @@ export function settlementOf(r: Repayment, groupId: string | null, verified: Rea
   }
   return { stamp: 'saved', amount: rewardFor(r.principal) + (groupId ? groupBonus(r.principal) : 0), verified: !!groupId && isVerified };
 }
+
+export type CompletionPreview = {
+  /** 지금 통장으로 돌아오는 냥(마이너스면 그만큼 빠진다). 인정 대기면 0 */
+  back: number;
+  /** 번 냥(이자 + 연속 기록 보너스 + 그룹 보너스) */
+  gained: number;
+  /** 잃은 냥(연체료, 몰수된 보증금) */
+  lost: number;
+  /** 이번에 연속 기록 보너스를 받는다 */
+  bonus: boolean;
+  /** 그룹 보증금이라 친구 인정을 기다린다. 인정받으면 promised만큼 돌아온다 */
+  pending: boolean;
+  promised: number;
+  /** 그룹 보증금을 늦게 끝내 금고로 갔다 */
+  forfeit: boolean;
+};
+
+/**
+ * 지금 끝내면 어떻게 되는지. 상세 화면 미리 보기와 끝낸 직후 알림 띠에 쓴다. (시간적금기획서 4.4, 4.7)
+ * streakBefore: 지금까지 이어진 기한 안 완료 횟수
+ */
+export function completionPreview(principal: number, overdueDays: number, lateFee: number, streakBefore: number, inGroup: boolean): CompletionPreview {
+  if (overdueDays > 0) {
+    if (inGroup) return { back: 0, gained: 0, lost: principal, bonus: false, pending: false, promised: 0, forfeit: true };
+    return { back: lateReturn(principal, lateFee), gained: 0, lost: lateFee, bonus: false, pending: false, promised: 0, forfeit: false };
+  }
+  const bonus = (streakBefore + 1) % STREAK_STEP === 0;
+  const gained = rewardFor(principal) + (bonus ? STREAK_BONUS : 0);
+  if (inGroup) {
+    const promised = principal + gained + groupBonus(principal);
+    return { back: 0, gained: gained + groupBonus(principal), lost: 0, bonus, pending: true, promised, forfeit: false };
+  }
+  return { back: principal + gained, gained, lost: 0, bonus, pending: false, promised: 0, forfeit: false };
+}
