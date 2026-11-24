@@ -3,35 +3,42 @@ import * as Crypto from 'expo-crypto';
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from 'react';
 import { AppState } from 'react-native';
 
-import { toDateString, type DateString } from '@/domain/dates';
-import { todoState, type Todo } from '@/domain/interest';
+import { diffDays, toDateString, type DateString } from '@/domain/dates';
+import { principalOf, viewOf, type Todo } from '@/domain/interest';
 import { settle, type Repayment, type TodoInput } from '@/domain/records';
 import {
   isUuid,
   latestUpdatedAt,
+  ledgerEventFromRow,
+  ledgerEventToParams,
   mergeRows,
   purchaseFromRow,
   purchaseToParams,
   repaymentFromRow,
   repaymentToParams,
+  splitLedgerEvents,
   todoFromRow,
   todoToParams,
   visible,
+  type LedgerEventRow,
   type PurchaseRow,
   type RepaymentRow,
+  type StoredLedgerEvent,
   type StoredPurchase,
   type StoredRepayment,
   type StoredTodo,
   type TodoRow,
 } from '@/domain/sync';
 import { canBuy, itemOf, ownedCodes } from '@/domain/shop';
-import { walletOf, type Purchase, type Wallet } from '@/domain/wallet';
+import { accountOf, earlyForgiveRefund, extendFee, inFreeEdit, type Account, type StakedTodo } from '@/domain/savings';
+import { type Purchase, type Wallet } from '@/domain/wallet';
 import { daysUntilDue } from '@/domain/events';
 import { track } from '@/lib/events';
 import { supabase } from '@/lib/supabase';
 
 import { useAuth } from './auth';
 import { useGroups } from './groups';
+import { useProfile } from './profile';
 
 /**
  * 할 일 저장소.
@@ -40,32 +47,42 @@ import { useGroups } from './groups';
  * - 서버에서는 마지막으로 받은 시각 이후에 바뀐 행만 받아 와 합친다.
  * - 저장은 계정마다 따로 한다.
  * - 상점 구매 기록도 같은 방식으로 맞춘다. 잔고는 저장하지 않고 상환·구매 기록에서 계산한다. (FR-060~063)
+ * - 장부 사건(기한 연장, 파산, 금고 배당)도 같은 방식으로 맞춘다. 통장·적금은 savings.ts가 계산한다 (시간적금기획서)
  */
 
 const storageKey = (userId: string) => `todo-interest/v2/${userId}`;
 const LEGACY_KEY = 'todo-interest/v1';
 
+/** 기기 사본의 모양. 3부터 할 일의 등록 시각·보증금 그룹과 장부 사건이 있다 */
+const DATA_VERSION = 3;
+
 type Data = {
+  version?: number;
   todos: StoredTodo[];
   repayments: StoredRepayment[];
   purchases: StoredPurchase[];
+  events: StoredLedgerEvent[];
   /** 아직 서버에 올리지 못한 행의 ID */
   pendingTodos: string[];
   pendingRepayments: string[];
   pendingPurchases: string[];
-  lastPulled: { todos: string | null; repayments: string | null; purchases: string | null };
+  pendingEvents: string[];
+  lastPulled: { todos: string | null; repayments: string | null; purchases: string | null; events: string | null };
 };
 
 type State = Data & { hydrated: boolean };
 
 const EMPTY: Data = {
+  version: DATA_VERSION,
   todos: [],
   repayments: [],
   purchases: [],
+  events: [],
   pendingTodos: [],
   pendingRepayments: [],
   pendingPurchases: [],
-  lastPulled: { todos: null, repayments: null, purchases: null },
+  pendingEvents: [],
+  lastPulled: { todos: null, repayments: null, purchases: null, events: null },
 };
 
 type Stamp = { id: string; updatedAt: string };
@@ -76,8 +93,9 @@ type Action =
   | { type: 'putTodo'; todo: StoredTodo }
   | { type: 'putRepayment'; repayment: StoredRepayment }
   | { type: 'putPurchase'; purchase: StoredPurchase }
-  | { type: 'pushed'; todos: Stamp[]; repayments: Stamp[]; purchases: Stamp[] }
-  | { type: 'pulled'; todos: StoredTodo[]; repayments: StoredRepayment[]; purchases: StoredPurchase[] };
+  | { type: 'putEvent'; event: StoredLedgerEvent }
+  | { type: 'pushed'; todos: Stamp[]; repayments: Stamp[]; purchases: Stamp[]; events: Stamp[] }
+  | { type: 'pulled'; todos: StoredTodo[]; repayments: StoredRepayment[]; purchases: StoredPurchase[]; events: StoredLedgerEvent[] };
 
 const put = <T extends { id: string }>(rows: T[], row: T): T[] =>
   rows.some((r) => r.id === row.id) ? rows.map((r) => (r.id === row.id ? row : r)) : [...rows, row];
@@ -90,6 +108,17 @@ function settlePending<T extends Stamp>(pending: string[], rows: T[], pushed: St
     pushed.filter((p) => rows.find((r) => r.id === p.id)?.updatedAt === p.updatedAt).map((p) => p.id),
   );
   return pending.filter((id) => !done.has(id));
+}
+
+/** 할 일 합치기: 예전 사본에 없던 등록 시각·보증금 그룹은 서버 것으로 채운다(수정 시각이 같아도) */
+function mergeTodos(local: StoredTodo[], remote: StoredTodo[]): StoredTodo[] {
+  const merged = mergeRows(local, remote);
+  const fromServer = new Map(remote.map((r) => [r.id, r]));
+  return merged.map((row) => {
+    const r = fromServer.get(row.id);
+    if (!r || row.createdAt) return row;
+    return { ...row, createdAt: r.createdAt, stakeGroupId: row.stakeGroupId ?? r.stakeGroupId ?? null };
+  });
 }
 
 function reducer(state: State, action: Action): State {
@@ -116,23 +145,32 @@ function reducer(state: State, action: Action): State {
         purchases: put(state.purchases, action.purchase),
         pendingPurchases: addId(state.pendingPurchases, action.purchase.id),
       };
+    case 'putEvent':
+      return {
+        ...state,
+        events: put(state.events, action.event),
+        pendingEvents: addId(state.pendingEvents, action.event.id),
+      };
     case 'pushed':
       return {
         ...state,
         pendingTodos: settlePending(state.pendingTodos, state.todos, action.todos),
         pendingRepayments: settlePending(state.pendingRepayments, state.repayments, action.repayments),
         pendingPurchases: settlePending(state.pendingPurchases, state.purchases, action.purchases),
+        pendingEvents: settlePending(state.pendingEvents, state.events, action.events),
       };
     case 'pulled':
       return {
         ...state,
-        todos: mergeRows(state.todos, action.todos),
+        todos: mergeTodos(state.todos, action.todos),
         repayments: mergeRows(state.repayments, action.repayments),
         purchases: mergeRows(state.purchases, action.purchases),
+        events: mergeRows(state.events, action.events),
         lastPulled: {
           todos: latestUpdatedAt(action.todos, state.lastPulled.todos),
           repayments: latestUpdatedAt(action.repayments, state.lastPulled.repayments),
           purchases: latestUpdatedAt(action.purchases, state.lastPulled.purchases),
+          events: latestUpdatedAt(action.events, state.lastPulled.events),
         },
       };
   }
@@ -143,13 +181,26 @@ function isData(v: unknown): v is Data {
   return !!d && Array.isArray(d.todos) && Array.isArray(d.repayments) && Array.isArray(d.pendingTodos);
 }
 
-/** 상점이 생기기 전에 저장한 사본에는 구매 기록 칸이 없다. 빈 칸으로 채운다. */
+/**
+ * 예전에 저장한 사본을 지금 모양으로 맞춘다.
+ * - 상점 전 사본에는 구매 기록 칸이 없다.
+ * - 시간 적금 전 사본(버전 3 미만)에는 할 일의 등록 시각이 없다. 할 일을 처음부터 다시 받아 채운다.
+ */
 function withDefaults(d: Data): Data {
+  const old = (d.version ?? 2) < DATA_VERSION;
   return {
     ...d,
+    version: DATA_VERSION,
     purchases: d.purchases ?? [],
+    events: d.events ?? [],
     pendingPurchases: d.pendingPurchases ?? [],
-    lastPulled: { ...d.lastPulled, purchases: d.lastPulled?.purchases ?? null },
+    pendingEvents: d.pendingEvents ?? [],
+    lastPulled: {
+      todos: old ? null : (d.lastPulled?.todos ?? null),
+      repayments: d.lastPulled?.repayments ?? null,
+      purchases: d.lastPulled?.purchases ?? null,
+      events: d.lastPulled?.events ?? null,
+    },
   };
 }
 
@@ -209,7 +260,12 @@ type Store = {
   todos: Todo[];
   repayments: StoredRepayment[];
   purchases: Purchase[];
-  /** 냥 잔고와 연속 기록 */
+  /** 통장·적금·순자산·빚·파산 (시간적금기획서) */
+  account: Account;
+  /**
+   * 예전 화면과 맞추려고 남긴 잔고. balance는 지금 쓸 수 있는 냥이다(빚이 있거나 파산 중이면 0).
+   * 화면을 시간 적금에 맞게 바꾸면 account로 옮긴다.
+   */
   wallet: Wallet;
   /** 기본 물건과 산 물건의 코드 */
   owned: Set<string>;
@@ -219,13 +275,28 @@ type Store = {
   /** 아직 서버에 올리지 못한 변경 수 */
   pendingCount: number;
   syncState: SyncState;
-  add: (input: TodoInput) => string;
-  update: (id: string, input: TodoInput) => void;
+  /** 등록. 원금이 통장에서 적금으로 옮겨진다. stakeGroupId가 있으면 그 그룹 보증금으로 건다 */
+  add: (input: TodoInput, stakeGroupId?: string | null) => string;
+  /**
+   * 수정. 등록 후 1시간 안이면 무엇이든 무료다. 그 뒤에 기한을 미루면 연장 수수료를 낸다(원금 × 5% × 미룬 날).
+   * 낸 수수료를 돌려준다.
+   */
+  update: (id: string, input: TodoInput) => number;
+  /** 이 수정에 드는 연장 수수료. 화면에서 미리 보여준다 */
+  extendFeeFor: (id: string, input: TodoInput) => number;
   /** 상환(완료). 그 시점의 금액을 기록하고 상환 기록 ID를 돌려준다. 친구 인증에 쓴다 (FR-078) */
   repay: (id: string) => string | null;
   undoRepay: (id: string) => void;
-  /** 삭제. 연체된 할 일이면 탕감으로 기록하고, 아니면 그냥 지운다. 탕감했으면 true. */
+  /**
+   * 삭제. 등록 후 1시간 안이면 원금을 모두 돌려받고 지운다.
+   * 그 뒤에는 포기로 기록한다: 기한 전이면 원금의 절반을 돌려받고, 연체 뒤면 원금과 연체료를 잃는다.
+   * 포기로 기록했으면 true.
+   */
   remove: (id: string) => boolean;
+  /** 지우면 돌려받는 냥(포기면 마이너스일 수 있다). 화면에서 미리 보여준다 */
+  removeRefundFor: (id: string) => number;
+  /** 파산 신청. 순자산이 파산 기준에 닿으면 저절로 기록된다 */
+  declareBankruptcy: () => void;
   /** 상점 물건 사기. 잔고가 모자라거나 이미 가졌으면 false (FR-063) */
   buy: (itemCode: string) => boolean;
   /** 여러 개를 한 번에 산다. 합계가 잔고를 넘거나 하나라도 살 수 없으면 아무것도 사지 않는다 (FR-072) */
@@ -238,15 +309,28 @@ type Store = {
 
 const TodosContext = createContext<Store | null>(null);
 
-const TODO_COLUMNS = 'id,title,importance,due_date,status,updated_at,deleted_at';
+const TODO_COLUMNS = 'id,title,importance,due_date,status,updated_at,deleted_at,created_at,stake_group_id';
 const REPAYMENT_COLUMNS = 'id,todo_id,kind,title,principal,interest,overdue_days,settled_on,updated_at,deleted_at';
 const PURCHASE_COLUMNS = 'id,item_code,price,purchased_on,updated_at,deleted_at';
+const EVENT_COLUMNS = 'id,kind,todo_id,days,amount,happened_on,updated_at,deleted_at';
+
+/** 할 일을 장부 계산용으로. 등록 시각이 없는 예전 기록은 마지막으로 고친 날로 본다 */
+function toStaked(t: StoredTodo): StakedTodo {
+  const created = t.createdAt ?? t.updatedAt;
+  return { ...t, createdOn: toDateString(new Date(created)), groupId: t.stakeGroupId ?? null };
+}
+
+function bankruptcyEvent(id: string, today: DateString, at: string): StoredLedgerEvent {
+  return { id, kind: 'bankrupt', todoId: null, days: null, amount: 0, happenedOn: today, updatedAt: at, deletedAt: null };
+}
 
 export function TodosProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();
   const userId = session?.user.id ?? null;
   const today = useToday();
   const { verified } = useGroups();
+  const { profile } = useProfile();
+  const signupDate = profile?.signupDate ?? null;
   const [state, dispatch] = useReducer(reducer, { ...EMPTY, hydrated: false });
   const [syncState, setSyncState] = useState<SyncState>('idle');
   // 서버와 맞추는 함수가 항상 최신 상태를 읽도록 보관한다. 아래의 다른 effect보다 먼저 실행되어야 한다.
@@ -331,7 +415,19 @@ export function TodosProvider({ children }: { children: ReactNode }) {
           pushedPurchases.push({ id, updatedAt: purchase.updatedAt });
         }
       }
-      dispatch({ type: 'pushed', todos: pushedTodos, repayments: pushedRepayments, purchases: pushedPurchases });
+      const pushedEvents: Stamp[] = [];
+      for (const id of snapshot.pendingEvents) {
+        const event = snapshot.events.find((e) => e.id === id);
+        if (!event || event.kind === 'payout') continue;
+        const { error } = await supabase.rpc('upsert_ledger_event', ledgerEventToParams(event));
+        if (error) {
+          failed = true;
+          console.warn('장부 기록을 서버에 올리지 못했어요', error.message);
+        } else {
+          pushedEvents.push({ id, updatedAt: event.updatedAt });
+        }
+      }
+      dispatch({ type: 'pushed', todos: pushedTodos, repayments: pushedRepayments, purchases: pushedPurchases, events: pushedEvents });
 
       let todoQuery = supabase.from('todos').select(TODO_COLUMNS);
       if (snapshot.lastPulled.todos) todoQuery = todoQuery.gt('updated_at', snapshot.lastPulled.todos);
@@ -339,12 +435,14 @@ export function TodosProvider({ children }: { children: ReactNode }) {
       if (snapshot.lastPulled.repayments) repaymentQuery = repaymentQuery.gt('updated_at', snapshot.lastPulled.repayments);
       let purchaseQuery = supabase.from('purchases').select(PURCHASE_COLUMNS);
       if (snapshot.lastPulled.purchases) purchaseQuery = purchaseQuery.gt('updated_at', snapshot.lastPulled.purchases);
-      const [todosResult, repaymentsResult, purchasesResult] = await Promise.all([todoQuery, repaymentQuery, purchaseQuery]);
-      if (todosResult.error || repaymentsResult.error || purchasesResult.error) {
+      let eventQuery = supabase.from('ledger_events').select(EVENT_COLUMNS);
+      if (snapshot.lastPulled.events) eventQuery = eventQuery.gt('updated_at', snapshot.lastPulled.events);
+      const [todosResult, repaymentsResult, purchasesResult, eventsResult] = await Promise.all([todoQuery, repaymentQuery, purchaseQuery, eventQuery]);
+      if (todosResult.error || repaymentsResult.error || purchasesResult.error || eventsResult.error) {
         failed = true;
         console.warn(
           '서버에서 받아 오지 못했어요',
-          todosResult.error?.message ?? repaymentsResult.error?.message ?? purchasesResult.error?.message,
+          todosResult.error?.message ?? repaymentsResult.error?.message ?? purchasesResult.error?.message ?? eventsResult.error?.message,
         );
       } else {
         dispatch({
@@ -352,6 +450,7 @@ export function TodosProvider({ children }: { children: ReactNode }) {
           todos: (todosResult.data as TodoRow[]).map(todoFromRow),
           repayments: (repaymentsResult.data as RepaymentRow[]).map(repaymentFromRow),
           purchases: (purchasesResult.data as PurchaseRow[]).map(purchaseFromRow),
+          events: (eventsResult.data as LedgerEventRow[]).map(ledgerEventFromRow),
         });
       }
     } catch (e) {
@@ -364,7 +463,7 @@ export function TodosProvider({ children }: { children: ReactNode }) {
   }, [userId]);
 
   // 맞추는 시점: 사본을 읽은 직후, 보낼 것이 생겼을 때, 앱이 다시 앞으로 나올 때
-  const pendingCount = state.pendingTodos.length + state.pendingRepayments.length + state.pendingPurchases.length;
+  const pendingCount = state.pendingTodos.length + state.pendingRepayments.length + state.pendingPurchases.length + state.pendingEvents.length;
   useEffect(() => {
     if (state.hydrated && userId) sync();
   }, [state.hydrated, userId, pendingCount, sync]);
@@ -376,11 +475,35 @@ export function TodosProvider({ children }: { children: ReactNode }) {
     return () => sub.remove();
   }, [sync]);
 
+  // 통장·적금은 저장하지 않고 기록에서 계산한다 (시간적금기획서)
+  const account = useMemo(() => {
+    const todos: StakedTodo[] = visible(state.todos).map(toStaked);
+    return accountOf({
+      signupDate,
+      todos,
+      repayments: visible(state.repayments),
+      purchases: visible(state.purchases),
+      ...splitLedgerEvents(visible(state.events)),
+      verified,
+      today,
+    });
+  }, [state.todos, state.repayments, state.purchases, state.events, signupDate, verified, today]);
+
+  // 순자산이 파산 기준에 닿으면 파산을 기록한다. 기록하면 shouldBankrupt가 꺼져 다시 돌지 않는다
+  const shouldBankrupt = state.hydrated && account.shouldBankrupt;
+  useEffect(() => {
+    if (!shouldBankrupt) return;
+    const at = new Date().toISOString();
+    dispatch({ type: 'putEvent', event: bankruptcyEvent(Crypto.randomUUID(), today, at) });
+    track('bankrupt', { auto: true });
+  }, [shouldBankrupt, today]);
+
   const store = useMemo<Store>(() => {
     const now = () => new Date().toISOString();
     const find = (id: string) => state.todos.find((t) => t.id === id && !t.deletedAt);
     const putTodo = (todo: StoredTodo) => dispatch({ type: 'putTodo', todo });
     const putRepayment = (repayment: StoredRepayment) => dispatch({ type: 'putRepayment', repayment });
+    const free = (todo: StoredTodo) => !!todo.createdAt && inFreeEdit(todo.createdAt, new Date());
     const record = (todo: StoredTodo, kind: Repayment['kind']) => {
       const at = now();
       const rec = settle(todo, kind, today, Crypto.randomUUID());
@@ -388,36 +511,66 @@ export function TodosProvider({ children }: { children: ReactNode }) {
       putRepayment({ ...rec, updatedAt: at, deletedAt: null });
       // 사용 기록에는 금액과 일수만 남긴다. 제목은 남기지 않는다 (FR-053, NFR-009)
       if (kind === 'repaid') {
-        track('repay', { on_time: rec.overdueDays === 0, overdue_days: rec.overdueDays, interest: rec.interest, streak: walletOf(visible(state.repayments), visible(state.purchases), verified).streak });
+        track('repay', { on_time: rec.overdueDays === 0, overdue_days: rec.overdueDays, interest: rec.interest, streak: account.streak });
       } else {
         track('forgive', { overdue_days: rec.overdueDays, interest: rec.interest });
       }
       return rec.id;
     };
+    const feeFor = (todo: StoredTodo, input: TodoInput) => {
+      if (free(todo)) return 0;
+      const days = diffDays(todo.dueDate, input.dueDate);
+      return days > 0 ? extendFee(principalOf(todo.importance), days) : 0;
+    };
+    const refundFor = (todo: StoredTodo) => {
+      const v = viewOf(todo, today);
+      if (free(todo)) return v.principal;
+      return v.overdueDays > 0 ? -v.interest : earlyForgiveRefund(v.principal);
+    };
     const repayments = visible(state.repayments);
     const purchases = visible(state.purchases);
-    const wallet = walletOf(repayments, purchases, verified);
     const owned = ownedCodes(purchases.map((p) => p.itemCode));
+    // 예전 화면용 잔고: 지금 쓸 수 있는 냥
+    const spendable = account.state === 'normal' && account.netWorth >= 0 ? Math.max(account.cash, 0) : 0;
+    const wallet: Wallet = { balance: spendable, streak: account.streak, toNextBonus: account.toNextBonus, earned: 0, spent: 0, ledger: [] };
     return {
       hydrated: state.hydrated,
       todos: visible(state.todos),
       repayments,
       purchases,
+      account,
       wallet,
       owned,
       lastActivity: lastActivityOf([...state.todos, ...state.repayments, ...state.purchases]),
       today,
       pendingCount,
       syncState,
-      add: (input) => {
+      add: (input, stakeGroupId = null) => {
         const id = Crypto.randomUUID();
-        putTodo({ id, ...input, title: input.title.trim(), status: 'open', updatedAt: now(), deletedAt: null });
-        track('todo_create', { importance: input.importance, days_until_due: daysUntilDue(input.dueDate, today) });
+        const at = now();
+        putTodo({ id, ...input, title: input.title.trim(), status: 'open', updatedAt: at, deletedAt: null, createdAt: at, stakeGroupId });
+        track('todo_create', { importance: input.importance, days_until_due: daysUntilDue(input.dueDate, today), group: !!stakeGroupId, negative: account.cash < principalOf(input.importance) });
         return id;
+      },
+      extendFeeFor: (id, input) => {
+        const todo = find(id);
+        return todo ? feeFor(todo, input) : 0;
       },
       update: (id, input) => {
         const todo = find(id);
-        if (todo) putTodo({ ...todo, ...input, title: input.title.trim(), updatedAt: now() });
+        if (!todo) return 0;
+        const fee = feeFor(todo, input);
+        const at = now();
+        if (fee > 0) {
+          const days = diffDays(todo.dueDate, input.dueDate);
+          dispatch({
+            type: 'putEvent',
+            event: { id: Crypto.randomUUID(), kind: 'extend', todoId: id, days, amount: fee, happenedOn: today, updatedAt: at, deletedAt: null },
+          });
+          track('extend', { days, fee });
+        }
+        putTodo({ ...todo, ...input, title: input.title.trim(), updatedAt: at });
+        return fee;
       },
       repay: (id) => {
         const todo = find(id);
@@ -433,16 +586,26 @@ export function TodosProvider({ children }: { children: ReactNode }) {
           if (r.todoId === id && !r.deletedAt) putRepayment({ ...r, updatedAt: at, deletedAt: at });
         }
       },
+      removeRefundFor: (id) => {
+        const todo = find(id);
+        return todo ? refundFor(todo) : 0;
+      },
       remove: (id) => {
         const todo = find(id);
         if (!todo) return false;
-        if (todoState(todo, today) === 'overdue') {
-          record(todo, 'forgiven');
-          return true;
+        // 등록 후 1시간 안: 실수 취소. 원금을 모두 돌려받는다
+        if (free(todo)) {
+          const at = now();
+          putTodo({ ...todo, updatedAt: at, deletedAt: at });
+          return false;
         }
-        const at = now();
-        putTodo({ ...todo, updatedAt: at, deletedAt: at });
-        return false;
+        record(todo, 'forgiven');
+        return true;
+      },
+      declareBankruptcy: () => {
+        if (account.state === 'bankrupt') return;
+        dispatch({ type: 'putEvent', event: bankruptcyEvent(Crypto.randomUUID(), today, now()) });
+        track('bankrupt', { auto: false });
       },
       buyAll: (itemCodes) => {
         const items = itemCodes.map(itemOf);
@@ -478,7 +641,7 @@ export function TodosProvider({ children }: { children: ReactNode }) {
       },
       flush: sync,
     };
-  }, [state, today, pendingCount, syncState, userId, verified, sync]);
+  }, [state, account, today, pendingCount, syncState, userId, sync]);
 
   return <TodosContext.Provider value={store}>{children}</TodosContext.Provider>;
 }
