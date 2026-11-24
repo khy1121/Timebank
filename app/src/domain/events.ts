@@ -18,6 +18,7 @@ export type EventName =
   | 'bundle_add'
   | 'statement_share'
   | 'friend_card_share'
+  | 'friend_cheer'
   | 'standing_view'
   | 'voice_change'
   | 'closet_try'
@@ -56,6 +57,7 @@ const ALLOWED_KEYS: Record<EventName, string[]> = {
   bundle_add: ['count'],
   statement_share: ['month'],
   friend_card_share: ['image'],
+  friend_cheer: [],
   standing_view: ['status', 'rank', 'participants'],
   voice_change: ['voice'],
   closet_try: ['item_code', 'owned'],

@@ -57,6 +57,10 @@ type Store = {
   states: (userIds: string[]) => Promise<Record<string, FriendState>>;
   /** 카카오톡 친구 중 앱을 쓰는 사람 (FR-108) */
   findKakaoFriends: () => Promise<Result<KakaoMatch[]>>;
+  /** 응원 보내기 (FR-109). 같은 친구에게 하루 한 번 */
+  cheer: (userId: string) => Promise<Result<'sent' | 'already' | 'not_friend'>>;
+  /** 오늘 내가 응원한 친구 */
+  cheeredToday: () => Promise<Set<string>>;
 };
 
 const FriendsContext = createContext<Store | null>(null);
@@ -136,6 +140,20 @@ export function FriendsProvider({ children }: { children: ReactNode }) {
         const r = await call<void>('cancel_friend_request', { p_id: requestId }, '신청을 취소하지 못했어요');
         await refresh();
         return r.ok ? { ok: true, value: undefined } : r;
+      },
+
+      cheer: async (uid) => {
+        const r = await call<string>('send_cheer', { p_to: uid }, '응원을 보내지 못했어요. 잠시 뒤에 다시 해 주세요');
+        if (!r.ok) return r;
+        const v = r.value === 'sent' || r.value === 'already' ? r.value : 'not_friend';
+        if (v === 'sent') track('friend_cheer');
+        return { ok: true, value: v };
+      },
+
+      cheeredToday: async () => {
+        const { data, error } = await supabase.rpc('my_cheers_today');
+        if (error) return new Set();
+        return new Set(((data ?? []) as unknown[]).map(String));
       },
 
       remove: async (uid) => {
