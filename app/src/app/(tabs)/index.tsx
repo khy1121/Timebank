@@ -32,7 +32,7 @@ type View_ = 'open' | 'done';
 
 /** TI-SCR-03 홈 (v4): 요약 카드 하나와 할 일 목록. 피그마 57:1847, 57:2021 */
 export default function HomeScreen() {
-  const { todos, today, repay, undoRepay, wallet, repayments } = useTodos();
+  const { todos, today, repay, undoRepay, wallet, repayments, settlementFor } = useTodos();
   const standing = useStanding();
   const { groups } = useGroups();
   const openProofs = useOpenProofs();
@@ -101,6 +101,7 @@ export default function HomeScreen() {
               <HistoryList
                 repayments={repayments}
                 today={today}
+                settlementFor={settlementFor}
                 canProof={(id) => openProofs.has(id)}
                 onProof={(repaymentId) => router.push({ pathname: '/proof', params: { repaymentId } })}
               />

@@ -30,7 +30,7 @@ import {
   type TodoRow,
 } from '@/domain/sync';
 import { canBuy, itemOf, ownedCodes } from '@/domain/shop';
-import { accountOf, earlyForgiveRefund, extendFee, inFreeEdit, type Account, type StakedTodo } from '@/domain/savings';
+import { accountOf, earlyForgiveRefund, extendFee, inFreeEdit, settlementOf, type Account, type Settlement, type StakedTodo } from '@/domain/savings';
 import { type Purchase, type Wallet } from '@/domain/wallet';
 import { daysUntilDue } from '@/domain/events';
 import { track } from '@/lib/events';
@@ -297,6 +297,8 @@ type Store = {
   removeRefundFor: (id: string) => number;
   /** 파산 신청. 순자산이 파산 기준에 닿으면 저절로 기록된다 */
   declareBankruptcy: () => void;
+  /** 상환 기록의 도장과 손익 (시간적금기획서 12절) */
+  settlementFor: (r: Repayment) => Settlement;
   /** 상점 물건 사기. 잔고가 모자라거나 이미 가졌으면 false (FR-063) */
   buy: (itemCode: string) => boolean;
   /** 여러 개를 한 번에 산다. 합계가 잔고를 넘거나 하나라도 살 수 없으면 아무것도 사지 않는다 (FR-072) */
@@ -602,6 +604,10 @@ export function TodosProvider({ children }: { children: ReactNode }) {
         record(todo, 'forgiven');
         return true;
       },
+      settlementFor: (r) => {
+        const groupId = state.todos.find((t) => t.id === r.todoId)?.stakeGroupId ?? null;
+        return settlementOf(r, groupId, verified, today);
+      },
       declareBankruptcy: () => {
         if (account.state === 'bankrupt') return;
         dispatch({ type: 'putEvent', event: bankruptcyEvent(Crypto.randomUUID(), today, now()) });
@@ -641,7 +647,7 @@ export function TodosProvider({ children }: { children: ReactNode }) {
       },
       flush: sync,
     };
-  }, [state, account, today, pendingCount, syncState, userId, sync]);
+  }, [state, account, today, pendingCount, syncState, userId, verified, sync]);
 
   return <TodosContext.Provider value={store}>{children}</TodosContext.Provider>;
 }
