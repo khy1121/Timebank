@@ -11,6 +11,7 @@ import { Mascot } from '@/components/Mascot';
 import { TopBar } from '@/components/TopBar';
 import { gradeOf, nextStep, partItems, signed, tagOf, titleOf, voiceLine } from '@/domain/credit';
 import { dayOfMonth, weekdayLabel } from '@/domain/dates';
+import { weekdayLine, weekdayReport, WEEKDAY_BANK_STAGE, type WeekdayReport } from '@/domain/weekday';
 import { useCredit } from '@/store/credit';
 import { useProfile } from '@/store/profile';
 import { useTodos } from '@/store/todos';
@@ -21,7 +22,7 @@ import { goBack } from '@/lib/navigation';
 /** TI-SCR-20 내 신용 (FR-097~100). 순위 탭의 내 점수 카드, 홈의 신용 카드에서 온다. 피그마 111:254, 111:353 */
 export default function CreditScreen() {
   const { info, failed, refresh } = useCredit();
-  const { today, account } = useTodos();
+  const { today, account, todos, repayments } = useTodos();
   const { profile } = useProfile();
   const [range, setRange] = useState<'week' | 'month'>('week');
 
@@ -112,10 +113,45 @@ export default function CreditScreen() {
           ))}
         </View>
 
+        <WeekdayPanel unlocked={account.bankStage >= WEEKDAY_BANK_STAGE} report={weekdayReport(todos, repayments)} />
+
         <Button label="등급표" variant="secondary" onPress={() => router.push('/grades')} />
         <Text style={[type.caption, styles.muted]}>점수는 서버에 저장된 기록으로 매겨요. 방금 한 일은 서버에 올라간 뒤에 반영돼요.</Text>
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+/** 요일 분석 (읍내 금고 혜택). 요일마다 기한 안에 끝낸 비율 막대와 한 줄 */
+function WeekdayPanel({ unlocked, report }: { unlocked: boolean; report: WeekdayReport }) {
+  if (!unlocked) {
+    return (
+      <View style={styles.panel}>
+        <Text style={[type.label, styles.ink]}>요일 분석</Text>
+        <Text style={[type.caption, styles.secondary]}>🔒 읍내 금고를 열면 내가 잘 지키는 요일과 자주 미루는 요일을 보여 드려요.</Text>
+      </View>
+    );
+  }
+  return (
+    <View style={styles.panel} accessible accessibilityLabel={`요일 분석. ${weekdayLine(report)}`}>
+      <Text style={[type.label, styles.ink]}>요일 분석</Text>
+      <View style={styles.weekRow}>
+        {report.days.map((d) => {
+          const pct = d.rate === null ? 0 : Math.round(d.rate * 100);
+          const tone = d === report.best ? color.okFg : d === report.worst ? color.debtFg : color.accentCoin;
+          return (
+            <View key={d.day} style={styles.weekCol}>
+              <Text style={[type.caption, styles.muted]}>{d.rate === null ? '-' : `${pct}%`}</Text>
+              <View style={styles.weekTrack}>
+                <View style={[styles.weekFill, { height: `${Math.max(d.rate === null ? 0 : 6, pct)}%`, backgroundColor: tone }]} />
+              </View>
+              <Text style={[type.caption, d === report.best || d === report.worst ? styles.ink : styles.secondary]}>{d.name}</Text>
+            </View>
+          );
+        })}
+      </View>
+      <Text style={[type.caption, styles.secondary]}>{weekdayLine(report)}</Text>
+    </View>
   );
 }
 
@@ -153,6 +189,10 @@ const styles = themed(() => ({
   between: { flexDirection: 'row', justifyContent: 'space-between' },
   panel: { ...layout.panel, padding: 12, gap: 10 },
   tabs: { flexDirection: 'row', gap: 8 },
+  weekRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 6 },
+  weekCol: { flex: 1, alignItems: 'center', gap: 4 },
+  weekTrack: { width: 14, height: 72, borderRadius: radius.full, backgroundColor: color.bgSunken, justifyContent: 'flex-end', overflow: 'hidden' },
+  weekFill: { width: '100%', borderRadius: radius.full },
   parts: { ...layout.panel, flexDirection: 'row', paddingVertical: 12 },
   part: { flex: 1, alignItems: 'center', gap: 2 },
   ink: { color: color.textPrimary },
