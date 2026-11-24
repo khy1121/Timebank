@@ -1,4 +1,5 @@
 import { STATUS, type StatusCode } from './standing';
+import { toNameplate, type Nameplate } from './bank';
 import { rewardFor } from './wallet';
 
 /**
@@ -6,6 +7,7 @@ import { rewardFor } from './wallet';
  * 인증 상태 규칙은 서버 함수 proof_state(supabase/migrations/0006_groups.sql)와 같아야 한다.
  */
 
+/** 기본 한도(길가 좌판). 은행 단계가 오르면 늘어난다: domain/bank.ts perksOf (FR-111) */
 export const MAX_MEMBERS = 10;
 export const MAX_GROUPS = 3;
 export const GROUP_NAME_MAX = 20;
@@ -161,8 +163,8 @@ export function inviteMessage(groupName: string, code: string, link: string): st
 
 /** 서버가 hint로 알려 주는 이유를 화면 문구로 바꾼다 */
 const HINT_MESSAGE: Record<string, string> = {
-  too_many_groups: `그룹은 ${MAX_GROUPS}개까지 들 수 있어요`,
-  group_full: `그룹이 꽉 찼어요. ${MAX_MEMBERS}명까지 들어갈 수 있어요`,
+  too_many_groups: '들 수 있는 그룹을 다 채웠어요. 은행을 키우면 더 들 수 있어요',
+  group_full: '그룹이 꽉 찼어요. 그룹장의 은행이 커지면 더 들어갈 수 있어요',
   not_found: '초대 코드를 찾을 수 없어요',
   too_many_attempts: '초대 코드를 너무 많이 틀렸어요. 1시간 뒤에 다시 해 주세요',
   own_proof: '내 인증에는 투표할 수 없어요',
@@ -230,8 +232,9 @@ export type MyGroupRow = {
   joined_at: string;
   theme?: string | null;
   theme_label?: string | null;
+  max_members?: number | null;
 };
-export type MyGroup = { id: string; name: string; inviteCode: string; isOwner: boolean; members: number; newProofs: number; theme: GroupTheme; themeLabel: string | null };
+export type MyGroup = { id: string; name: string; inviteCode: string; isOwner: boolean; members: number; newProofs: number; theme: GroupTheme; themeLabel: string | null; maxMembers: number };
 
 export function groupFromRow(r: MyGroupRow): MyGroup {
   return {
@@ -243,6 +246,7 @@ export function groupFromRow(r: MyGroupRow): MyGroup {
     newProofs: r.new_proofs,
     theme: toTheme(r.theme),
     themeLabel: r.theme_label ?? null,
+    maxMembers: r.max_members ?? MAX_MEMBERS,
   };
 }
 
@@ -310,18 +314,18 @@ export function withVote(p: Proof, vote: Vote | null): Proof {
   return { ...p, approvals, doubts, myVote: vote };
 }
 
-export type MemberRow = { user_id: string; nickname: string; is_owner: boolean; is_me: boolean; joined_at: string; status_code: string | null; blocked: boolean; credit_score?: number | null };
-export type Member = { userId: string; nickname: string; isOwner: boolean; isMe: boolean; status: StatusCode | null; blocked: boolean; creditScore: number | null };
+export type MemberRow = { user_id: string; nickname: string; is_owner: boolean; is_me: boolean; joined_at: string; status_code: string | null; blocked: boolean; credit_score?: number | null; nameplate?: string | null };
+export type Member = { userId: string; nickname: string; isOwner: boolean; isMe: boolean; status: StatusCode | null; blocked: boolean; creditScore: number | null; nameplate: Nameplate };
 
 export function memberFromRow(r: MemberRow): Member {
-  return { userId: r.user_id, nickname: r.nickname, isOwner: r.is_owner, isMe: r.is_me, status: toStatusCode(r.status_code), blocked: r.blocked, creditScore: r.credit_score ?? null };
+  return { userId: r.user_id, nickname: r.nickname, isOwner: r.is_owner, isMe: r.is_me, status: toStatusCode(r.status_code), blocked: r.blocked, creditScore: r.credit_score ?? null, nameplate: toNameplate(r.nameplate) };
 }
 
-export type GroupStandingRow = { user_id: string; nickname: string; is_me: boolean; status_code: string | null; score: number; passed: number; rank: number; credit_score?: number | null };
-export type GroupStanding = { userId: string; nickname: string; isMe: boolean; status: StatusCode | null; score: number; passed: number; rank: number; creditScore: number | null };
+export type GroupStandingRow = { user_id: string; nickname: string; is_me: boolean; status_code: string | null; score: number; passed: number; rank: number; credit_score?: number | null; nameplate?: string | null };
+export type GroupStanding = { userId: string; nickname: string; isMe: boolean; status: StatusCode | null; score: number; passed: number; rank: number; creditScore: number | null; nameplate: Nameplate };
 
 export function groupStandingFromRow(r: GroupStandingRow): GroupStanding {
-  return { userId: r.user_id, nickname: r.nickname, isMe: r.is_me, status: toStatusCode(r.status_code), score: r.score, passed: r.passed, rank: r.rank, creditScore: r.credit_score ?? null };
+  return { userId: r.user_id, nickname: r.nickname, isMe: r.is_me, status: toStatusCode(r.status_code), score: r.score, passed: r.passed, rank: r.rank, creditScore: r.credit_score ?? null, nameplate: toNameplate(r.nameplate) };
 }
 
 export function passedLabel(n: number): string {
@@ -336,6 +340,7 @@ export type GroupPreviewRow = {
   is_member: boolean;
   theme?: string | null;
   theme_label?: string | null;
+  max_members?: number | null;
 };
 
 // ---------------------------------------------------------------------------

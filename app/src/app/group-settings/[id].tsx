@@ -10,7 +10,7 @@ import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { SettingRow } from '@/components/SettingRow';
 import { ThemeBadge } from '@/components/ThemeBadge';
 import { TopBar } from '@/components/TopBar';
-import { GROUP_THEMES, inviteMessage, MAX_MEMBERS, type Member } from '@/domain/groups';
+import { GROUP_THEMES, inviteMessage, type Member } from '@/domain/groups';
 import { josa } from '@/domain/korean';
 import { useGroups } from '@/store/groups';
 import * as layout from '@/theme/layout';
@@ -72,7 +72,7 @@ export default function GroupSettingsScreen() {
             {group.inviteCode}
           </Text>
           <Text style={[type.caption, styles.secondary]}>
-            {group.members}명이 함께해요. {MAX_MEMBERS}명까지 들어올 수 있어요.
+            {group.members}명이 함께해요. {group.maxMembers}명까지 들어올 수 있어요.
           </Text>
           <Button label="초대 링크 보내기" onPress={share} />
           {group.isOwner ? <Button label="초대 코드 바꾸기" variant="secondary" onPress={() => setDialog({ kind: 'rotate' })} /> : null}
