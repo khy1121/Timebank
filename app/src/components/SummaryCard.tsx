@@ -52,12 +52,11 @@ export function SummaryCard({ summary, account, status, message, current, change
           <View style={styles.debt}>
             <Text style={[type.caption, styles.secondary]}>{negative ? '순자산 · 빚이 있어요' : '순자산'}</Text>
             <Text style={[type.numberL, { color: negative || bankrupt ? color.debtFg : color.textPrimary }]}>{big}</Text>
-            <Text style={[type.caption, styles.secondary]} numberOfLines={1}>
-              {sub}
-            </Text>
           </View>
           <StatusStamp code={status} />
         </View>
+
+        <Text style={[type.caption, styles.secondary]}>{sub}</Text>
 
         <Text style={[type.body, styles.ink]}>{message}</Text>
       </Pressable>
