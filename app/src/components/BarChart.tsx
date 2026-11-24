@@ -1,6 +1,6 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
-import { color, radius, stroke, type } from '@/theme/tokens';
+import { color, radius, stroke, themed, type } from '@/theme/tokens';
 
 export type Bar = { key: string; value: number; label: string; caption?: string };
 
@@ -66,7 +66,7 @@ export function BarChart({ bars, height = 120, signed = false, highlightLast = t
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   plot: { flexDirection: 'row', gap: 8, position: 'relative' },
   zero: { position: 'absolute', left: 0, right: 0, height: 1, backgroundColor: color.borderDefault },
   col: { flex: 1, alignItems: 'stretch' },
@@ -75,4 +75,4 @@ const styles = StyleSheet.create({
   label: { color: color.textSecondary, textAlign: 'center' },
   labelOn: { color: color.textPrimary, fontFamily: type.label.fontFamily },
   caption: { color: color.textTertiary, textAlign: 'center', fontSize: 11 },
-});
+}));

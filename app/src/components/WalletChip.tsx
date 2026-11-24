@@ -1,7 +1,7 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { formatAmount } from '@/domain/interest';
-import { color, radius, stroke, type } from '@/theme/tokens';
+import { color, radius, stroke, themed, type } from '@/theme/tokens';
 
 type Props = { balance: number; onPress: () => void };
 
@@ -24,7 +24,7 @@ export function WalletChip({ balance, onPress }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -52,4 +52,4 @@ const styles = StyleSheet.create({
   hole: { width: 6, height: 6, borderRadius: 1, borderWidth: 1.5, borderColor: color.inkOutline, backgroundColor: color.mascotCream },
   amount: { color: color.inkOutline, fontFamily: type.numberM.fontFamily },
   unit: { color: color.inkOutline, opacity: 0.7 },
-});
+}));

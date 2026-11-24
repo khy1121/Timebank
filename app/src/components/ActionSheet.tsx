@@ -1,6 +1,6 @@
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, Text, View } from 'react-native';
 
-import { color, radius, stroke, type } from '@/theme/tokens';
+import { color, radius, stroke, themed, type } from '@/theme/tokens';
 
 export type SheetAction = { label: string; danger?: boolean; onPress: () => void };
 
@@ -39,7 +39,7 @@ export function ActionSheet({ visible, title, actions, onClose }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   backdrop: { flex: 1, backgroundColor: 'rgba(22, 34, 74, 0.45)', justifyContent: 'flex-end', padding: 16 },
   sheet: {
     backgroundColor: color.bgSurface,
@@ -54,4 +54,4 @@ const styles = StyleSheet.create({
   rowBorder: { borderTopWidth: stroke.hairline, borderTopColor: color.borderDefault },
   pressed: { backgroundColor: color.bgSunken },
   cancel: { color: color.textSecondary },
-});
+}));

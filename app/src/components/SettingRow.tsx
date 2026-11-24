@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
-import { color, stroke, type } from '@/theme/tokens';
+import { color, live, stroke, themed, type } from '@/theme/tokens';
 
 type Tone = 'default' | 'muted' | 'warn' | 'danger';
 
@@ -20,12 +20,12 @@ type Props = {
   first?: boolean;
 };
 
-const TONE = {
+const TONE = live(() => ({
   default: color.textPrimary,
   muted: color.textSecondary,
   warn: color.accentCoinDeep,
   danger: color.debtFg,
-} as const;
+}) as const);
 
 /** 설정 화면의 한 줄. */
 export function SettingRow({ label, hint, value, right, tone = 'default', onPress, first }: Props) {
@@ -56,7 +56,7 @@ export function SettingRow({ label, hint, value, right, tone = 'default', onPres
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   row: { minHeight: 54, flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 },
   border: { borderTopWidth: stroke.hairline, borderTopColor: color.borderDefault },
   pressed: { backgroundColor: color.bgSunken },
@@ -64,4 +64,4 @@ const styles = StyleSheet.create({
   hint: { color: color.textSecondary },
   value: { color: color.textSecondary },
   chevron: { fontSize: 22, lineHeight: 24, color: color.textTertiary, fontFamily: type.body.fontFamily },
-});
+}));

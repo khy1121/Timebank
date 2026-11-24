@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
 
@@ -13,7 +13,7 @@ import { formatAmount, viewOf } from '@/domain/interest';
 import { BANKRUPT_AT, completionPreview, REHAB_GRANT } from '@/domain/savings';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
-import { color, radius, stroke, type } from '@/theme/tokens';
+import { color, radius, stroke, themed, type } from '@/theme/tokens';
 
 const won = (n: number) => `${n < 0 ? '−' : ''}${formatAmount(Math.abs(n))}`;
 
@@ -282,7 +282,7 @@ function Chevron() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   safe: layout.screen,
   content: layout.content,
   ink: { color: color.textPrimary },
@@ -344,4 +344,4 @@ const styles = StyleSheet.create({
   grant: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: radius.full, backgroundColor: color.brandSoft },
   groupRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 },
   mark: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
-});
+}));

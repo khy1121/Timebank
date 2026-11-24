@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { GradeBadge } from '@/components/GradeBadge';
@@ -7,7 +7,7 @@ import { TopBar } from '@/components/TopBar';
 import { BANKRUPT_TITLE, gradeOf, gradeRange, GRADES } from '@/domain/credit';
 import { useCredit } from '@/store/credit';
 import * as layout from '@/theme/layout';
-import { color, stroke, type } from '@/theme/tokens';
+import { color, stroke, themed, type } from '@/theme/tokens';
 
 /** TI-SCR-12 등급표 (FR-098). 아홉 등급, 칭호, 한 줄 설명, 점수 구간. 피그마 111:444 */
 export default function GradesScreen() {
@@ -55,7 +55,7 @@ export default function GradesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   safe: layout.screen,
   content: layout.content,
   flex: { flex: 1, minWidth: 0 },
@@ -68,4 +68,4 @@ const styles = StyleSheet.create({
   secondary: { color: color.textSecondary },
   muted: { color: color.textTertiary },
   brand: { color: color.brandPrimary },
-});
+}));

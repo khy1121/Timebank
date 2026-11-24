@@ -1,14 +1,14 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { STATUS, type StatusCode, type Tone } from '@/domain/standing';
-import { color, radius, type } from '@/theme/tokens';
+import { color, live, radius, themed, type } from '@/theme/tokens';
 
-export const TONE_COLOR: Record<Tone, { fg: string; bg: string }> = {
+export const TONE_COLOR: Record<Tone, { fg: string; bg: string }> = live(() => ({
   good: { fg: color.okFg, bg: color.okBg },
   neutral: { fg: color.textSecondary, bg: color.bgSunken },
   warn: { fg: color.accentCoinDeep, bg: color.mascotCream },
   bad: { fg: color.debtFg, bg: color.debtBg },
-};
+}));
 
 type Props = { code: StatusCode; size?: 'm' | 'l' };
 
@@ -31,9 +31,9 @@ export function StatusStamp({ code, size = 'm' }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   outer: { borderWidth: 2.5, borderRadius: radius.sm, padding: 3, transform: [{ rotate: '-4deg' }], alignSelf: 'flex-start' },
   outerL: { padding: 4 },
   inner: { borderWidth: 1, borderStyle: 'dashed', borderRadius: 3, paddingHorizontal: 10, paddingVertical: 2 },
   text: { fontFamily: type.stamp.fontFamily },
-});
+}));

@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams, type Href } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Amount } from '@/components/Amount';
@@ -13,7 +13,7 @@ import { debtFor, principalOf, type Importance } from '@/domain/interest';
 import { GUIDE_PAGES, SOURCE_QUESTION } from '@/domain/messages';
 import { SOURCE_OPTIONS, type SignupSource } from '@/domain/profile';
 import { useProfile } from '@/store/profile';
-import { color, radius, stroke, type } from '@/theme/tokens';
+import { color, radius, stroke, themed, type } from '@/theme/tokens';
 
 const LEVELS: Importance[] = [1, 2, 3, 4, 5];
 const EXAMPLE_PRINCIPAL = 3000;
@@ -159,7 +159,7 @@ function RepaidFigure() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   safe: { flex: 1, backgroundColor: color.bgPage },
   header: { height: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 12, paddingRight: 16 },
   lead: { width: 48, height: 44, justifyContent: 'center', paddingLeft: 8 },
@@ -190,4 +190,4 @@ const styles = StyleSheet.create({
   barDebt: { backgroundColor: color.debtBg },
   barLabel: { color: color.textSecondary },
   repaid: { alignItems: 'center', paddingVertical: 12 },
-});
+}));

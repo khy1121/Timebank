@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { useState, useSyncExternalStore, type ReactNode } from 'react';
-import { ActivityIndicator, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Linking, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
@@ -20,7 +20,7 @@ import { useFriends } from '@/store/friends';
 import { useProfile } from '@/store/profile';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
-import { color, inputType, radius, stroke, type } from '@/theme/tokens';
+import { color, inputType, radius, stroke, themed, type } from '@/theme/tokens';
 
 const CONTACT = process.env.EXPO_PUBLIC_CONTACT_EMAIL ?? '';
 const VERSION = Constants.expoConfig?.version ?? '1.0.0';
@@ -298,7 +298,7 @@ function Group({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   safe: layout.screen,
   content: layout.content,
   group: { gap: 8 },
@@ -330,4 +330,4 @@ const styles = StyleSheet.create({
   actions: { gap: 12, marginTop: 8 },
   progress: { alignItems: 'center', gap: 12, paddingVertical: 24 },
   voice: { flexDirection: 'row', gap: 6 },
-});
+}));

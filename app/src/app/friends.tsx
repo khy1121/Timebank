@@ -1,7 +1,7 @@
 import * as Linking from 'expo-linking';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Share, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
@@ -27,14 +27,14 @@ import { feedback } from '@/lib/feedback';
 import { useFriends } from '@/store/friends';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
-import { color, inputType, radius, stroke, type } from '@/theme/tokens';
+import { color, inputType, live, radius, stroke, themed, type } from '@/theme/tokens';
 
-const TONE: Record<Tone, string> = {
+const TONE: Record<Tone, string> = live(() => ({
   ok: color.okFg,
   warn: color.accentCoinDeep,
   bad: color.debtFg,
   muted: color.textTertiary,
-};
+}));
 
 /**
  * TI-SCR-21·22 친구 (FR-103~107). 1·2단계는 한 화면에 둔다: 내 코드와 공유, 코드로 신청, 받은·보낸 신청, 친구 목록.
@@ -371,7 +371,7 @@ export default function FriendsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   safe: layout.screen,
   flex: { flex: 1 },
   content: layout.content,
@@ -411,4 +411,4 @@ const styles = StyleSheet.create({
   error: { color: color.debtFg },
   errorBox: { padding: 12, borderRadius: radius.md, backgroundColor: color.debtBg },
   banner: { paddingVertical: 10, paddingHorizontal: 14, borderRadius: radius.md, backgroundColor: color.brandSoft },
-});
+}));

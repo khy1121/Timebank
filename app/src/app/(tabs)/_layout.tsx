@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { Tabs } from 'expo-router/js-tabs';
 import { useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Snackbar } from '@/components/Snackbar';
@@ -9,7 +9,7 @@ import { TabBar } from '@/components/TabBar';
 import { shopLockReason } from '@/domain/savings';
 import { useGroups } from '@/store/groups';
 import { useTodos } from '@/store/todos';
-import { color } from '@/theme/tokens';
+import { color, themed } from '@/theme/tokens';
 
 const TOAST_MS = 3000;
 
@@ -62,7 +62,7 @@ export default function TabsLayout() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   root: { flex: 1 },
   toast: { position: 'absolute', left: 16, right: 16 },
-});
+}));

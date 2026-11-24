@@ -1,8 +1,8 @@
 import { Image } from 'expo-image';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import type { MyGroup } from '@/domain/groups';
-import { color, radius, stroke, type } from '@/theme/tokens';
+import { color, radius, stroke, themed, type } from '@/theme/tokens';
 
 import { ThemeBadge } from './ThemeBadge';
 
@@ -45,7 +45,7 @@ export function GroupRow({ group, onPress }: { group: MyGroup; onPress: () => vo
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -78,4 +78,4 @@ const styles = StyleSheet.create({
   badge: { backgroundColor: color.brandPrimary, borderRadius: radius.full, paddingHorizontal: 8, paddingVertical: 2 },
   badgeText: { color: color.textOnPrimary },
   chevron: { color: color.textTertiary },
-});
+}));

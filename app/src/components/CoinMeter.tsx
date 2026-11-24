@@ -1,7 +1,7 @@
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import type { Importance } from '@/domain/interest';
-import { color, radius } from '@/theme/tokens';
+import { color, radius, themed } from '@/theme/tokens';
 
 /** 중요도를 엽전 개수로 보여준다. 엽전 1개 = 원금 1,000냥. (FR-020) */
 export function CoinMeter({ level }: { level: Importance }) {
@@ -19,7 +19,7 @@ export function CoinMeter({ level }: { level: Importance }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   row: { flexDirection: 'row', gap: 4 },
   coin: {
     width: 22,
@@ -34,4 +34,4 @@ const styles = StyleSheet.create({
   hole: { width: 7, height: 7, borderRadius: 1, borderWidth: 1.5 },
   holeOn: { backgroundColor: color.mascotCream, borderColor: color.inkOutline },
   holeOff: { backgroundColor: color.bgSurface, borderColor: color.borderDefault },
-});
+}));

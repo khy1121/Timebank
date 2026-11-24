@@ -1,6 +1,6 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
-import { color, radius, type } from '@/theme/tokens';
+import { color, radius, themed, type } from '@/theme/tokens';
 
 type Props = { text: string; actionLabel?: string; onAction?: () => void };
 
@@ -18,7 +18,7 @@ export function Snackbar({ text, actionLabel, onAction }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   bar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -30,4 +30,4 @@ const styles = StyleSheet.create({
   },
   text: { flex: 1, color: color.textOnPrimary },
   action: { color: color.accentCoin },
-});
+}));

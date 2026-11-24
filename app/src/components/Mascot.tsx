@@ -1,11 +1,12 @@
 import { Image } from 'expo-image';
 import { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 
 import { describeOutfit, type Outfit } from '@/domain/closet';
 import { itemOf, WEAR_SLOTS } from '@/domain/shop';
 import { useLook } from '@/store/look';
+import { themed } from '@/theme/tokens';
 
 /** 소품 그림. 모두 마스코트와 같은 512px 캔버스에 맞춰 그려져 있어서 그대로 겹치면 된다. */
 const LAYERS: Record<string, number> = {
@@ -65,6 +66,6 @@ export function Mascot({ size, outfit, bounceKey = 0, animateLayers = false }: P
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   layer: { position: 'absolute', top: 0, left: 0 },
-});
+}));

@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
@@ -11,7 +11,7 @@ import { CODE_LENGTH, codeFromText, isCompleteCode, NICKNAME_MAX, nicknameError,
 import { feedback } from '@/lib/feedback';
 import { useGroups, type GroupPreview } from '@/store/groups';
 import * as layout from '@/theme/layout';
-import { color, inputType, radius, stroke, type } from '@/theme/tokens';
+import { color, inputType, radius, stroke, themed, type } from '@/theme/tokens';
 
 /** 찾지 못했으면 null, 서버 오류면 그 문구 */
 type Lookup = { code: string; result: GroupPreview | null | { error: string } };
@@ -126,7 +126,7 @@ export default function JoinGroupScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   safe: layout.screen,
   flex: { flex: 1 },
   content: layout.content,
@@ -154,4 +154,4 @@ const styles = StyleSheet.create({
     backgroundColor: color.mascotCream,
   },
   footer: layout.footer,
-});
+}));

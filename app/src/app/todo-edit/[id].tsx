@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SpeechBubble } from '@/components/SpeechBubble';
@@ -7,6 +7,7 @@ import { TodoForm } from '@/components/TodoForm';
 import { TopBar } from '@/components/TopBar';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
+import { themed } from '@/theme/tokens';
 
 /** TI-SCR-04 할 일 입력 (수정) */
 export default function EditTodoScreen() {
@@ -27,7 +28,7 @@ export default function EditTodoScreen() {
   return <TodoForm original={todo} />;
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   safe: layout.screen,
   body: { padding: 24 },
-});
+}));

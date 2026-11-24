@@ -1,11 +1,11 @@
 import { router } from 'expo-router';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { TopBar } from '@/components/TopBar';
 import { PRIVACY_EFFECTIVE_DATE, PRIVACY_SECTIONS } from '@/domain/privacy';
 import * as layout from '@/theme/layout';
-import { color, type } from '@/theme/tokens';
+import { color, themed, type } from '@/theme/tokens';
 
 const CONTACT = process.env.EXPO_PUBLIC_CONTACT_EMAIL ?? '';
 
@@ -45,7 +45,7 @@ export default function PrivacyScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   safe: layout.screen,
   content: layout.content,
   section: { gap: 8 },
@@ -53,4 +53,4 @@ const styles = StyleSheet.create({
   card: { ...layout.panel, padding: 16, gap: 10 },
   line: { color: color.textSecondary },
   date: { color: color.textTertiary, textAlign: 'center' },
-});
+}));

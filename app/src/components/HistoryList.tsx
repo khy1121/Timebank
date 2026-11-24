@@ -1,10 +1,10 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { formatAmount } from '@/domain/interest';
 import { groupByMonth, type Repayment } from '@/domain/records';
 import type { Settlement, SettlementStamp } from '@/domain/savings';
 import * as layout from '@/theme/layout';
-import { color, radius, stroke, type } from '@/theme/tokens';
+import { color, live, radius, stroke, themed, type } from '@/theme/tokens';
 
 import { SpeechBubble } from './SpeechBubble';
 import { ForfeitSticker, Stamp } from './Stamp';
@@ -24,13 +24,13 @@ type Props = {
 
 const LABEL: Record<SettlementStamp, string> = { saved: '번 냥', late: '연체료', forgive: '포기', forfeit: '보증금', pending: '인정 대기' };
 const NAME = { saved: '적립', late: '연체', forgive: '포기', forfeit: '몰수' } as const;
-const AMOUNT_COLOR: Record<SettlementStamp, string> = {
+const AMOUNT_COLOR: Record<SettlementStamp, string> = live(() => ({
   saved: color.okFg,
   late: color.debtFg,
   forgive: color.textTertiary,
   forfeit: color.debtFg,
   pending: color.textSecondary,
-};
+}));
 
 function Mark({ stamp, size }: { stamp: SettlementStamp; size: number }) {
   return stamp === 'forfeit' ? <ForfeitSticker size={size} /> : <Stamp kind={stamp} size={size} />;
@@ -127,7 +127,7 @@ function Row({ record, settlement, first, onProof }: { record: Repayment; settle
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   wrap: { gap: 20 },
   panel: {
     backgroundColor: color.bgSurface,
@@ -161,4 +161,4 @@ const styles = StyleSheet.create({
   },
   pressed: { opacity: 0.8 },
   brand: { color: color.brandPrimary },
-});
+}));

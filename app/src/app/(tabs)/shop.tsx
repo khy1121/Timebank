@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Image } from 'expo-image';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Amount } from '@/components/Amount';
@@ -26,7 +26,7 @@ import { tokenColor, useLook } from '@/store/look';
 import { useProfile } from '@/store/profile';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
-import { color, radius, stroke, type } from '@/theme/tokens';
+import { color, radius, stroke, themed, type } from '@/theme/tokens';
 
 // 단계 순서. 읍내 금고(4)와 중앙은행(6)은 그림을 새로 그리기 전까지 가까운 단계 그림을 쓴다 (상점기획서 11.6절 미결 3)
 const BANK_ART = [
@@ -248,7 +248,7 @@ function Action({ label, onPress, primary }: { label: string; onPress: () => voi
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   safe: layout.screen,
   content: layout.content,
   panel: {
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
   },
   action: { minWidth: 88, minHeight: 36, alignItems: 'center', justifyContent: 'center', borderRadius: radius.full, paddingHorizontal: 14 },
   actionPrimary: { backgroundColor: color.brandPrimary, borderWidth: stroke.outline, borderColor: color.inkOutline },
-  actionPlain: { backgroundColor: color.bgSurface, borderWidth: stroke.outline, borderColor: color.inkOutline },
+  actionPlain: { backgroundColor: stroke.outline === 0 ? color.bgSunken : color.bgSurface, borderWidth: stroke.outline, borderColor: color.inkOutline },
   pressed: { opacity: 0.8 },
   wearing: { color: color.brandPrimary, minHeight: 36, lineHeight: 36 },
   muted: { color: color.textSecondary, textAlign: 'center' },
@@ -344,4 +344,4 @@ const styles = StyleSheet.create({
   bgThumb: { width: 72, height: 48, borderRadius: radius.md, borderWidth: stroke.outline, borderColor: color.inkOutline },
   lockBanner: { paddingVertical: 12, paddingHorizontal: 14, borderRadius: 12, backgroundColor: color.debtBg },
   lockText: { color: color.debtFg },
-});
+}));

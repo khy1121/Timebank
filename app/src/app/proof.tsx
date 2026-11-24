@@ -3,7 +3,7 @@ import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
@@ -17,7 +17,7 @@ import { useGroups } from '@/store/groups';
 import { useOpenProofs } from '@/store/openProofs';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
-import { color, radius, stroke, type } from '@/theme/tokens';
+import { color, radius, stroke, themed, type } from '@/theme/tokens';
 
 /** 처음 인증을 올리기 전에 한 번 동의받는다 (FR-083) */
 const RULES = [
@@ -197,7 +197,7 @@ export default function ProofScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   safe: layout.screen,
   flex: { flex: 1 },
   content: layout.content,
@@ -225,4 +225,4 @@ const styles = StyleSheet.create({
   rules: { gap: 8, padding: 16, borderRadius: radius.lg, backgroundColor: color.mascotCream, borderWidth: stroke.hairline, borderColor: color.borderDefault },
   footer: layout.footer,
   actions: { flexDirection: 'row', gap: 10 },
-});
+}));

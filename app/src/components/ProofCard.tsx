@@ -2,15 +2,15 @@ import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { countsLabel, proofNote, proofState, STATE_LABEL, timeAgo, votingOpen, type Proof, type ProofState, type Vote } from '@/domain/groups';
-import { color, radius, stroke, type } from '@/theme/tokens';
+import { color, live, radius, stroke, themed, type } from '@/theme/tokens';
 
 const AVATAR = require('@/assets/images/closet/base.png');
 
-const TONE: Record<ProofState, { fg: string; bg: string }> = {
+const TONE: Record<ProofState, { fg: string; bg: string }> = live(() => ({
   pending: { fg: color.accentCoinDeep, bg: color.mascotCream },
   passed: { fg: color.okFg, bg: color.okBg },
   rejected: { fg: color.debtFg, bg: color.debtBg },
-};
+}));
 
 type Props = {
   proof: Proof;
@@ -90,7 +90,7 @@ export function ProofCard({ proof, photoUrl, now, onVote, onMore }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   card: {
     backgroundColor: color.bgSurface,
     borderRadius: radius.lg,
@@ -133,4 +133,4 @@ const styles = StyleSheet.create({
   ink: { color: color.textPrimary },
   secondary: { color: color.textSecondary },
   muted: { color: color.textTertiary },
-});
+}));

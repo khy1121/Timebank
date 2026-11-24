@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BarChart } from '@/components/BarChart';
@@ -15,7 +15,7 @@ import { useCredit } from '@/store/credit';
 import { useProfile } from '@/store/profile';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
-import { color, radius, type } from '@/theme/tokens';
+import { color, radius, themed, type } from '@/theme/tokens';
 
 /** TI-SCR-20 내 신용 (FR-097~100). 순위 탭의 내 점수 카드, 홈의 신용 카드에서 온다. 피그마 111:254, 111:353 */
 export default function CreditScreen() {
@@ -138,7 +138,7 @@ function weeksCaption(n: number): string {
   return `최근 ${n}주, 주마다 점수${tail}`;
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   safe: layout.screen,
   content: layout.content,
   section: layout.section,
@@ -157,4 +157,4 @@ const styles = StyleSheet.create({
   ink: { color: color.textPrimary },
   secondary: { color: color.textSecondary },
   muted: { color: color.textTertiary },
-});
+}));

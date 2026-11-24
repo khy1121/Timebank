@@ -3,7 +3,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import { stampPath, type StampShape } from '@/domain/stampShape';
 import { useLook } from '@/store/look';
-import { color, type } from '@/theme/tokens';
+import { color, live, themed, type } from '@/theme/tokens';
 
 /**
  * saved: 적립(기한 안에 끝냄). 상점에서 산 잉크·글자·모양으로 꾸민다
@@ -21,11 +21,11 @@ type Props = {
   shape?: StampShape;
 };
 
-const FIXED: Record<Exclude<StampKind, 'saved'>, { word: string; tint: string; dashed: boolean }> = {
+const FIXED: Record<Exclude<StampKind, 'saved'>, { word: string; tint: string; dashed: boolean }> = live(() => ({
   late: { word: '연체', tint: color.debtFg, dashed: false },
   forgive: { word: '포기', tint: color.textTertiary, dashed: false },
   pending: { word: '대기', tint: color.textSecondary, dashed: true },
-};
+}));
 
 export const STAMP_LABEL: Record<StampKind, string> = { saved: '적립', late: '연체', forgive: '포기', pending: '인정 대기' };
 
@@ -79,7 +79,7 @@ export function ForfeitSticker({ size = 44 }: { size?: number }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   box: { alignItems: 'center', justifyContent: 'center', opacity: 0.92 },
   text: { transform: [{ rotate: '-12deg' }] },
   sticker: { backgroundColor: color.debtFg, padding: 3, transform: [{ rotate: '8deg' }] },
@@ -93,4 +93,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   stickerText: { color: color.textOnPrimary, letterSpacing: 1 },
-});
+}));

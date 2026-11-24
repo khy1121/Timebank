@@ -1,11 +1,11 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { diffDays } from '@/domain/dates';
 import { gradeOf, signed, type CreditInfo } from '@/domain/credit';
 import { formatAmount, type Summary } from '@/domain/interest';
 import type { Account } from '@/domain/savings';
 import * as layout from '@/theme/layout';
-import { color, radius, type } from '@/theme/tokens';
+import { color, radius, themed, type } from '@/theme/tokens';
 
 import { GRADE_TONE, GradeBadge } from './GradeBadge';
 import { Mascot } from './Mascot';
@@ -91,7 +91,7 @@ export function SummaryCard({ account, message, credit, onPress, onGrade, today 
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   card: { ...layout.card, borderRadius: radius.xl, padding: 16, gap: 12 },
   body: { gap: 12 },
   // 등수와 변화는 두 줄로 쌓고 줄어들 수 있게 한다. 좁은 화면에서 신용등급 링크를 덮지 않게 (2026-11-24 휴대폰에서 겹침)
@@ -103,4 +103,4 @@ const styles = StyleSheet.create({
   gradeLink: { textDecorationLine: 'underline' },
   ink: { color: color.textPrimary },
   secondary: { color: color.textSecondary },
-});
+}));

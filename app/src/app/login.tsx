@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
@@ -9,7 +9,7 @@ import { SpeechBubble } from '@/components/SpeechBubble';
 import { isValidEmail } from '@/domain/auth';
 import { LOGIN_GREETING } from '@/domain/messages';
 import { useAuth } from '@/store/auth';
-import { color, radius, stroke, type } from '@/theme/tokens';
+import { color, radius, stroke, themed, type } from '@/theme/tokens';
 
 /**
  * 이메일 6자리 코드 로그인을 보여줄지.
@@ -125,7 +125,7 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   root: { flex: 1, backgroundColor: color.bgPage },
   pattern: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, opacity: 0.08 },
   safe: { flex: 1 },
@@ -144,4 +144,4 @@ const styles = StyleSheet.create({
   error: { color: color.debtFg },
   terms: { color: color.textTertiary, textAlign: 'center' },
   termsLink: { color: color.textSecondary, textDecorationLine: 'underline' },
-});
+}));

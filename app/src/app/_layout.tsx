@@ -13,24 +13,22 @@ import { NotificationsProvider } from '@/store/notifications';
 import { ProfileProvider } from '@/store/profile';
 import { StandingProvider } from '@/store/standing';
 import { UsageTracker } from '@/store/usage';
+import { ThemeProvider, useTheme } from '@/store/theme';
 import { TodosProvider } from '@/store/todos';
+import { STARTUP_FONTS } from '@/theme/fonts';
 import { color } from '@/theme/tokens';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [loaded, error] = useFonts({
-    'Pretendard-Regular': require('@/assets/fonts/Pretendard-Regular.ttf'),
-    'Pretendard-Medium': require('@/assets/fonts/Pretendard-Medium.ttf'),
-    'Pretendard-SemiBold': require('@/assets/fonts/Pretendard-SemiBold.ttf'),
-    'Pretendard-Bold': require('@/assets/fonts/Pretendard-Bold.ttf'),
-    'Pretendard-ExtraBold': require('@/assets/fonts/Pretendard-ExtraBold.ttf'),
-  });
+  // 기본 테마(말랑 저금통)와 Pretendard 글꼴. 다른 테마 글꼴은 그 테마를 고를 때 불러온다 (theme/fonts.ts)
+  const [loaded, error] = useFonts(STARTUP_FONTS);
 
   if (!loaded && !error) return null;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+    <ThemeProvider>
     <AuthProvider>
       <ProfileProvider>
         <GroupsProvider>
@@ -50,6 +48,7 @@ export default function RootLayout() {
         </GroupsProvider>
       </ProfileProvider>
     </AuthProvider>
+    </ThemeProvider>
     </GestureHandlerRootView>
   );
 }
@@ -57,6 +56,7 @@ export default function RootLayout() {
 /** 로그인 여부에 따라 갈 수 있는 화면을 나눈다. (FR-001, FR-002) */
 function Screens() {
   const { loading, session } = useAuth();
+  const { version } = useTheme();
   const signedIn = !!session;
 
   useEffect(() => {
@@ -66,7 +66,8 @@ function Screens() {
   if (loading) return null;
 
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: color.bgPage } }}>
+    // 테마가 바뀌면 key가 바뀌어 화면을 새 색으로 다시 그린다
+    <Stack key={version} screenOptions={{ headerShown: false, contentStyle: { backgroundColor: color.bgPage } }}>
       <Stack.Protected guard={signedIn}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="history" />
