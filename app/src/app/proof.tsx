@@ -13,6 +13,7 @@ import { TopBar } from '@/components/TopBar';
 import { CAPTION_MAX, PHOTO_LONG_EDGE, PHOTO_QUALITY, proofBonus } from '@/domain/groups';
 import { feedback } from '@/lib/feedback';
 import { useGroups } from '@/store/groups';
+import { useOpenProofs } from '@/store/openProofs';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
 import { color, radius, stroke, type } from '@/theme/tokens';
@@ -31,8 +32,11 @@ type Photo = { uri: string; base64: string };
 export default function ProofScreen() {
   const { repaymentId } = useLocalSearchParams<{ repaymentId: string }>();
   const { repayments, flush } = useTodos();
-  const { groups, rulesAgreed, agreeRules, postProof } = useGroups();
+  const { groups: allGroups, rulesAgreed, agreeRules, postProof } = useGroups();
   const repayment = repayments.find((r) => r.id === repaymentId);
+  // 이미 인증을 올린 그룹은 빼고 보여준다. 상환 내역에서 다시 들어온 경우다
+  const openIds = useOpenProofs().get(repaymentId ?? '');
+  const groups = openIds ? allGroups.filter((g) => openIds.includes(g.id)) : allGroups;
   const [photo, setPhoto] = useState<Photo | null>(null);
   const [caption, setCaption] = useState('');
   const [picked, setPicked] = useState<Set<string> | null>(null);

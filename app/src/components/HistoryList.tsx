@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { groupByMonth, historySummary, type Repayment } from '@/domain/records';
 import * as layout from '@/theme/layout';
@@ -10,8 +10,16 @@ import { Stamp } from './Stamp';
 
 const shortDate = (d: string) => `${Number(d.slice(5, 7))}월 ${Number(d.slice(8, 10))}일`;
 
+type Props = {
+  repayments: Repayment[];
+  today: string;
+  /** 지금 인증을 올릴 수 있는 상환 ID. 이 줄에 "인증 올리기"를 보여준다 (FR-078) */
+  canProof?: (repaymentId: string) => boolean;
+  onProof?: (repaymentId: string) => void;
+};
+
 /** 끝낸 일: 지금까지 낸 이자, 완납·탕감 수, 달별 기록 (FR-016, FR-024). 홈의 "끝낸 일"과 상환 내역 화면이 같이 쓴다. */
-export function HistoryList({ repayments, today }: { repayments: Repayment[]; today: string }) {
+export function HistoryList({ repayments, today, canProof, onProof }: Props) {
   const summary = historySummary(repayments);
   const groups = groupByMonth(repayments, today);
   return (
@@ -42,7 +50,7 @@ export function HistoryList({ repayments, today }: { repayments: Repayment[]; to
         </Text>
         <View style={styles.rows}>
           {g.records.map((r, i) => (
-            <Row key={r.id} record={r} first={i === 0} />
+            <Row key={r.id} record={r} first={i === 0} onProof={onProof && canProof?.(r.id) ? () => onProof(r.id) : undefined} />
           ))}
         </View>
       </View>
@@ -51,7 +59,7 @@ export function HistoryList({ repayments, today }: { repayments: Repayment[]; to
   );
 }
 
-function Row({ record, first }: { record: Repayment; first: boolean }) {
+function Row({ record, first, onProof }: { record: Repayment; first: boolean; onProof?: () => void }) {
   const forgiven = record.kind === 'forgiven';
   return (
     <View style={[styles.row, !first && styles.rowBorder]}>
@@ -61,6 +69,16 @@ function Row({ record, first }: { record: Repayment; first: boolean }) {
           {record.title}
         </Text>
         <Text style={[type.caption, styles.muted]}>{shortDate(record.settledOn)}</Text>
+        {onProof ? (
+          <Pressable
+            onPress={onProof}
+            accessibilityRole="button"
+            accessibilityLabel={`${record.title} 그룹에 인증 올리기`}
+            hitSlop={8}
+            style={({ pressed }) => [styles.proof, pressed && styles.pressed]}>
+            <Text style={[type.caption, styles.brand]}>인증 올리기</Text>
+          </Pressable>
+        ) : null}
       </View>
       <View style={styles.rowAmount}>
         <Text style={[type.caption, styles.tertiary]}>{forgiven ? '탕감한 빚' : '낸 이자'}</Text>
@@ -92,5 +110,8 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 },
   rowBorder: { borderTopWidth: stroke.hairline, borderTopColor: color.borderDefault },
   rowText: { flex: 1, gap: 4 },
+  proof: { alignSelf: 'flex-start', marginTop: 4, paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.full, borderWidth: stroke.hairline, borderColor: color.brandPrimary },
+  pressed: { opacity: 0.8 },
+  brand: { color: color.brandPrimary },
   rowAmount: { alignItems: 'flex-end', gap: 2 },
 });

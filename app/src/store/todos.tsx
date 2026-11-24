@@ -207,7 +207,7 @@ export type SyncState = 'idle' | 'syncing' | 'error';
 type Store = {
   hydrated: boolean;
   todos: Todo[];
-  repayments: Repayment[];
+  repayments: StoredRepayment[];
   purchases: Purchase[];
   /** 냥 잔고와 연속 기록 */
   wallet: Wallet;

@@ -18,6 +18,7 @@ import { homeMessage, repayMessage } from '@/domain/messages';
 import { repayEffect } from '@/domain/wallet';
 import { feedback } from '@/lib/feedback';
 import { useGroups } from '@/store/groups';
+import { useOpenProofs } from '@/store/openProofs';
 import { useProfile } from '@/store/profile';
 import { useStanding } from '@/store/standing';
 import { useTodos } from '@/store/todos';
@@ -33,6 +34,7 @@ export default function HomeScreen() {
   const { todos, today, repay, undoRepay, wallet, repayments } = useTodos();
   const standing = useStanding();
   const { groups } = useGroups();
+  const openProofs = useOpenProofs();
   const { needsOnboarding } = useProfile();
   const [lastRepaid, setLastRepaid] = useState<{ id: string; text: string } | null>(null);
   const [showing, setShowing] = useState<View_>('open');
@@ -93,7 +95,12 @@ export default function HomeScreen() {
             </View>
 
             {showing === 'done' ? (
-              <HistoryList repayments={repayments} today={today} />
+              <HistoryList
+                repayments={repayments}
+                today={today}
+                canProof={(id) => openProofs.has(id)}
+                onProof={(repaymentId) => router.push({ pathname: '/proof', params: { repaymentId } })}
+              />
             ) : views.length === 0 ? (
               <View style={styles.empty}>
                 <View accessible={false} importantForAccessibility="no-hide-descendants">
