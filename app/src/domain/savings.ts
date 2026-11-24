@@ -267,3 +267,38 @@ export function accountOf(input: AccountInput): Account {
 export function canBuy(account: Pick<Account, 'cash' | 'netWorth' | 'state'>, price: number): boolean {
   return account.state === 'normal' && account.cash >= price && account.netWorth >= 0;
 }
+
+export type SettlementStamp = 'saved' | 'late' | 'forgive' | 'forfeit' | 'pending';
+
+export type Settlement = {
+  stamp: SettlementStamp;
+  /** 이 기록으로 번 냥(+) 또는 잃은 냥(−). 원금을 건 것 자체는 빼고 본다 */
+  amount: number;
+  /** 친구 인정을 받아 그룹 보너스를 받았다 */
+  verified: boolean;
+};
+
+/**
+ * 상환 내역 한 줄의 도장과 손익. (시간적금기획서 12절)
+ * - 적립: 기한 안에 끝냄. + 이자(+ 그룹 보너스)
+ * - 연체: 늦게 끝냄. − 연체료
+ * - 포기: 기한 전이면 − 원금의 절반, 연체 뒤면 − (원금 + 연체료)
+ * - 몰수: 그룹 보증금을 인정받지 못함. − 원금
+ * - pending: 그룹 보증금이 친구 인정을 기다리는 중(상환 뒤 하루)
+ */
+export function settlementOf(r: Repayment, groupId: string | null, verified: ReadonlySet<string>, today: DateString): Settlement {
+  const isVerified = verified.has(r.id);
+  if (r.kind === 'forgiven') {
+    const lost = r.overdueDays === 0 ? r.principal - earlyForgiveRefund(r.principal) : r.principal + r.interest;
+    return { stamp: 'forgive', amount: -lost, verified: false };
+  }
+  if (r.overdueDays > 0) {
+    return groupId ? { stamp: 'forfeit', amount: -r.principal, verified: false } : { stamp: 'late', amount: -r.interest, verified: false };
+  }
+  if (groupId && !isVerified) {
+    return diffDays(r.settledOn, today) <= PROOF_WAIT_DAYS
+      ? { stamp: 'pending', amount: 0, verified: false }
+      : { stamp: 'forfeit', amount: -r.principal, verified: false };
+  }
+  return { stamp: 'saved', amount: rewardFor(r.principal) + (groupId ? groupBonus(r.principal) : 0), verified: !!groupId && isVerified };
+}

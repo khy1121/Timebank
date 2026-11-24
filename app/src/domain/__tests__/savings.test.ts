@@ -5,6 +5,7 @@ import {
   canBuy,
   extendFee,
   inFreeEdit,
+  settlementOf,
   REHAB_GRANT,
   SIGNUP_GRANT,
   type AccountInput,
@@ -239,5 +240,27 @@ describe('상점', () => {
   it('산 값은 통장에서 빠진다', () => {
     const a = accountOf(input({ purchases: [{ id: 'p1', itemCode: 'ink-blue', price: 700, purchasedOn: '2026-11-02' }] }));
     expect(a.cash).toBe(9300);
+  });
+});
+
+describe('상환 내역 도장 (TI-SAV 12절)', () => {
+  const today = '2026-11-10';
+  it('기한 안: 적립, 이자만큼 +', () => {
+    expect(settlementOf(repaid(), null, new Set(), today)).toEqual({ stamp: 'saved', amount: 300, verified: false });
+  });
+  it('그룹 인정: 적립, 이자 + 그룹 보너스', () => {
+    expect(settlementOf(repaid(), 'g1', new Set(['r1']), today)).toEqual({ stamp: 'saved', amount: 450, verified: true });
+  });
+  it('늦게: 연체, 연체료만큼 −', () => {
+    expect(settlementOf(repaid({ overdueDays: 3, interest: 993 }), null, new Set(), today)).toEqual({ stamp: 'late', amount: -993, verified: false });
+  });
+  it('포기: 기한 전이면 원금 절반, 연체 뒤면 원금 + 연체료', () => {
+    expect(settlementOf(repaid({ kind: 'forgiven' }), null, new Set(), today).amount).toBe(-1500);
+    expect(settlementOf(repaid({ kind: 'forgiven', overdueDays: 3, interest: 993 }), null, new Set(), today).amount).toBe(-3993);
+  });
+  it('그룹 보증금: 하루 안은 인정 대기, 그 뒤 몰수', () => {
+    expect(settlementOf(repaid({ settledOn: '2026-11-09' }), 'g1', new Set(), today).stamp).toBe('pending');
+    expect(settlementOf(repaid({ settledOn: '2026-11-08' }), 'g1', new Set(), today)).toEqual({ stamp: 'forfeit', amount: -3000, verified: false });
+    expect(settlementOf(repaid({ overdueDays: 1, interest: 300 }), 'g1', new Set(['r1']), today).stamp).toBe('forfeit');
   });
 });
