@@ -15,6 +15,7 @@ import { TopBar } from '@/components/TopBar';
 import { formatAmount } from '@/domain/interest';
 import { shopMessage } from '@/domain/messages';
 import { josa } from '@/domain/korean';
+import { shopLockReason } from '@/domain/savings';
 import { BANK_NAMES, bankStage, canBuy, ITEMS, itemOf, itemsOf, nextBank, SLOT_LABEL, SLOTS, type ShopItem } from '@/domain/shop';
 import { toShape } from '@/domain/stampShape';
 import { STREAK_STEP } from '@/domain/wallet';
@@ -35,8 +36,8 @@ const BANK_ART = [
 
 /** TI-SCR-10 상점. 잔고와 연속 기록, 내 은행, 옷장 입구, 꾸미기. (FR-060~064, FR-070) */
 export default function ShopScreen() {
-  const { wallet, account, owned, buy } = useTodos();
-  const locked = account.state !== 'normal' || account.netWorth < 0;
+  const { wallet, account, owned, buy, today } = useTodos();
+  const locked = shopLockReason(account, today) !== null;
   const { profile, update } = useProfile();
   const look = useLook();
   const [asking, setAsking] = useState<string | null>(null);

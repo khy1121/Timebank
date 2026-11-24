@@ -16,7 +16,7 @@ import { TodoTicket } from '@/components/TodoTicket';
 import { WalletChip } from '@/components/WalletChip';
 import { sortViews, summarize, viewOf } from '@/domain/interest';
 import { homeMessage, repayMessage } from '@/domain/messages';
-import { completionPreview } from '@/domain/savings';
+import { completionPreview, shopLockReason } from '@/domain/savings';
 import { feedback } from '@/lib/feedback';
 import { useGroups } from '@/store/groups';
 import { useOpenProofs } from '@/store/openProofs';
@@ -38,6 +38,8 @@ export default function HomeScreen() {
   const openProofs = useOpenProofs();
   const { needsOnboarding } = useProfile();
   const [lastRepaid, setLastRepaid] = useState<{ id: string; text: string } | null>(null);
+  // 상점이 잠겼을 때 잔고 칩을 누르면 잠깐 띄우는 안내
+  const [lockNote, setLockNote] = useState<string | null>(null);
   const [showing, setShowing] = useState<View_>('open');
   const [gradeOpen, setGradeOpen] = useState(false);
 
@@ -45,6 +47,12 @@ export default function HomeScreen() {
     const open = todos.filter((t) => t.status === 'open');
     return { summary: summarize(todos, today), views: sortViews(open.map((t) => viewOf(t, today))) };
   }, [todos, today]);
+
+  useEffect(() => {
+    if (!lockNote) return;
+    const timer = setTimeout(() => setLockNote(null), 3000);
+    return () => clearTimeout(timer);
+  }, [lockNote]);
 
   useEffect(() => {
     if (!lastRepaid) return;
@@ -67,7 +75,14 @@ export default function HomeScreen() {
             <Text style={[type.title, styles.title]} accessibilityRole="header">
               할 일 이자
             </Text>
-            <WalletChip balance={account.cash} onPress={() => router.navigate('/shop')} />
+            <WalletChip
+              balance={account.cash}
+              onPress={() => {
+                const lock = shopLockReason(account, today);
+                if (lock) setLockNote(lock);
+                else router.navigate('/shop');
+              }}
+            />
             <Pressable onPress={() => router.push('/settings')} accessibilityRole="button" accessibilityLabel="설정" hitSlop={12}>
               <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
                 <Circle cx={12} cy={12} r={3} stroke={color.inkOutline} strokeWidth={2} />
@@ -152,6 +167,16 @@ export default function HomeScreen() {
         </ScrollView>
 
         <View style={styles.footer}>
+          {lockNote && !lastRepaid ? (
+            <Snackbar
+              text={lockNote}
+              actionLabel={account.state === 'bankrupt' ? '자세히' : '빚 보기'}
+              onAction={() => {
+                setLockNote(null);
+                router.push('/bankrupt');
+              }}
+            />
+          ) : null}
           {lastRepaid ? (
             <Snackbar
               text={lastRepaid.text}
