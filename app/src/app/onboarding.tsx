@@ -82,6 +82,7 @@ export default function OnboardingScreen() {
               {guide.title}
             </Text>
             <Text style={[type.body, styles.body]}>{guide.body}</Text>
+            <SpeechBubble text={guide.mascot} />
           </>
         ) : (
           <>
