@@ -59,7 +59,18 @@ export function kakaoErrorMessage(error: AuthFailure): string {
   return '카카오 로그인을 시작하지 못했어요. 연결을 확인하고 다시 시도해 주세요.';
 }
 
-export type AuthCallback = { accessToken?: string; refreshToken?: string; code?: string; error?: string };
+/**
+ * 카카오 친구 목록 권한을 받다가 실패했을 때의 문구.
+ * 콘솔에서 "카카오 서비스 내 친구목록" 동의 항목을 켜지 않았으면 카카오가 scope 오류를 돌려준다.
+ */
+export function kakaoFriendsErrorMessage(error: string | null | undefined): string {
+  const e = error ?? '';
+  if (/scope|KOE205|invalid_scope/i.test(e)) return '카카오톡 친구 목록 권한이 아직 켜지지 않았어요.';
+  if (/access_denied|cancel|consent/i.test(e)) return '친구 목록 제공에 동의하지 않았어요.';
+  return '카카오에서 친구 목록 권한을 받지 못했어요.';
+}
+
+export type AuthCallback = { accessToken?: string; refreshToken?: string; code?: string; error?: string; providerToken?: string };
 
 /**
  * 로그인 뒤 돌아온 주소에서 로그인 정보를 꺼낸다.
@@ -83,6 +94,8 @@ export function parseAuthCallback(url: string): AuthCallback {
     accessToken: params.get('access_token'),
     refreshToken: params.get('refresh_token'),
     code: params.get('code'),
+    // 카카오가 준 토큰. 카카오 API(친구 목록)를 부를 때 쓴다
+    providerToken: params.get('provider_token'),
     error: params.get('error_description') ?? params.get('error'),
   };
 }

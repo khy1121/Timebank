@@ -5,6 +5,7 @@ import {
   kakaoErrorMessage,
   normalizeCode,
   normalizeEmail,
+  kakaoFriendsErrorMessage,
   parseAuthCallback,
   sendErrorMessage,
   verifyErrorMessage,
@@ -93,5 +94,17 @@ describe('다시 받기까지 남은 시간', () => {
     expect(formatCountdown(42)).toBe('0:42');
     expect(formatCountdown(0.2)).toBe('0:01');
     expect(formatCountdown(-3)).toBe('0:00');
+  });
+});
+
+describe('카카오 친구 목록 권한 (FR-108)', () => {
+  it('돌아온 주소에서 카카오 토큰을 꺼낸다', () => {
+    expect(parseAuthCallback('todointerest://auth-callback#access_token=a&refresh_token=b&provider_token=kakao123').providerToken).toBe('kakao123');
+    expect(parseAuthCallback('todointerest://auth-callback#access_token=a').providerToken).toBeUndefined();
+  });
+  it('실패 이유를 문구로', () => {
+    expect(kakaoFriendsErrorMessage('invalid_scope')).toBe('카카오톡 친구 목록 권한이 아직 켜지지 않았어요.');
+    expect(kakaoFriendsErrorMessage('access_denied')).toBe('친구 목록 제공에 동의하지 않았어요.');
+    expect(kakaoFriendsErrorMessage(null)).toBe('카카오에서 친구 목록 권한을 받지 못했어요.');
   });
 });

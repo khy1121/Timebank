@@ -6,6 +6,7 @@ import { Platform } from 'react-native';
 
 import {
   kakaoErrorMessage,
+  kakaoFriendsErrorMessage,
   normalizeEmail,
   parseAuthCallback,
   sendErrorMessage,
@@ -33,6 +34,11 @@ type Auth = {
   /** 코드를 보낸 주소. 인증 코드 화면에서 쓴다. 주소를 화면 경로에 싣지 않으려고 여기에 둔다. */
   pendingEmail: string | null;
   signInWithKakao: () => Promise<Result>;
+  /**
+   * 카카오 친구 목록 권한(friends)을 추가로 동의받고 카카오 토큰을 돌려준다. (FR-108)
+   * 카카오로 로그인한 계정에서만 된다. 다른 카카오 계정으로 바뀌면 원래 로그인으로 되돌린다.
+   */
+  kakaoFriendsToken: () => Promise<{ ok: true; token: string } | { ok: false; message: string }>;
   requestCode: (email: string) => Promise<Result>;
   verifyCode: (code: string) => Promise<Result>;
   cancelPending: () => void;
@@ -133,6 +139,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return codeError ? { ok: false, message: kakaoErrorMessage(codeError) } : { ok: true };
         }
         return { ok: false, message: '카카오에서 로그인 정보를 받지 못했어요.' };
+      },
+      kakaoFriendsToken: async () => {
+        if (!isSupabaseConfigured) return { ok: false, message: '서버 연결 정보가 없어요. .env 파일을 확인해 주세요.' };
+        if (Platform.OS === 'web') return { ok: false, message: '카카오톡 친구 찾기는 휴대폰 앱에서만 돼요.' };
+        const { data: current } = await supabase.auth.getSession();
+        const before = current.session;
+        if (!before) return { ok: false, message: '로그인이 필요해요.' };
+        if (!before.user.identities?.some((i) => i.provider === 'kakao')) {
+          return { ok: false, message: '카카오로 로그인한 계정에서만 카카오톡 친구를 찾을 수 있어요.' };
+        }
+        const redirectTo = Linking.createURL('auth-callback');
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'kakao',
+          options: { redirectTo, skipBrowserRedirect: true, scopes: 'friends' },
+        });
+        if (error || !data.url) return { ok: false, message: kakaoErrorMessage(error) };
+        const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+        if (result.type !== 'success') return { ok: false, message: '카카오톡 친구 찾기를 취소했어요.' };
+        const parsed = parseAuthCallback(result.url);
+        if (parsed.error) return { ok: false, message: kakaoFriendsErrorMessage(parsed.error) };
+
+        let after: Session | null = null;
+        let token = parsed.providerToken ?? null;
+        if (parsed.accessToken && parsed.refreshToken) {
+          const r = await supabase.auth.setSession({ access_token: parsed.accessToken, refresh_token: parsed.refreshToken });
+          after = r.data.session;
+        } else if (parsed.code) {
+          const r = await supabase.auth.exchangeCodeForSession(parsed.code);
+          after = r.data.session;
+          token = token ?? r.data.session?.provider_token ?? null;
+        }
+        // 다른 카카오 계정으로 로그인됐으면 원래 계정으로 되돌린다
+        if (after && after.user.id !== before.user.id) {
+          await supabase.auth.setSession({ access_token: before.access_token, refresh_token: before.refresh_token });
+          return { ok: false, message: '다른 카카오 계정으로 로그인돼서 원래 계정으로 되돌렸어요. 이 앱에 가입한 카카오 계정으로 해 주세요.' };
+        }
+        if (!token) return { ok: false, message: kakaoFriendsErrorMessage(null) };
+        return { ok: true, token };
       },
       requestCode: async (input) => {
         if (!isSupabaseConfigured) return NOT_CONFIGURED;
