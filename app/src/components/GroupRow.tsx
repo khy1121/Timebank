@@ -4,6 +4,8 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { MyGroup } from '@/domain/groups';
 import { color, radius, stroke, type } from '@/theme/tokens';
 
+import { ThemeBadge } from './ThemeBadge';
+
 const AVATAR = require('@/assets/images/closet/base.png');
 
 /** 그룹 목록의 한 줄 (TI-SCR-14). 피그마 GroupRow 50:1572 */
@@ -23,9 +25,12 @@ export function GroupRow({ group, onPress }: { group: MyGroup; onPress: () => vo
         ))}
       </View>
       <View style={styles.text}>
-        <Text style={[type.headline, styles.ink]} numberOfLines={1}>
-          {group.name}
-        </Text>
+        <View style={styles.nameRow}>
+          <Text style={[type.headline, styles.ink, styles.name]} numberOfLines={1}>
+            {group.name}
+          </Text>
+          <ThemeBadge theme={group.theme} label={group.themeLabel} />
+        </View>
         <Text style={[type.caption, styles.muted]}>
           {group.members}명이 함께해요{group.isOwner ? '. 내가 방장' : ''}
         </Text>
@@ -54,6 +59,8 @@ const styles = StyleSheet.create({
   },
   pressed: { backgroundColor: color.bgSunken },
   faces: { height: 36 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  name: { flexShrink: 1 },
   face: {
     position: 'absolute',
     width: 36,

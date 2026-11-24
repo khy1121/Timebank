@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
 import { TextField } from '@/components/TextField';
+import { ThemeBadge } from '@/components/ThemeBadge';
 import { TopBar } from '@/components/TopBar';
 import { CODE_LENGTH, codeFromText, isCompleteCode, MAX_MEMBERS, NICKNAME_MAX, nicknameError, normalizeCode } from '@/domain/groups';
 import { feedback } from '@/lib/feedback';
@@ -91,6 +92,7 @@ export default function JoinGroupScreen() {
           {group ? (
             <View style={styles.preview}>
               <Text style={[type.headline, styles.ink]}>{group.name}</Text>
+              <ThemeBadge theme={group.theme} label={group.themeLabel} />
               <Text style={[type.caption, styles.secondary]}>
                 {group.members}명이 함께해요{group.ownerNickname ? `. 방장 ${group.ownerNickname}` : ''}
               </Text>

@@ -8,6 +8,7 @@ import { Chip } from '@/components/Chip';
 import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { ProofCard } from '@/components/ProofCard';
 import { StatusStamp } from '@/components/StatusStamp';
+import { ThemeBadge } from '@/components/ThemeBadge';
 import { TopBar } from '@/components/TopBar';
 import {
   passedLabel,
@@ -171,6 +172,7 @@ export default function GroupScreen() {
 
   const header = (
     <View style={styles.headerBlock}>
+      {group ? <ThemeBadge theme={group.theme} label={group.themeLabel} /> : null}
       <View style={styles.tabs} accessibilityRole="tablist">
         {TABS.map((t) => (
           <Chip key={t.key} label={t.label} selected={tab === t.key} onPress={() => setTab(t.key)} />

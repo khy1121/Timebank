@@ -10,7 +10,8 @@ import { Button } from '@/components/Button';
 import { OptionRow } from '@/components/OptionRow';
 import { TextField } from '@/components/TextField';
 import { TopBar } from '@/components/TopBar';
-import { CAPTION_MAX, PHOTO_LONG_EDGE, PHOTO_QUALITY, proofBonus } from '@/domain/groups';
+import { CAPTION_MAX, PHOTO_LONG_EDGE, PHOTO_QUALITY, proofBonus, proofHint } from '@/domain/groups';
+import { josa } from '@/domain/korean';
 import { feedback } from '@/lib/feedback';
 import { useGroups } from '@/store/groups';
 import { useOpenProofs } from '@/store/openProofs';
@@ -46,6 +47,9 @@ export default function ProofScreen() {
 
   // 기본은 모든 그룹에 올린다
   const selected = picked ?? new Set(groups.map((g) => g.id));
+  // 올릴 그룹들의 테마가 같으면 그 테마에 맞게, 다르면 일반 안내
+  const themes = [...new Set(groups.filter((g) => selected.has(g.id)).map((g) => g.theme))];
+  const hint = proofHint(themes.length === 1 ? themes[0] : 'etc');
   const onTime = repayment ? repayment.overdueDays === 0 : false;
   const bonus = repayment ? proofBonus(repayment.principal, onTime) : 0;
 
@@ -124,7 +128,7 @@ export default function ProofScreen() {
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <Text style={[type.title, styles.ink]}>완납! 그룹에 인증할까요?</Text>
           <Text style={[type.body, styles.secondary]}>
-            {repayment ? `"${repayment.title}"` : '방금 끝낸 할 일'}을 사진으로 보여 주세요.{' '}
+            {repayment ? `"${repayment.title}"` : '방금 끝낸 할 일'}, {josa(hint, '을', '를')} 사진으로 보여 주세요.{' '}
             {bonus > 0
               ? `친구가 인정하면 ${bonus.toLocaleString('ko-KR')}냥을 더 받고 그룹 순위에 들어가요.`
               : '친구가 인정하면 그룹 순위에 들어가요. 늦게 갚은 할 일은 보너스가 없어요.'}

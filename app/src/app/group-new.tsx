@@ -7,7 +7,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
 import { TextField } from '@/components/TextField';
 import { TopBar } from '@/components/TopBar';
-import { GROUP_NAME_MAX, groupNameError, inviteMessage, MAX_MEMBERS, NICKNAME_MAX, nicknameError } from '@/domain/groups';
+import { GROUP_NAME_MAX, GROUP_THEMES, groupNameError, inviteMessage, MAX_MEMBERS, NICKNAME_MAX, nicknameError, THEME_LABEL_MAX, type GroupTheme } from '@/domain/groups';
+import { Chip } from '@/components/Chip';
 import { josa } from '@/domain/korean';
 import { feedback } from '@/lib/feedback';
 import { useGroups } from '@/store/groups';
@@ -19,6 +20,8 @@ export default function NewGroupScreen() {
   const { create } = useGroups();
   const [name, setName] = useState('');
   const [nickname, setNickname] = useState('');
+  const [theme, setTheme] = useState<GroupTheme>('study');
+  const [themeLabel, setThemeLabel] = useState('');
   const [touched, setTouched] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +35,7 @@ export default function NewGroupScreen() {
     if (groupNameError(name) || nicknameError(nickname) || busy) return;
     setBusy(true);
     setError(null);
-    const r = await create(name, nickname);
+    const r = await create(name, nickname, theme, theme === 'etc' ? themeLabel.trim() || null : null);
     setBusy(false);
     if (!r.ok) {
       setError(r.message);
@@ -81,6 +84,17 @@ export default function NewGroupScreen() {
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <TextField label="그룹 이름" value={name} onChangeText={setName} maxLength={GROUP_NAME_MAX} placeholder="예: 스터디 4인방" error={nameErr} />
+          <View style={styles.themeField}>
+            <Text style={[type.label, styles.themeLabel]}>무엇을 함께 하나요?</Text>
+            <View style={styles.themes} accessibilityRole="radiogroup">
+              {GROUP_THEMES.map((t) => (
+                <Chip key={t.code} label={t.label} selected={theme === t.code} onPress={() => setTheme(t.code)} />
+              ))}
+            </View>
+            {theme === 'etc' ? (
+              <TextField label="테마 이름 (안 적어도 돼요)" value={themeLabel} onChangeText={setThemeLabel} maxLength={THEME_LABEL_MAX} placeholder="예: 피아노" />
+            ) : null}
+          </View>
           <TextField
             label="그룹에서 쓸 내 별명"
             value={nickname}
@@ -105,6 +119,9 @@ export default function NewGroupScreen() {
 }
 
 const styles = StyleSheet.create({
+  themeField: { gap: 8 },
+  themeLabel: { color: color.textSecondary },
+  themes: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   safe: layout.screen,
   flex: { flex: 1 },
   content: layout.content,
