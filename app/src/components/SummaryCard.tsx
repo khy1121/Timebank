@@ -95,7 +95,8 @@ export function SummaryCard({ summary, account, status, message, current, change
 const styles = StyleSheet.create({
   card: { ...layout.card, borderRadius: radius.xl, padding: 16, gap: 12 },
   body: { gap: 12 },
-  rank: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  // 등수와 변화는 두 줄로 쌓고 줄어들 수 있게 한다. 좁은 화면에서 신용등급 링크를 덮지 않게 (2026-11-24 휴대폰에서 겹침)
+  rank: { flex: 1, minWidth: 0, gap: 2 },
   pressed: { opacity: 0.8 },
   top: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   debt: { flex: 1 },
