@@ -59,7 +59,7 @@ export function HistoryList({ repayments, today, settlementFor, canProof, onProo
         <View style={styles.counts}>
           {(['saved', 'late', 'forgive', 'forfeit'] as const).map((k) => (
             <View key={k} style={styles.count} accessible accessibilityLabel={`${NAME[k]} ${count(k)}건`}>
-              <Mark stamp={k} size={32} />
+              <Mark stamp={k} size={28} />
               <Text style={[type.headline, styles.ink]}>{count(k)}건</Text>
             </View>
           ))}
@@ -115,7 +115,7 @@ function Row({ record, settlement, first, onProof }: { record: Repayment; settle
       <View style={styles.rowAmount} accessible accessibilityLabel={`${label} ${signed(amount)}냥`}>
         <Text style={[type.caption, styles.tertiary]}>{label}</Text>
         {stamp === 'pending' ? (
-          <Text style={[type.caption, { color: AMOUNT_COLOR.pending }]}>하루 안에 인정받으면 돌려받아요</Text>
+          <Text style={[type.caption, { color: AMOUNT_COLOR.pending }]}>인정받으면 돌아와요</Text>
         ) : (
           <Text style={[type.numberM, { color: AMOUNT_COLOR[stamp] }]}>
             {signed(amount)}
@@ -138,8 +138,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   paid: { gap: 2 },
-  counts: { flexDirection: 'row', flexWrap: 'wrap', gap: 14 },
-  count: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  counts: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  count: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   muted: { color: color.textSecondary },
   tertiary: { color: color.textTertiary },
   ink: { color: color.textPrimary },
