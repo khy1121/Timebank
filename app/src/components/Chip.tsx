@@ -36,6 +36,7 @@ const styles = themed(() => ({
   },
   grow: { flex: 1, paddingHorizontal: 0 },
   on: { backgroundColor: color.brandPrimary, borderColor: color.inkOutline },
-  off: { backgroundColor: color.bgSurface, borderColor: color.borderDefault },
+  // 외곽선 없는 테마에서는 카드 바탕과 구분되게 한 단계 짙게
+  off: { backgroundColor: stroke.outline === 0 ? color.bgSunken : color.bgSurface, borderColor: color.borderDefault },
   disabled: { opacity: 0.45 },
 }));

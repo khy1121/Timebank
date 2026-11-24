@@ -18,6 +18,7 @@ const profile = (over: Partial<Profile> = {}): Profile => ({
   signupDate: null,
   pushFriends: true,
   nameplate: 'none',
+  todoBundles: [],
   ...over,
 });
 
@@ -44,7 +45,7 @@ describe('사용자 설정 변환', () => {
   it('서버 행을 앱의 모양으로 옮긴다', () => {
     expect(
       profileFromRow({ notify_enabled: false, notify_time: '18:00:00', onboarded_at: null, signup_source: 'sns' }),
-    ).toEqual({ notifyEnabled: false, notifyTime: '18:00', onboardedAt: null, signupSource: 'sns', equipped: {}, voice: 'spicy', signupDate: null, pushFriends: true, nameplate: 'none' });
+    ).toEqual({ notifyEnabled: false, notifyTime: '18:00', onboardedAt: null, signupSource: 'sns', equipped: {}, voice: 'spicy', signupDate: null, pushFriends: true, nameplate: 'none', todoBundles: [] });
     expect(profileFromRow({ notify_enabled: true, notify_time: '09:00', onboarded_at: null, signup_source: 'sns', push_friends: false }).pushFriends).toBe(false);
   });
 

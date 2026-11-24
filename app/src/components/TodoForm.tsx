@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -22,6 +23,7 @@ import { TopBar } from './TopBar';
 import { goBack } from '@/lib/navigation';
 import { REPEAT_BANK_STAGE, REPEAT_LABEL, type Repeat } from '@/domain/repeat';
 import type { StoredTodo } from '@/domain/sync';
+import { BUNDLE_BANK_STAGE } from '@/domain/bundles';
 
 const LEVELS: Importance[] = [1, 2, 3, 4, 5];
 const QUICK = [
@@ -48,6 +50,7 @@ export function TodoForm({ original }: { original?: Todo }) {
   const [repeat, setRepeat] = useState<Repeat | null>((original as StoredTodo | undefined)?.repeat ?? null);
   // 반복은 시장 지점부터 (FR-111)
   const canRepeat = account.bankStage >= REPEAT_BANK_STAGE;
+  const canBundle = account.bankStage >= BUNDLE_BANK_STAGE;
   const [focused, setFocused] = useState(false);
   const [askDiscard, setAskDiscard] = useState(false);
 
@@ -214,6 +217,17 @@ export function TodoForm({ original }: { original?: Todo }) {
             </Text>
           ) : null}
 
+          {!original ? (
+
+            <Pressable onPress={() => router.push('/bundles')} accessibilityRole="button" style={styles.bundleLink}>
+
+              <Text style={[type.label, styles.bundleText]}>{canBundle ? '할 일 묶음으로 한 번에 넣기 ›' : '🔒 할 일 묶음 (시장 지점을 열면)'}</Text>
+
+            </Pressable>
+
+          ) : null}
+
+
           <SpeechBubble text={inputRuleHint(principal, original ? Number.MAX_SAFE_INTEGER : account.cash)} />
         </ScrollView>
       </KeyboardAvoidingView>
@@ -262,6 +276,8 @@ function Stepper({ label, glyph, disabled, onPress }: { label: string; glyph: st
 }
 
 const styles = themed(() => ({
+  bundleLink: { alignSelf: 'flex-start', paddingVertical: 4 },
+  bundleText: { color: color.brandPrimary },
   lockedChip: { opacity: 0.45 },
   safe: layout.screen,
   flex: { flex: 1 },
