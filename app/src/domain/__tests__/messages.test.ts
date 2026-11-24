@@ -1,4 +1,4 @@
-import { repayMessage, shopMessage } from '../messages';
+import { GUIDE_PAGES, repayMessage, shopMessage } from '../messages';
 
 describe('상환 직후 문구 (TC-064)', () => {
   it('번 냥을 알려준다', () => {
@@ -25,5 +25,12 @@ describe('상점 한마디 (TC-061)', () => {
 
   it('연속 기록이 없으면 버는 방법을 알려준다', () => {
     expect(shopMessage(0, 5)).toContain('원금의 10%');
+  });
+});
+
+describe('첫 실행 안내 한마디 (FR-055)', () => {
+  it('세 장 모두 마스코트 한마디가 있고, 2장 금액은 계산값과 같다', () => {
+    expect(GUIDE_PAGES.every((p) => p.mascot.length > 0)).toBe(true);
+    expect(GUIDE_PAGES[1].mascot).toContain('3,993냥');
   });
 });
