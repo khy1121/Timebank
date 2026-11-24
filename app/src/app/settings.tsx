@@ -27,7 +27,7 @@ const VERSION = Constants.expoConfig?.version ?? '1.0.0';
 
 type Dialog = 'signOut' | 'time' | 'deleteWarn' | 'deleteType' | null;
 
-/** TI-SCR-07 설정. 알림, 순위, 소리와 진동, 도움말, 계정. (FR-003, FR-004, FR-032, FR-033, FR-050~052, FR-067, FR-073) */
+/** TI-SCR-07 설정. 알림, 신용, 소리와 진동, 도움말, 계정. (FR-003, FR-004, FR-032, FR-033, FR-050~052, FR-067, FR-073) */
 export default function SettingsScreen() {
   const { email, signOut, deleteAccount } = useAuth();
   const { pendingCount, syncState, clearLocal: clearTodos } = useTodos();
@@ -114,11 +114,11 @@ export default function SettingsScreen() {
           ) : null}
         </Group>
 
-        <Group label="순위">
+        <Group label="신용">
           <SettingRow
             first
-            label="상태 말투"
-            hint={profile?.voice === 'mild' ? '순한맛: 놀리되 비난하지 않아요' : '매운맛: 밀리면 독하게 말해요'}
+            label="말투"
+            hint={profile?.voice === 'mild' ? '순한맛: 내 신용과 마스코트가 다정하게 말해요' : '매운맛: 내 신용과 마스코트가 독하게 말해요'}
             right={
               <View style={styles.voice} accessibilityRole="radiogroup">
                 <Chip label="매운맛" selected={profile?.voice !== 'mild'} onPress={() => {
