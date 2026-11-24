@@ -35,7 +35,8 @@ const BANK_ART = [
 
 /** TI-SCR-10 상점. 잔고와 연속 기록, 내 은행, 옷장 입구, 꾸미기. (FR-060~064, FR-070) */
 export default function ShopScreen() {
-  const { wallet, owned, buy } = useTodos();
+  const { wallet, account, owned, buy } = useTodos();
+  const locked = account.state !== 'normal' || account.netWorth < 0;
   const { profile, update } = useProfile();
   const look = useLook();
   const [asking, setAsking] = useState<string | null>(null);
@@ -51,8 +52,8 @@ export default function ShopScreen() {
       <TopBar lead="none" title="상점" />
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.panel}>
-          <Text style={[type.label, styles.panelLabel]}>내 잔고</Text>
-          <Amount value={wallet.balance} size="XL" />
+          <Text style={[type.label, styles.panelLabel]}>통장 (쓸 수 있는 냥)</Text>
+          <Amount value={account.cash} size="XL" tone={account.cash < 0 ? 'debt' : 'ink'} />
           <View style={styles.streak} accessible accessibilityLabel={`연속 기록 ${wallet.streak}번, 보너스까지 ${wallet.toNextBonus}번`}>
             {Array.from({ length: STREAK_STEP }, (_, i) => (
               <View key={i} style={[styles.streakDot, i < wallet.streak % STREAK_STEP && styles.streakOn]} />
@@ -60,6 +61,14 @@ export default function ShopScreen() {
             <Text style={[type.caption, styles.muted]}>보너스까지 {wallet.toNextBonus}번</Text>
           </View>
         </View>
+
+        {locked ? (
+          <Pressable onPress={() => router.push('/bankrupt')} accessibilityRole="button" style={styles.lockBanner}>
+            <Text style={[type.label, styles.lockText]}>
+              {account.state === 'bankrupt' ? '파산 중이라 회생할 때까지 상점이 잠겨 있어요' : '빚이 있어서 상점을 쓸 수 없어요. 빚 갚는 법 보기 ›'}
+            </Text>
+          </Pressable>
+        ) : null}
 
         <SpeechBubble text={shopMessage(wallet.streak, wallet.toNextBonus)} />
 
@@ -293,4 +302,6 @@ const styles = StyleSheet.create({
   chev: { color: color.inkOutline },
   closetPressed: { opacity: 0.8 },
   bgThumb: { width: 72, height: 48, borderRadius: radius.md, borderWidth: stroke.outline, borderColor: color.inkOutline },
+  lockBanner: { paddingVertical: 12, paddingHorizontal: 14, borderRadius: 12, backgroundColor: color.debtBg },
+  lockText: { color: color.debtFg },
 });

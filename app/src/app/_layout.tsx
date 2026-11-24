@@ -73,6 +73,7 @@ function Screens() {
         <Stack.Screen name="group/[id]" />
         <Stack.Screen name="group-settings/[id]" />
         <Stack.Screen name="proof" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="bankrupt" options={{ presentation: 'modal' }} />
         <Stack.Screen name="todo/new" />
         <Stack.Screen name="todo/[id]" />
         <Stack.Screen name="todo-edit/[id]" />
