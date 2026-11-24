@@ -6,14 +6,18 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
 import { GroupRow } from '@/components/GroupRow';
 import { TopBar } from '@/components/TopBar';
-import { MAX_GROUPS } from '@/domain/groups';
+import { perksOf } from '@/domain/bank';
 import { useGroups } from '@/store/groups';
+import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
 import { color, radius, type } from '@/theme/tokens';
 
 /** TI-SCR-14 그룹 목록 (FR-075, FR-076). 피그마 53:1511 */
 export default function GroupsScreen() {
   const { groups, loaded, refresh } = useGroups();
+  // 들 수 있는 그룹 수는 은행 단계를 따른다 (FR-111)
+  const { account } = useTodos();
+  const MAX_GROUPS = perksOf(account.bankStage).maxGroups;
   const full = groups.length >= MAX_GROUPS;
 
   // 다른 화면에서 돌아오면 새 인증 수를 다시 받는다
@@ -48,7 +52,7 @@ export default function GroupsScreen() {
       </ScrollView>
 
       <View style={styles.footer}>
-        {full ? <Text style={[type.caption, styles.muted, styles.center]}>그룹을 {MAX_GROUPS}개 모두 채웠어요. 하나를 나가야 새로 들 수 있어요.</Text> : null}
+        {full ? <Text style={[type.caption, styles.muted, styles.center]}>그룹을 {MAX_GROUPS}개 모두 채웠어요. 하나를 나가거나 은행을 키우면 새로 들 수 있어요.</Text> : null}
         <Button label="그룹 만들기" disabled={full} onPress={() => router.push('/group-new')} />
         <Button label="초대 코드로 들어가기" variant="secondary" disabled={full} onPress={() => router.push('/group-join')} />
       </View>

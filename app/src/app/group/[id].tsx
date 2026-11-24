@@ -8,6 +8,7 @@ import { Chip } from '@/components/Chip';
 import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { ProofCard } from '@/components/ProofCard';
 import { GradeBadge } from '@/components/GradeBadge';
+import { NameplateBackground, NameplateStamp, nameplateNameStyle } from '@/components/Nameplate';
 import { ThemeBadge } from '@/components/ThemeBadge';
 import { TopBar } from '@/components/TopBar';
 import {
@@ -340,12 +341,17 @@ function StandingList({ rows }: { rows: GroupStanding[] | null }) {
         {rows.map((r, i) => (
           <View
             key={r.userId}
-            style={[styles.rankRow, i > 0 && styles.rowBorder, r.isMe && styles.mine]}
+            style={[styles.rankRow, i > 0 && styles.rowBorder]}
             accessible
             accessibilityLabel={`${r.rank}등 ${r.nickname}${r.isMe ? ', 나' : ''}. 인증 ${r.passed}번`}>
             <Text style={[type.numberM, styles.rank]}>{r.rank}</Text>
+            <NameplateBackground plate={r.nameplate} />
+            {r.isMe ? <View style={styles.meBar} /> : null}
             <View style={styles.who}>
-              <Text style={[type.label, styles.ink]}>{r.isMe ? `${r.nickname} (나)` : r.nickname}</Text>
+              <View style={styles.nameRow}>
+                <Text style={[type.label, styles.ink, nameplateNameStyle(r.nameplate)]}>{r.isMe ? `${r.nickname} (나)` : r.nickname}</Text>
+                <NameplateStamp plate={r.nameplate} />
+              </View>
               {r.creditScore !== null ? <GradeBadge score={r.creditScore} size="s" /> : null}
             </View>
             <View style={styles.score}>
@@ -377,8 +383,9 @@ function MemberList({
     <View style={styles.list}>
       {rows.map((m, i) => (
         <View key={m.userId} style={[styles.rankRow, i > 0 && styles.rowBorder]}>
+          <NameplateBackground plate={m.blocked ? 'none' : m.nameplate} />
           <View style={styles.who}>
-            <Text style={[type.label, styles.ink]}>
+            <Text style={[type.label, styles.ink, nameplateNameStyle(m.nameplate)]}>
               {m.isMe ? `${m.nickname} (나)` : m.nickname}
               {m.isOwner ? '  방장' : ''}
             </Text>
@@ -423,9 +430,10 @@ const styles = StyleSheet.create({
   empty: { ...layout.panel, gap: 8, padding: 20 },
   section: { gap: 10 },
   list: layout.list,
-  rankRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 },
+  rankRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16, overflow: 'hidden' },
+  meBar: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, backgroundColor: color.brandPrimary },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   rowBorder: { borderTopWidth: stroke.hairline, borderTopColor: color.borderDefault },
-  mine: { backgroundColor: color.brandSoft },
   rank: { width: 20, color: color.inkOutline },
   who: { flex: 1, gap: 4, alignItems: 'flex-start' },
   score: { alignItems: 'flex-end' },

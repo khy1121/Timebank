@@ -6,7 +6,10 @@
  * - 내 은행: 순서대로만 산다. 가장 높은 단계가 지금 은행이고, 단계가 다른 물건을 연다
  */
 
+import { BANK_NAMES, BANKS } from './bank';
 import { josa } from './korean';
+
+export { BANK_NAMES };
 
 export type DecorSlot = 'stampInk' | 'stampWord' | 'stampShape' | 'bubble' | 'background';
 export type WearSlot = 'head' | 'face' | 'body';
@@ -45,8 +48,6 @@ export const WEAR_SLOTS: WearSlot[] = ['body', 'face', 'head'];
 /** 옷장 서랍의 탭 순서 */
 export const WEAR_TABS: WearSlot[] = ['head', 'face', 'body'];
 
-export const BANK_NAMES = ['길가 좌판', '엽전 가판대', '동네 창구', '시장 지점', '시간은행 본점'] as const;
-
 export const ITEMS: ShopItem[] = [
   // 적립 도장의 잉크. 빨강은 연체 도장과 헷갈려서 팔지 않는다 (시간적금기획서 12절)
   { code: 'ink-brand', slot: 'stampInk', name: '파랑', price: 0, value: 'brandPrimary' },
@@ -81,11 +82,8 @@ export const ITEMS: ShopItem[] = [
   { code: 'body-raincoat', slot: 'body', name: '노란 우비', price: 4000, value: 'raincoat' },
   { code: 'body-banker', slot: 'body', name: '은행원 조끼', price: 6000, value: 'banker', needsBank: 1 },
 
-  { code: 'bank-0', slot: 'bank', name: BANK_NAMES[0], price: 0, value: 'bank-0', stage: 0 },
-  { code: 'bank-1', slot: 'bank', name: BANK_NAMES[1], price: 5000, value: 'bank-1', stage: 1 },
-  { code: 'bank-2', slot: 'bank', name: BANK_NAMES[2], price: 12000, value: 'bank-2', stage: 2 },
-  { code: 'bank-3', slot: 'bank', name: BANK_NAMES[3], price: 25000, value: 'bank-3', stage: 3 },
-  { code: 'bank-4', slot: 'bank', name: BANK_NAMES[4], price: 50000, value: 'bank-4', stage: 4 },
+  // 은행 7단계는 bank.ts가 정한다 (상점기획서 11.2절)
+  ...BANKS.map((b): ShopItem => ({ code: b.code, slot: 'bank', name: b.name, price: b.price, value: b.code, stage: b.stage })),
 ];
 
 export type Equipped = Partial<Record<DecorSlot | WearSlot, string>>;
@@ -114,7 +112,7 @@ export function bankStage(owned: Set<string>): number {
   return Math.max(0, ...itemsOf('bank').filter((b) => owned.has(b.code)).map((b) => b.stage ?? 0));
 }
 
-/** 다음에 살 수 있는 은행. 본점까지 다 열었으면 null */
+/** 다음에 살 수 있는 은행. 중앙은행까지 다 열었으면 null */
 export function nextBank(owned: Set<string>): ShopItem | null {
   const stage = bankStage(owned);
   return itemsOf('bank').find((b) => b.stage === stage + 1) ?? null;
@@ -141,14 +139,16 @@ export function resolveLook(equipped: Equipped, owned: Set<string>): Look {
   return Object.fromEntries(LOOK_SLOTS.map((s) => [s, pick(s)])) as Look;
 }
 
-export type BuyCheck = { ok: true } | { ok: false; reason: 'owned' | 'unknown' | 'short' | 'locked'; short?: number; lock?: string };
+export type BuyCheck = { ok: true } | { ok: false; reason: 'owned' | 'unknown' | 'short' | 'locked' | 'condition'; short?: number; lock?: string };
 
-export function canBuy(code: string, balance: number, owned: Set<string>): BuyCheck {
+/** conditionMet: 은행이면 냥 말고의 조건을 채웠는가 (bankConditions.ts가 판정) */
+export function canBuy(code: string, balance: number, owned: Set<string>, conditionMet = true): BuyCheck {
   const item = itemOf(code);
   if (!item) return { ok: false, reason: 'unknown' };
   if (owned.has(code)) return { ok: false, reason: 'owned' };
   const lock = lockLabel(item, owned);
   if (lock) return { ok: false, reason: 'locked', lock };
+  if (item.slot === 'bank' && !conditionMet) return { ok: false, reason: 'condition' };
   if (balance < item.price) return { ok: false, reason: 'short', short: item.price - balance };
   return { ok: true };
 }

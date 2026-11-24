@@ -29,8 +29,9 @@ import {
   type StoredTodo,
   type TodoRow,
 } from '@/domain/sync';
+import { bankProgress, type Progress } from '@/domain/bankConditions';
 import { canBuy, itemOf, ownedCodes } from '@/domain/shop';
-import { accountOf, earlyForgiveRefund, extendFee, inFreeEdit, settlementOf, type Account, type Settlement, type StakedTodo } from '@/domain/savings';
+import { accountOf, earlyForgiveRefund, extendFee, inFreeEdit, settlementOf, type Account, type AccountInput, type Settlement, type StakedTodo } from '@/domain/savings';
 import { type Purchase, type Wallet } from '@/domain/wallet';
 import { daysUntilDue } from '@/domain/events';
 import { track } from '@/lib/events';
@@ -270,6 +271,8 @@ type Store = {
   wallet: Wallet;
   /** 기본 물건과 산 물건의 코드 */
   owned: Set<string>;
+  /** 다음 은행을 여는 조건의 진행. 중앙은행까지 열었으면 null */
+  nextBankProgress: Progress | null;
   /** 마지막으로 할 일·기록을 고친 날(기기 현지 날짜). 없으면 null. 잠수 판정에 쓴다 (FR-066) */
   lastActivity: DateString | null;
   today: DateString;
@@ -479,9 +482,9 @@ export function TodosProvider({ children }: { children: ReactNode }) {
   }, [sync]);
 
   // 통장·적금은 저장하지 않고 기록에서 계산한다 (시간적금기획서)
-  const account = useMemo(() => {
+  const accountInput = useMemo<AccountInput>(() => {
     const todos: StakedTodo[] = visible(state.todos).map(toStaked);
-    return accountOf({
+    return {
       signupDate,
       todos,
       repayments: visible(state.repayments),
@@ -489,8 +492,14 @@ export function TodosProvider({ children }: { children: ReactNode }) {
       ...splitLedgerEvents(visible(state.events)),
       verified,
       today,
-    });
+    };
   }, [state.todos, state.repayments, state.purchases, state.events, signupDate, verified, today]);
+  const account = useMemo(() => accountOf(accountInput), [accountInput]);
+  // 다음 은행을 여는 냥 말고의 조건. 중앙은행까지 다 열었으면 null (FR-110)
+  const nextBankProgress = useMemo(
+    () => (account.bankStage >= 6 ? null : bankProgress(account.bankStage + 1, accountInput, account)),
+    [account, accountInput],
+  );
 
   // 순자산이 파산 기준에 닿으면 파산을 기록한다. 기록하면 shouldBankrupt가 꺼져 다시 돌지 않는다
   const shouldBankrupt = state.hydrated && account.shouldBankrupt;
@@ -544,6 +553,7 @@ export function TodosProvider({ children }: { children: ReactNode }) {
       account,
       wallet,
       owned,
+      nextBankProgress,
       lastActivity: lastActivityOf([...state.todos, ...state.repayments, ...state.purchases]),
       today,
       pendingCount,
@@ -616,7 +626,8 @@ export function TodosProvider({ children }: { children: ReactNode }) {
       },
       buyAll: (itemCodes) => {
         const items = itemCodes.map(itemOf);
-        if (items.some((i) => !i)) return false;
+        // 은행은 조건을 따로 봐야 해서 한꺼번에 사지 않는다
+        if (items.some((i) => !i || i.slot === 'bank')) return false;
         const total = items.reduce((s, i) => s + i!.price, 0);
         if (total > wallet.balance) return false;
         // 잔고는 합계로 확인했으니 하나씩은 잠김·이미 가짐만 본다
@@ -633,7 +644,8 @@ export function TodosProvider({ children }: { children: ReactNode }) {
       },
       buy: (itemCode) => {
         const item = itemOf(itemCode);
-        if (!item || !canBuy(itemCode, wallet.balance, owned).ok) return false;
+        const conditionMet = item?.slot !== 'bank' || !!nextBankProgress?.done;
+        if (!item || !canBuy(itemCode, wallet.balance, owned, conditionMet).ok) return false;
         const at = now();
         dispatch({
           type: 'putPurchase',
@@ -648,7 +660,7 @@ export function TodosProvider({ children }: { children: ReactNode }) {
       },
       flush: sync,
     };
-  }, [state, account, today, pendingCount, syncState, userId, verified, sync]);
+  }, [state, account, nextBankProgress, today, pendingCount, syncState, userId, verified, sync]);
 
   return <TodosContext.Provider value={store}>{children}</TodosContext.Provider>;
 }

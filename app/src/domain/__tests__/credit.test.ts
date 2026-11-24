@@ -93,7 +93,7 @@ describe('서버 값', () => {
   });
   it('순위표 행', () => {
     expect(boardFromRows([{ rank: 1, name: '준*', score: 968, week_delta: 5, is_me: false }])).toEqual([
-      { rank: 1, userId: null, name: '준*', score: 968, weekDelta: 5, isMe: false },
+      { rank: 1, userId: null, name: '준*', score: 968, weekDelta: 5, isMe: false, nameplate: 'none' },
     ]);
   });
 });

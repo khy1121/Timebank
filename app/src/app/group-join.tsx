@@ -7,7 +7,7 @@ import { Button } from '@/components/Button';
 import { TextField } from '@/components/TextField';
 import { ThemeBadge } from '@/components/ThemeBadge';
 import { TopBar } from '@/components/TopBar';
-import { CODE_LENGTH, codeFromText, isCompleteCode, MAX_MEMBERS, NICKNAME_MAX, nicknameError, normalizeCode } from '@/domain/groups';
+import { CODE_LENGTH, codeFromText, isCompleteCode, NICKNAME_MAX, nicknameError, normalizeCode } from '@/domain/groups';
 import { feedback } from '@/lib/feedback';
 import { useGroups, type GroupPreview } from '@/store/groups';
 import * as layout from '@/theme/layout';
@@ -44,7 +44,7 @@ export default function JoinGroupScreen() {
   const failed = found && 'error' in found ? found.error : null;
   const group = found && !('error' in found) ? found : null;
   const nickErr = touched ? nicknameError(nickname) : null;
-  const full = !!group && !group.isMember && group.members >= MAX_MEMBERS;
+  const full = !!group && !group.isMember && group.members >= group.maxMembers;
 
   const submit = async () => {
     setTouched(true);

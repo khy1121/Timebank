@@ -150,7 +150,7 @@ export default function HomeScreen() {
                     view={v}
                     onRepay={() => {
                       const stake = todos.find((t) => t.id === v.todo.id)?.stakeGroupId ?? null;
-                      const preview = completionPreview(v.principal, v.overdueDays, v.interest, account.streak, !!stake);
+                      const preview = completionPreview(v.principal, v.overdueDays, v.interest, account.streak, !!stake, account.bankStage);
                       const repaymentId = repay(v.todo.id);
                       if (preview.gained > 0) feedback.buy();
                       else feedback.tap();

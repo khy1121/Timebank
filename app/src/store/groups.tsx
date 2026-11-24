@@ -6,6 +6,7 @@ import {
   base64ToBytes,
   groupErrorMessage,
   groupFromRow,
+  MAX_MEMBERS,
   toTheme,
   groupStandingFromRow,
   memberFromRow,
@@ -39,7 +40,7 @@ import { useAuth } from './auth';
 
 export type Result<T = void> = { ok: true; value: T } | { ok: false; message: string };
 
-export type GroupPreview = { id: string; name: string; members: number; ownerNickname: string | null; isMember: boolean; theme: GroupTheme; themeLabel: string | null };
+export type GroupPreview = { id: string; name: string; members: number; ownerNickname: string | null; isMember: boolean; theme: GroupTheme; themeLabel: string | null; maxMembers: number };
 
 export type PostProofInput = {
   repaymentId: string;
@@ -186,7 +187,7 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
         return {
           ok: true,
           value: row
-            ? { id: row.id, name: row.name, members: row.members, ownerNickname: row.owner_nickname, isMember: row.is_member, theme: toTheme(row.theme), themeLabel: row.theme_label ?? null }
+            ? { id: row.id, name: row.name, members: row.members, ownerNickname: row.owner_nickname, isMember: row.is_member, theme: toTheme(row.theme), themeLabel: row.theme_label ?? null, maxMembers: row.max_members ?? MAX_MEMBERS }
             : null,
         };
       },

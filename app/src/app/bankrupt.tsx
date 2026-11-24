@@ -35,7 +35,7 @@ export default function BankruptScreen() {
         {bankrupt ? (
           <Bankrupt rehabOn={account.rehabOn!} today={today} />
         ) : account.state === 'debt' ? (
-          <Debt netWorth={account.netWorth} streak={account.streak} today={today} todos={todos} onBankrupt={() => setAsk(true)} />
+          <Debt netWorth={account.netWorth} streak={account.streak} bankStage={account.bankStage} today={today} todos={todos} onBankrupt={() => setAsk(true)} />
         ) : (
           <NoDebt netWorth={account.netWorth} />
         )}
@@ -65,12 +65,14 @@ type TodoList = ReturnType<typeof useTodos>['todos'];
 function Debt({
   netWorth,
   streak,
+  bankStage,
   today,
   todos,
   onBankrupt,
 }: {
   netWorth: number;
   streak: number;
+  bankStage: number;
   today: string;
   todos: TodoList;
   onBankrupt: () => void;
@@ -84,7 +86,7 @@ function Debt({
     .filter((t) => t.status === 'open')
     .map((t) => {
       const v = viewOf(t, today);
-      const p = completionPreview(v.principal, v.overdueDays, v.interest, streak, !!t.stakeGroupId);
+      const p = completionPreview(v.principal, v.overdueDays, v.interest, streak, !!t.stakeGroupId, bankStage);
       return { todo: t, v, payout: p.pending ? p.promised : p.back };
     })
     .sort((a, b) => b.v.overdueDays - a.v.overdueDays || a.todo.dueDate.localeCompare(b.todo.dueDate));

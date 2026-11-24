@@ -1,7 +1,8 @@
+import { perksOf, stageOn } from './bank';
 import { addDays, diffDays, type DateString } from './dates';
 import { viewOf, type Todo } from './interest';
 import type { Repayment } from './records';
-import { rewardFor, STREAK_BONUS, STREAK_STEP, type Purchase } from './wallet';
+import { rewardFor, STREAK_STEP, type Purchase } from './wallet';
 
 /**
  * 시간 적금 장부. (시간적금기획서 TI-SAV-001)
@@ -55,6 +56,7 @@ export type EntryKind =
   | 'stake' // 원금 걸기
   | 'return' // 기한 안 완료: 원금 돌려받기
   | 'interest' // 기한 안 완료: 이자
+  | 'boost' // 적금 우대: 은행 4단계부터 기한 안에 끝낸 원금에 붙는다(상점기획서 11.2절)
   | 'bonus' // 연속 기록 보너스
   | 'group' // 그룹 보너스(친구 인정)
   | 'late' // 늦은 완료: 원금 − 연체료
@@ -83,6 +85,8 @@ export type Account = {
   shouldBankrupt: boolean;
   streak: number;
   toNextBonus: number;
+  /** 오늘까지 연 은행 단계(0~6) */
+  bankStage: number;
   ledger: Entry[];
 };
 
@@ -94,6 +98,7 @@ const ORDER: Record<EntryKind, number> = {
   return: 3,
   interest: 3,
   bonus: 3,
+  boost: 3,
   group: 3,
   late: 4,
   forgive: 4,
@@ -203,6 +208,8 @@ export function accountOf(input: AccountInput): Account {
       }
       add('return', r.settledOn, principal, r.id);
       add('interest', r.settledOn, rewardFor(principal), r.id);
+      const boost = Math.floor(principal * perksOf(stageOn(purchases, r.settledOn)).savingsBoost);
+      if (boost > 0) add('boost', r.settledOn, boost, r.id);
       if (isGroup) add('group', r.settledOn, groupBonus(principal), r.id);
     } else if (r.kind === 'repaid') {
       broken.push({ date: r.settledOn, id: r.id });
@@ -231,7 +238,7 @@ export function accountOf(input: AccountInput): Account {
       continue;
     }
     streak += 1;
-    if (streak % STREAK_STEP === 0) add('bonus', e.date, STREAK_BONUS, e.id);
+    if (streak % STREAK_STEP === 0) add('bonus', e.date, perksOf(stageOn(purchases, e.date)).streakBonus, e.id);
   }
 
   // 파산: 그날까지의 통장을 0으로 만든다
@@ -259,6 +266,7 @@ export function accountOf(input: AccountInput): Account {
     shouldBankrupt: !current && netWorth <= BANKRUPT_AT,
     streak,
     toNextBonus: STREAK_STEP - (streak % STREAK_STEP),
+    bankStage: stageOn(purchases, today),
     ledger: entries,
   };
 }
@@ -321,15 +329,16 @@ export type CompletionPreview = {
 
 /**
  * 지금 끝내면 어떻게 되는지. 상세 화면 미리 보기와 끝낸 직후 알림 띠에 쓴다. (시간적금기획서 4.4, 4.7)
- * streakBefore: 지금까지 이어진 기한 안 완료 횟수
+ * streakBefore: 지금까지 이어진 기한 안 완료 횟수, bankStage: 지금 은행 단계(연속 보너스·적금 우대)
  */
-export function completionPreview(principal: number, overdueDays: number, lateFee: number, streakBefore: number, inGroup: boolean): CompletionPreview {
+export function completionPreview(principal: number, overdueDays: number, lateFee: number, streakBefore: number, inGroup: boolean, bankStage = 0): CompletionPreview {
   if (overdueDays > 0) {
     if (inGroup) return { back: 0, gained: 0, lost: principal, bonus: false, pending: false, promised: 0, forfeit: true };
     return { back: lateReturn(principal, lateFee), gained: 0, lost: lateFee, bonus: false, pending: false, promised: 0, forfeit: false };
   }
   const bonus = (streakBefore + 1) % STREAK_STEP === 0;
-  const gained = rewardFor(principal) + (bonus ? STREAK_BONUS : 0);
+  const perks = perksOf(bankStage);
+  const gained = rewardFor(principal) + Math.floor(principal * perks.savingsBoost) + (bonus ? perks.streakBonus : 0);
   if (inGroup) {
     const promised = principal + gained + groupBonus(principal);
     return { back: 0, gained: gained + groupBonus(principal), lost: 0, bonus, pending: true, promised, forfeit: false };

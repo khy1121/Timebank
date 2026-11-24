@@ -78,3 +78,20 @@ describe('알림 계획 (TC-030, TC-031, 시간적금기획서 13절)', () => {
     expect([...dates].sort()).toEqual(dates);
   });
 });
+
+describe('은행 혜택 알림 (FR-111)', () => {
+  const now = { date: '2026-11-20', minutes: 8 * 60 };
+  it('기한 전날 알림과 당일 저녁 알림', () => {
+    const plan = planNotifications([todo({ dueDate: '2026-11-22' })], now, NINE, { dueEve: true, twice: true });
+    const kinds = plan.filter((p) => p.kind !== 'overdue' && p.kind !== 'overdueDigest').map((p) => `${p.kind}@${p.date} ${p.hour}`);
+    expect(kinds).toEqual(['dueEve@2026-11-21 9', 'due@2026-11-22 9', 'dueLate@2026-11-22 21']);
+  });
+  it('혜택이 없으면 당일 알림만', () => {
+    const plan = planNotifications([todo({ dueDate: '2026-11-22' })], now, NINE);
+    expect(plan.filter((p) => p.kind.startsWith('due')).map((p) => p.kind)).toEqual(['due']);
+  });
+  it('첫 알림이 저녁 9시보다 늦으면 두 번째는 없다', () => {
+    const plan = planNotifications([todo({ dueDate: '2026-11-22' })], now, { hour: 22, minute: 0 }, { dueEve: false, twice: true });
+    expect(plan.some((p) => p.kind === 'dueLate')).toBe(false);
+  });
+});

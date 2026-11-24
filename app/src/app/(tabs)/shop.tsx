@@ -16,6 +16,8 @@ import { formatAmount } from '@/domain/interest';
 import { shopMessage } from '@/domain/messages';
 import { josa } from '@/domain/korean';
 import { shopLockReason } from '@/domain/savings';
+import { bankOf } from '@/domain/bank';
+import type { Progress } from '@/domain/bankConditions';
 import { BANK_NAMES, bankStage, canBuy, ITEMS, itemOf, itemsOf, nextBank, SLOT_LABEL, SLOTS, type ShopItem } from '@/domain/shop';
 import { toShape } from '@/domain/stampShape';
 import { STREAK_STEP } from '@/domain/wallet';
@@ -26,17 +28,20 @@ import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
 import { color, radius, stroke, type } from '@/theme/tokens';
 
+// 단계 순서. 읍내 금고(4)와 중앙은행(6)은 그림을 새로 그리기 전까지 가까운 단계 그림을 쓴다 (상점기획서 11.6절 미결 3)
 const BANK_ART = [
   require('@/assets/images/bank/bank-0.png'),
   require('@/assets/images/bank/bank-1.png'),
   require('@/assets/images/bank/bank-2.png'),
   require('@/assets/images/bank/bank-3.png'),
+  require('@/assets/images/bank/bank-3.png'),
+  require('@/assets/images/bank/bank-4.png'),
   require('@/assets/images/bank/bank-4.png'),
 ];
 
 /** TI-SCR-10 상점. 잔고와 연속 기록, 내 은행, 옷장 입구, 꾸미기. (FR-060~064, FR-070) */
 export default function ShopScreen() {
-  const { wallet, account, owned, buy, today } = useTodos();
+  const { wallet, account, owned, buy, today, nextBankProgress } = useTodos();
   const locked = shopLockReason(account, today) !== null;
   const { profile, update } = useProfile();
   const look = useLook();
@@ -73,7 +78,7 @@ export default function ShopScreen() {
 
         <SpeechBubble text={shopMessage(wallet.streak, wallet.toNextBonus)} />
 
-        <BankCard owned={owned} balance={wallet.balance} onOpen={(code) => setAsking(code)} />
+        <BankCard owned={owned} balance={wallet.balance} progress={nextBankProgress} onOpen={(code) => setAsking(code)} />
 
         <Pressable
           onPress={() => router.push('/closet')}
@@ -141,19 +146,24 @@ export default function ShopScreen() {
   );
 }
 
-/** 확인 창 문구. 은행이면 새로 열리는 물건까지 알려준다. */
+/** 확인 창 문구. 은행이면 새로 생기는 혜택과 열리는 물건까지 알려준다. */
 function buyMessage(item: ShopItem): string {
   if (item.slot !== 'bank') return `${formatAmount(item.price)}냥이 잔고에서 빠지고 바로 착용해요.`;
+  const b = bankOf(item.stage ?? 0);
   const unlocks = ITEMS.filter((i) => i.needsBank === item.stage).map((i) => i.name);
   const grow = `${formatAmount(item.price)}냥이 잔고에서 빠지고 내 은행이 ${josa(item.name, '으로', '로')} 커져요.`;
-  return unlocks.length ? `${grow} 새로 열리는 것: ${unlocks.join(', ')}` : grow;
+  return [grow, `생기는 것: ${[...b.perks, ...unlocks].join(', ')}`].join(' ');
 }
 
-/** 내 은행: 지금 단계 그림, 다음 단계까지 모은 냥, 열기 버튼 (상점기획서 3.1) */
-function BankCard({ owned, balance, onOpen }: { owned: Set<string>; balance: number; onOpen: (code: string) => void }) {
+/** 내 은행: 지금 단계 그림, 다음 은행의 조건과 냥, 열면 생기는 것, 열기 버튼 (상점기획서 11.2절, FR-110, 111) */
+function BankCard({ owned, balance, progress, onOpen }: { owned: Set<string>; balance: number; progress: Progress | null; onOpen: (code: string) => void }) {
   const stage = bankStage(owned);
   const next = nextBank(owned);
+  const nextDef = next ? bankOf(next.stage ?? 0) : null;
   const ratio = next ? Math.min(1, balance / next.price) : 1;
+  const enoughCoins = !!next && balance >= next.price;
+  const conditionDone = !progress || progress.done;
+  const ready = enoughCoins && conditionDone;
   return (
     <View style={styles.bank}>
       <View style={styles.bankTop}>
@@ -161,30 +171,54 @@ function BankCard({ owned, balance, onOpen }: { owned: Set<string>; balance: num
           <Image source={BANK_ART[stage]} style={styles.bankImage} contentFit="contain" accessibilityLabel={`내 은행 ${BANK_NAMES[stage]} 그림`} />
         </View>
         <View style={styles.bankText}>
-          <Text style={[type.caption, styles.panelLabel]}>내 은행 {stage}단계</Text>
+          <Text style={[type.caption, styles.panelLabel]}>내 은행 {stage}단계 / 6단계</Text>
           <Text style={[type.title, styles.ink]}>{BANK_NAMES[stage]}</Text>
           <Text style={[type.caption, styles.panelLabel]}>{next ? `다음은 ${next.name}` : '가장 큰 은행이에요'}</Text>
         </View>
       </View>
-      {next ? (
+      {next && nextDef ? (
         <>
-          <View style={styles.trackRow}>
-            <Text style={[type.label, styles.ink]}>{next.name}</Text>
-            <Text style={[type.caption, styles.panelLabel]}>
-              {formatAmount(Math.min(balance, next.price))} / {formatAmount(next.price)}냥
-            </Text>
+          <View style={styles.need}>
+            <Text style={[type.label, styles.ink]}>{josa(next.name, '을', '를')} 열려면</Text>
+            <NeedRow done={conditionDone} text={progress?.text ?? '조건 없음'} ratio={progress && progress.target ? progress.current / progress.target : 1} />
+            <NeedRow done={enoughCoins} text={`${formatAmount(Math.min(balance, next.price))} / ${formatAmount(next.price)}냥`} ratio={ratio} />
           </View>
-          <View style={styles.track} accessible accessibilityLabel={`${next.name}까지 ${Math.round(ratio * 100)}% 모았어요`}>
-            <View style={[styles.trackFill, { width: `${Math.round(ratio * 100)}%` }]} />
+          <View style={styles.perks} accessible accessibilityLabel={`열면 생기는 것: ${nextDef.perks.join(', ')}${nextDef.soon.length ? `. 곧 추가: ${nextDef.soon.join(', ')}` : ''}`}>
+            <Text style={[type.label, styles.ink]}>열면 생기는 것</Text>
+            {nextDef.perks.map((p) => (
+              <Text key={p} style={[type.caption, styles.ink]}>
+                · {p}
+              </Text>
+            ))}
+            {nextDef.soon.map((p) => (
+              <Text key={p} style={[type.caption, styles.panelLabel]}>
+                · {p} (곧 추가)
+              </Text>
+            ))}
           </View>
           <Button
-            label={balance >= next.price ? `${formatAmount(next.price)}냥에 열기` : `${formatAmount(next.price - balance)}냥 더 모으면 열려요`}
-            variant={balance >= next.price ? 'primary' : 'secondary'}
-            disabled={balance < next.price}
+            label={ready ? `${formatAmount(next.price)}냥에 열기` : !conditionDone ? '조건을 채우면 열려요' : `${formatAmount(next.price - balance)}냥 더 모으면 열려요`}
+            variant={ready ? 'primary' : 'secondary'}
+            disabled={!ready}
             onPress={() => onOpen(next.code)}
           />
         </>
       ) : null}
+    </View>
+  );
+}
+
+function NeedRow({ done, text, ratio }: { done: boolean; text: string; ratio: number }) {
+  const pct = Math.round(Math.max(0, Math.min(1, ratio)) * 100);
+  return (
+    <View style={styles.needRow} accessible accessibilityLabel={`${text}${done ? ', 채웠어요' : ''}`}>
+      <View style={styles.needHead}>
+        <Text style={[type.caption, { color: done ? color.okFg : color.textSecondary }]}>{done ? '✓' : '○'}</Text>
+        <Text style={[type.caption, styles.ink, styles.flex]}>{text}</Text>
+      </View>
+      <View style={styles.track}>
+        <View style={[styles.trackFill, done && styles.trackDone, { width: `${pct}%` }]} />
+      </View>
     </View>
   );
 }
@@ -228,7 +262,7 @@ const styles = StyleSheet.create({
   streak: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
   streakDot: {
     width: 14,
-    height: 14,
+    height: 10,
     borderRadius: radius.full,
     borderWidth: 1.5,
     borderColor: color.inkOutline,
@@ -279,7 +313,6 @@ const styles = StyleSheet.create({
   bankArt: { width: 104, height: 104, borderRadius: radius.lg, backgroundColor: color.bgSunken, alignItems: 'center', justifyContent: 'center' },
   bankImage: { width: 96, height: 96 },
   bankText: { flex: 1, gap: 2 },
-  trackRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
   track: {
     height: 14,
     borderRadius: radius.full,
@@ -289,6 +322,12 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   trackFill: { height: '100%', backgroundColor: color.accentCoin },
+  trackDone: { backgroundColor: color.okFg },
+  need: { gap: 10 },
+  needRow: { gap: 4 },
+  needHead: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  flex: { flex: 1 },
+  perks: { gap: 2, padding: 12, borderRadius: radius.md, backgroundColor: color.bgSunken },
   closet: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -7,17 +7,20 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
 import { TextField } from '@/components/TextField';
 import { TopBar } from '@/components/TopBar';
-import { GROUP_NAME_MAX, GROUP_THEMES, groupNameError, inviteMessage, MAX_MEMBERS, NICKNAME_MAX, nicknameError, THEME_LABEL_MAX, type GroupTheme } from '@/domain/groups';
+import { GROUP_NAME_MAX, GROUP_THEMES, groupNameError, inviteMessage, NICKNAME_MAX, nicknameError, THEME_LABEL_MAX, type GroupTheme } from '@/domain/groups';
 import { Chip } from '@/components/Chip';
+import { perksOf } from '@/domain/bank';
 import { josa } from '@/domain/korean';
 import { feedback } from '@/lib/feedback';
 import { useGroups } from '@/store/groups';
+import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
 import { color, radius, stroke, type } from '@/theme/tokens';
 
 /** TI-SCR-15 그룹 만들기 (FR-075). 만들면 초대 코드를 보여준다. 피그마 53:1594 */
 export default function NewGroupScreen() {
   const { create } = useGroups();
+  const { account } = useTodos();
   const [name, setName] = useState('');
   const [nickname, setNickname] = useState('');
   const [theme, setTheme] = useState<GroupTheme>('study');
@@ -67,7 +70,7 @@ export default function NewGroupScreen() {
             <Text style={[type.display, styles.code]} selectable accessibilityLabel={`초대 코드 ${made.code.split('').join(' ')}`}>
               {made.code}
             </Text>
-            <Text style={[type.caption, styles.secondary, styles.center]}>친구에게 이 코드를 알려 주세요. {MAX_MEMBERS}명까지 들어올 수 있어요.</Text>
+            <Text style={[type.caption, styles.secondary, styles.center]}>친구에게 이 코드를 알려 주세요. {perksOf(account.bankStage).maxMembers}명까지 들어올 수 있어요.</Text>
           </View>
         </ScrollView>
         <View style={styles.footer}>
