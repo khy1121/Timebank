@@ -1,8 +1,9 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ActionSheet } from '@/components/ActionSheet';
 import { Amount } from '@/components/Amount';
 import { Badge } from '@/components/Badge';
 import { Button } from '@/components/Button';
@@ -10,7 +11,7 @@ import { CoinMeter } from '@/components/CoinMeter';
 import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { SpeechBubble } from '@/components/SpeechBubble';
 import { TopBar } from '@/components/TopBar';
-import { formatKoreanDate } from '@/domain/dates';
+import { addDays, formatKoreanDate } from '@/domain/dates';
 import { formatAmount, viewOf } from '@/domain/interest';
 import { interestHistory } from '@/domain/records';
 import { completionPreview } from '@/domain/savings';
@@ -23,9 +24,12 @@ import { color, radius, stroke, type } from '@/theme/tokens';
 /** TI-SCR-05 할 일 상세. 지금 끝내면 돌려받는 냥과 깎이는 원금을 보여준다 (시간적금기획서 4.4, 피그마 71:523) */
 export default function TodoDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { todos, today, repay, remove, account, removeRefundFor } = useTodos();
+  const { todos, today, repay, remove, update, account, removeRefundFor, extendFeeFor } = useTodos();
   const { groups } = useGroups();
   const [askDelete, setAskDelete] = useState(false);
+  const [pickExtend, setPickExtend] = useState(false);
+  // 고른 연장 일수. 수수료가 있으면 한 번 더 묻는다
+  const [askExtend, setAskExtend] = useState<{ days: number; fee: number } | null>(null);
   const todo = todos.find((t) => t.id === id && t.status === 'open');
 
   if (!todo) {
@@ -49,6 +53,13 @@ export default function TodoDetailScreen() {
   const refund = removeRefundFor(todo.id);
   const freeDelete = !overdue && refund === v.principal;
   const rows = interestHistory(v.principal, v.overdueDays);
+  // 기한 미루기: 연체 전에만 (FR-011). 상세에서 바로 고를 수 있게 한다 (2026-11-24 휴대폰 확인: 수정 화면에서 찾기 어려움)
+  const extendInput = (days: number) => ({ title: todo.title, importance: todo.importance, dueDate: addDays(todo.dueDate, days) });
+  const extendOptions = [1, 2, 3, 7].map((days) => ({ days, fee: extendFeeFor(todo.id, extendInput(days)) }));
+  const applyExtend = (days: number) => {
+    update(todo.id, extendInput(days));
+    feedback.tap();
+  };
   const dueText = overdue
     ? `${formatKoreanDate(todo.dueDate)}까지였어요`
     : v.state === 'today'
@@ -71,6 +82,16 @@ export default function TodoDetailScreen() {
             <Text style={[type.body, styles.muted]}>{dueText}</Text>
             {overdue ? <Badge kind="overdue" label={`연체 ${v.overdueDays}일`} /> : null}
             {v.state === 'upcoming' ? <Badge kind="due" label={`D-${v.daysLeft}`} /> : null}
+            {!overdue ? (
+              <Pressable
+                onPress={() => setPickExtend(true)}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="기한 미루기"
+                style={({ pressed }) => [styles.extend, pressed && styles.pressed]}>
+                <Text style={[type.label, styles.extendText]}>기한 미루기</Text>
+              </Pressable>
+            ) : null}
           </View>
         </View>
 
@@ -145,6 +166,28 @@ export default function TodoDetailScreen() {
         <Button label={freeDelete ? '지우기' : '포기하기'} variant="secondary" onPress={() => setAskDelete(true)} />
       </View>
 
+      <ActionSheet
+        visible={pickExtend}
+        title={extendOptions[0].fee === 0 ? '얼마나 미룰까요? 지금은 무료예요' : `얼마나 미룰까요? 하루에 ${formatAmount(extendOptions[0].fee)}냥`}
+        actions={extendOptions.map((o) => ({
+          label: `${o.days === 7 ? '일주일' : `${o.days}일`} 미루기 · ${formatKoreanDate(addDays(todo.dueDate, o.days))}${o.fee > 0 ? ` (${formatAmount(o.fee)}냥)` : ''}`,
+          onPress: () => (o.fee > 0 ? setAskExtend(o) : applyExtend(o.days)),
+        }))}
+        onClose={() => setPickExtend(false)}
+      />
+
+      <ConfirmSheet
+        visible={!!askExtend}
+        title={askExtend ? `기한을 ${askExtend.days}일 미룰까요?` : ''}
+        message={askExtend ? `연장 수수료 ${formatAmount(askExtend.fee)}냥이 통장에서 빠져요. 미룬 날마다 원금의 5%예요.` : ''}
+        confirmLabel={askExtend ? `${formatAmount(askExtend.fee)}냥 내고 미루기` : '미루기'}
+        onConfirm={() => {
+          if (askExtend) applyExtend(askExtend.days);
+          setAskExtend(null);
+        }}
+        onCancel={() => setAskExtend(null)}
+      />
+
       <ConfirmSheet
         visible={askDelete}
         title={freeDelete ? '이 할 일을 지울까요?' : '포기할까요?'}
@@ -193,4 +236,15 @@ const styles = StyleSheet.create({
   future: { color: color.textTertiary },
   total: { width: 92, alignItems: 'flex-end' },
   footer: layout.footer,
+  extend: {
+    marginLeft: 'auto',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: radius.full,
+    borderWidth: stroke.hairline,
+    borderColor: color.brandPrimary,
+    backgroundColor: color.brandSoft,
+  },
+  extendText: { color: color.brandPrimary },
+  pressed: { opacity: 0.7 },
 });
