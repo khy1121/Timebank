@@ -68,6 +68,8 @@ type Store = {
   markSeen: (groupId: string) => void;
   feed: (groupId: string, before?: string) => Promise<Result<Proof[]>>;
   standing: (groupId: string) => Promise<Result<GroupStanding[]>>;
+  /** 이번 주 금고: 지난주에서 넘어온 냥 + 이번 주 몰수된 보증금 (시간적금기획서 4.7) */
+  pot: (groupId: string) => Promise<number>;
   members: (groupId: string) => Promise<Result<Member[]>>;
   photoUrls: (paths: string[]) => Promise<Record<string, string>>;
   vote: (proofId: string, vote: Vote | null) => Promise<Result>;
@@ -223,6 +225,11 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
       feed: async (groupId, before) => {
         const r = await call<FeedRow[]>('group_feed', { p_group_id: groupId, p_before: before ?? null, p_limit: 20 }, '인증을 받아 오지 못했어요');
         return r.ok ? { ok: true, value: (r.value ?? []).map(proofFromRow) } : r;
+      },
+
+      pot: async (groupId) => {
+        const r = await call<number>('group_pot_now', { p_group_id: groupId }, '금고를 받아 오지 못했어요');
+        return r.ok ? (r.value ?? 0) : 0;
       },
 
       standing: async (groupId) => {
