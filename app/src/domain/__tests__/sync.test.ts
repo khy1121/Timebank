@@ -95,6 +95,8 @@ describe('서버 행 변환', () => {
       p_deleted_at: null,
       p_created_at: null,
       p_stake_group_id: null,
+      p_repeat: null,
+      p_repeat_from: null,
     });
   });
 

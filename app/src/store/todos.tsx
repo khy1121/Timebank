@@ -30,6 +30,7 @@ import {
   type TodoRow,
 } from '@/domain/sync';
 import { bankProgress, type Progress } from '@/domain/bankConditions';
+import { nextDue } from '@/domain/repeat';
 import { canBuy, itemOf, ownedCodes } from '@/domain/shop';
 import { accountOf, earlyForgiveRefund, extendFee, inFreeEdit, settlementOf, type Account, type AccountInput, type Settlement, type StakedTodo } from '@/domain/savings';
 import { type Purchase, type Wallet } from '@/domain/wallet';
@@ -315,7 +316,7 @@ type Store = {
 
 const TodosContext = createContext<Store | null>(null);
 
-const TODO_COLUMNS = 'id,title,importance,due_date,status,updated_at,deleted_at,created_at,stake_group_id';
+const TODO_COLUMNS = 'id,title,importance,due_date,status,updated_at,deleted_at,created_at,stake_group_id,repeat,repeat_from';
 const REPAYMENT_COLUMNS = 'id,todo_id,kind,title,principal,interest,overdue_days,settled_on,updated_at,deleted_at';
 const PURCHASE_COLUMNS = 'id,item_code,price,purchased_on,updated_at,deleted_at';
 const EVENT_COLUMNS = 'id,kind,todo_id,days,amount,happened_on,updated_at,deleted_at';
@@ -529,6 +530,24 @@ export function TodosProvider({ children }: { children: ReactNode }) {
       }
       return rec.id;
     };
+    // 반복하는 할 일을 끝내거나 포기하면 다음 할 일을 새로 만든다 (FR-111). 같은 원금이 다시 걸린다
+    const spawnNext = (todo: StoredTodo) => {
+      if (!todo.repeat) return;
+      const at = now();
+      putTodo({
+        id: Crypto.randomUUID(),
+        title: todo.title,
+        importance: todo.importance,
+        dueDate: nextDue(todo.dueDate, todo.repeat, today),
+        status: 'open',
+        updatedAt: at,
+        deletedAt: null,
+        createdAt: at,
+        stakeGroupId: todo.stakeGroupId ?? null,
+        repeat: todo.repeat,
+        repeatFrom: todo.id,
+      });
+    };
     const feeFor = (todo: StoredTodo, input: TodoInput) => {
       if (free(todo)) return 0;
       const days = diffDays(todo.dueDate, input.dueDate);
@@ -561,7 +580,7 @@ export function TodosProvider({ children }: { children: ReactNode }) {
       add: (input, stakeGroupId = null) => {
         const id = Crypto.randomUUID();
         const at = now();
-        putTodo({ id, ...input, title: input.title.trim(), status: 'open', updatedAt: at, deletedAt: null, createdAt: at, stakeGroupId });
+        putTodo({ id, ...input, repeat: input.repeat ?? null, title: input.title.trim(), status: 'open', updatedAt: at, deletedAt: null, createdAt: at, stakeGroupId });
         track('todo_create', { importance: input.importance, days_until_due: daysUntilDue(input.dueDate, today), group: !!stakeGroupId, negative: account.cash < principalOf(input.importance) });
         return id;
       },
@@ -582,18 +601,25 @@ export function TodosProvider({ children }: { children: ReactNode }) {
           });
           track('extend', { days, fee });
         }
-        putTodo({ ...todo, ...input, title: input.title.trim(), updatedAt: at });
+        putTodo({ ...todo, ...input, repeat: input.repeat === undefined ? todo.repeat : input.repeat, title: input.title.trim(), updatedAt: at });
         return fee;
       },
       repay: (id) => {
         const todo = find(id);
-        return todo ? record(todo, 'repaid') : null;
+        if (!todo) return null;
+        const repaymentId = record(todo, 'repaid');
+        spawnNext(todo);
+        return repaymentId;
       },
       undoRepay: (id) => {
         const todo = find(id);
         if (!todo) return;
         const at = now();
         putTodo({ ...todo, status: 'open', updatedAt: at });
+        // 끝내서 새로 생긴 다음 반복 할 일도 지운다
+        for (const t of state.todos) {
+          if (t.repeatFrom === id && t.status === 'open' && !t.deletedAt) putTodo({ ...t, updatedAt: at, deletedAt: at });
+        }
         track('repay_undo');
         for (const r of state.repayments) {
           if (r.todoId === id && !r.deletedAt) putRepayment({ ...r, updatedAt: at, deletedAt: at });
@@ -613,6 +639,7 @@ export function TodosProvider({ children }: { children: ReactNode }) {
           return false;
         }
         record(todo, 'forgiven');
+        spawnNext(todo);
         return true;
       },
       settlementFor: (r) => {

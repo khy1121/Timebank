@@ -1,3 +1,4 @@
+import type { Repeat } from './repeat';
 import { diffDays, type DateString } from './dates';
 import { debtFor, isCapped, viewOf, type Importance, type Todo } from './interest';
 
@@ -37,7 +38,8 @@ export function settle(todo: Todo, kind: RepaymentKind, today: DateString, id: s
 
 export const TITLE_MAX = 100;
 
-export type TodoInput = { title: string; importance: Importance; dueDate: DateString };
+/** repeat: 반복(매일·매주). 없으면 한 번만 (FR-111) */
+export type TodoInput = { title: string; importance: Importance; dueDate: DateString; repeat?: Repeat | null };
 export type InputError = 'titleRequired' | 'titleTooLong' | 'dueInPast';
 
 /**

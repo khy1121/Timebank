@@ -1,6 +1,7 @@
 import { Pressable, Text, View } from 'react-native';
 
 import { formatAmount, type TodoView } from '@/domain/interest';
+import { REPEAT_LABEL, toRepeat } from '@/domain/repeat';
 import { color, radius, shadow, stroke, themed, type } from '@/theme/tokens';
 
 type Props = { view: TodoView; onRepay?: () => void; onOpen?: () => void };
@@ -26,7 +27,8 @@ export function TodoTicket({ view, onRepay, onOpen }: Props) {
   const { todo, state } = view;
   const overdue = state === 'overdue';
   const amount = overdue ? view.principal - view.interest : view.principal;
-  const line = ticketLine(view);
+  const repeat = toRepeat((todo as { repeat?: string | null }).repeat);
+  const line = repeat ? `${ticketLine(view)} · ${REPEAT_LABEL[repeat]}` : ticketLine(view);
   return (
     <View style={[styles.card, overdue && styles.cardOverdue]}>
       <Pressable
