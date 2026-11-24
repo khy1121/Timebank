@@ -12,6 +12,7 @@ import {
   verifyErrorMessage,
 } from '@/domain/auth';
 import { DELETE_FAILED } from '@/domain/settings';
+import { forgetPushToken } from '@/lib/push';
 import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 
 /**
@@ -136,6 +137,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       cancelPending: () => setPendingEmail(null),
       signOut: async () => {
+        // 이 기기로 다른 사람의 친구 알림이 오지 않게, 로그인이 살아 있을 때 토큰부터 지운다
+        await forgetPushToken();
         const { error } = await supabase.auth.signOut();
         if (error) console.warn('로그아웃 요청이 실패했어요', error);
         setSession(null);
