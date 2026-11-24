@@ -386,7 +386,7 @@ function NameplatePicker({ stage, current, onPick }: { stage: number; current: N
               onPress={() => onPick(n)}
               accessibilityRole="radio"
               accessibilityState={{ selected: on, disabled: !open }}
-              accessibilityLabel={`${NAMEPLATE_LABEL[n]} 이름표${open ? '' : `, ${bankOf(need).name}을 열면`}`}
+              accessibilityLabel={`${NAMEPLATE_LABEL[n]} 이름표${open ? '' : `, ${josa(bankOf(need).name, '을', '를')} 열면`}`}
               style={({ pressed }) => [pickerStyles.cell, on && pickerStyles.cellOn, !open && pickerStyles.locked, pressed && pickerStyles.pressed]}>
               <NameplateSwatch plate={n} />
               <Text style={[type.caption, on ? pickerStyles.brand : pickerStyles.muted]} numberOfLines={1}>
@@ -403,9 +403,10 @@ function NameplatePicker({ stage, current, onPick }: { stage: number; current: N
 const pickerStyles = StyleSheet.create({
   wrap: { gap: 8 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  cell: { width: '31%', flexGrow: 1, alignItems: 'center', gap: 6, paddingVertical: 10, borderRadius: radius.md, borderWidth: stroke.hairline, borderColor: color.borderDefault, backgroundColor: color.bgSurface },
+  // 일곱 칸이라 마지막 줄이 혼자 늘어나지 않게 너비를 고정한다
+  cell: { width: '31.5%', alignItems: 'center', gap: 6, paddingVertical: 10, borderRadius: radius.md, borderWidth: stroke.hairline, borderColor: color.borderDefault, backgroundColor: color.bgSurface },
   cellOn: { borderWidth: stroke.outline, borderColor: color.inkOutline },
-  locked: { opacity: 0.55 },
+  locked: { opacity: 0.75 },
   pressed: { opacity: 0.8 },
   ink: { color: color.textPrimary },
   muted: { color: color.textSecondary },
