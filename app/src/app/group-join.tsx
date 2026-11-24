@@ -11,7 +11,7 @@ import { CODE_LENGTH, codeFromText, isCompleteCode, MAX_MEMBERS, NICKNAME_MAX, n
 import { feedback } from '@/lib/feedback';
 import { useGroups, type GroupPreview } from '@/store/groups';
 import * as layout from '@/theme/layout';
-import { color, radius, stroke, type } from '@/theme/tokens';
+import { color, inputType, radius, stroke, type } from '@/theme/tokens';
 
 /** 찾지 못했으면 null, 서버 오류면 그 문구 */
 type Lookup = { code: string; result: GroupPreview | null | { error: string } };
@@ -82,7 +82,7 @@ export default function JoinGroupScreen() {
             placeholder="K7Q2M9"
             placeholderTextColor={color.textTertiary}
             accessibilityLabel="초대 코드"
-            style={[type.title, styles.codeInput, { borderColor: complete ? color.inkOutline : color.borderDefault }]}
+            style={[inputType.title, styles.codeInput, { borderColor: complete ? color.inkOutline : color.borderDefault }]}
           />
 
           {complete && found === undefined ? <Text style={[type.caption, styles.muted]}>그룹을 찾는 중이에요</Text> : null}

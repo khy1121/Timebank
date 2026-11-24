@@ -19,7 +19,7 @@ import { useNotifications } from '@/store/notifications';
 import { useProfile } from '@/store/profile';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
-import { color, radius, stroke, type } from '@/theme/tokens';
+import { color, inputType, radius, stroke, type } from '@/theme/tokens';
 
 const CONTACT = process.env.EXPO_PUBLIC_CONTACT_EMAIL ?? '';
 const VERSION = Constants.expoConfig?.version ?? '1.0.0';
@@ -264,7 +264,7 @@ export default function SettingsScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                   accessibilityLabel={`${DELETE_WORD}라고 입력`}
-                  style={[type.body, styles.input]}
+                  style={[inputType.body, styles.input]}
                 />
                 {deleteError ? (
                   <Text style={[type.label, styles.error]} accessibilityRole="alert">

@@ -12,7 +12,7 @@ import { rewardFor } from '@/domain/wallet';
 import { useGroups } from '@/store/groups';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
-import { color, radius, stroke, type } from '@/theme/tokens';
+import { color, inputType, radius, stroke, type } from '@/theme/tokens';
 
 import { Amount } from './Amount';
 import { Chip } from './Chip';
@@ -107,7 +107,7 @@ export function TodoForm({ original }: { original?: Todo }) {
               returnKeyType="done"
               accessibilityLabel="할 일 제목"
               style={[
-                type.body,
+                inputType.body,
                 styles.input,
                 { borderColor: focused ? color.brandPrimary : title ? color.inkOutline : color.borderDefault },
               ]}

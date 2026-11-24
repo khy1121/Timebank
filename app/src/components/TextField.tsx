@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
 
-import { color, radius, stroke, type } from '@/theme/tokens';
+import { color, inputType, radius, stroke, type } from '@/theme/tokens';
 
 type Props = {
   label: string;
@@ -29,7 +29,7 @@ export function TextField({ label, value, onChangeText, maxLength, placeholder, 
         maxLength={maxLength}
         accessibilityLabel={label}
         style={[
-          type.body,
+          inputType.body,
           styles.input,
           { borderColor: error ? color.debtFg : focused ? color.brandPrimary : value ? color.inkOutline : color.borderDefault },
           style,
