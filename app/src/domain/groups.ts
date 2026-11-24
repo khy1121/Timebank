@@ -101,6 +101,21 @@ export function canPostProof(repaidAt: string, now: Date): boolean {
   return now.getTime() - Date.parse(repaidAt) < WINDOW_MS;
 }
 
+/**
+ * 이 상환으로 아직 인증을 올릴 수 있는 그룹 ID. 상환(탕감 말고)이고, 상환한 지 24시간 안이며, 아직 올리지 않은 그룹만.
+ * repaidAt은 기기에 남은 상환 기록의 수정 시각이다(서버는 기록을 만든 시각으로 다시 확인한다).
+ */
+export function openProofGroups(
+  repayment: { id: string; kind: 'repaid' | 'forgiven'; repaidAt: string },
+  groupIds: readonly string[],
+  posted: ReadonlyMap<string, ReadonlySet<string>>,
+  now: Date,
+): string[] {
+  if (repayment.kind !== 'repaid' || !canPostProof(repayment.repaidAt, now)) return [];
+  const done = posted.get(repayment.id);
+  return groupIds.filter((g) => !done?.has(g));
+}
+
 /** 통과한 인증의 보너스 냥 (FR-080). 기한 안 상환 보상의 50% */
 export function proofBonus(principal: number, onTime: boolean): number {
   return onTime ? Math.floor(rewardFor(principal) / 2) : 0;

@@ -7,6 +7,7 @@ import {
   hoursLeft,
   isCompleteCode,
   nicknameError,
+  openProofGroups,
   normalizeCode,
   photoPath,
   proofBonus,
@@ -70,6 +71,15 @@ describe('인증 상태 (서버 proof_state와 같은 규칙)', () => {
   it('상환 뒤 24시간 안에만 올릴 수 있다', () => {
     expect(canPostProof(T0, at(23))).toBe(true);
     expect(canPostProof(T0, at(24))).toBe(false);
+  });
+
+  it('아직 올리지 않은 그룹만 남기고, 24시간이 지나거나 탕감이면 없다', () => {
+    const posted = new Map([['r1', new Set(['g1'])]]);
+    const r = { id: 'r1', kind: 'repaid' as const, repaidAt: T0 };
+    expect(openProofGroups(r, ['g1', 'g2'], posted, at(1))).toEqual(['g2']);
+    expect(openProofGroups({ ...r, id: 'r2' }, ['g1', 'g2'], posted, at(1))).toEqual(['g1', 'g2']);
+    expect(openProofGroups(r, ['g1', 'g2'], posted, at(24))).toEqual([]);
+    expect(openProofGroups({ ...r, kind: 'forgiven' }, ['g1'], new Map(), at(1))).toEqual([]);
   });
 });
 
