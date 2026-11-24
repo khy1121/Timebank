@@ -29,7 +29,7 @@ describe('사기 (TC-063)', () => {
 
   it('이미 가진 물건과 기본 물건은 다시 살 수 없다', () => {
     expect(canBuy('ink-blue', 9999, owned)).toMatchObject({ ok: false, reason: 'owned' });
-    expect(canBuy('ink-red', 9999, owned)).toMatchObject({ ok: false, reason: 'owned' });
+    expect(canBuy('ink-brand', 9999, owned)).toMatchObject({ ok: false, reason: 'owned' });
   });
 
   it('모르는 코드는 살 수 없다', () => {
@@ -46,8 +46,8 @@ describe('착용 (TC-064)', () => {
 
   it('가지지 않은 물건이나 다른 칸의 물건은 기본 물건으로 되돌린다', () => {
     const look = resolveLook({ stampInk: 'ink-gold', stampWord: 'ink-blue' }, ownedCodes(['ink-blue']));
-    expect(look.stampInk.code).toBe('ink-red');
-    expect(look.stampWord.code).toBe('word-wannap');
+    expect(look.stampInk.code).toBe('ink-brand');
+    expect(look.stampWord.code).toBe('word-jeokrip');
   });
 });
 
