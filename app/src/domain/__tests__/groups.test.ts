@@ -60,7 +60,7 @@ describe('인증 상태 (서버 proof_state와 같은 규칙)', () => {
     expect(proofState(T0, 1, 1, at(5))).toBe('pending');
   });
   it('24시간이 지나면 의심이 없을 때만 통과', () => {
-    expect(proofState(T0, 0, 0, at(24))).toBe('passed');
+    expect(proofState(T0, 0, 0, at(24))).toBe('rejected');
     expect(proofState(T0, 1, 1, at(24))).toBe('rejected');
     expect(proofState(T0, 0, 1, at(30))).toBe('rejected');
   });
@@ -93,9 +93,9 @@ describe('보너스와 문구', () => {
   it('상태마다 한 줄 설명', () => {
     expect(proofNote({ ...base, state: 'passed' }, at(1))).toBe('+150냥 보너스');
     expect(proofNote({ ...base, state: 'passed', onTime: false }, at(1))).toBe('통과했어요');
-    expect(proofNote({ ...base, state: 'pending' }, at(2))).toBe('자동 통과까지 22시간');
+    expect(proofNote({ ...base, state: 'pending' }, at(2))).toBe('22시간 안에 인정 1명이 필요해요');
     expect(proofNote({ ...base, state: 'pending', doubts: 1 }, at(2))).toBe('22시간 안에 인정이 의심보다 많아야 해요');
-    expect(proofNote({ ...base, state: 'rejected' }, at(30))).toBe('그룹 순위에 세지 않아요');
+    expect(proofNote({ ...base, state: 'rejected' }, at(30))).toBe('인정을 못 받아 그룹 순위에 세지 않아요');
     expect(proofNote({ ...base, state: 'passed', hidden: true }, at(1))).toContain('숨겨졌어요');
   });
   it('지난 시간', () => {

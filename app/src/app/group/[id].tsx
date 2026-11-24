@@ -52,10 +52,12 @@ export default function GroupScreen() {
     block,
     unblock,
     markSeen,
+    pot: fetchPot,
   } = useGroups();
   const group = myGroups.find((g) => g.id === id);
   const [tab, setTab] = useState<Tab>('feed');
   const [feed, setFeed] = useState<Feed | null>(null);
+  const [pot, setPot] = useState<number | null>(null);
   const [standing, setStanding] = useState<GroupStanding[] | null>(null);
   const [members, setMembers] = useState<Member[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -67,7 +69,13 @@ export default function GroupScreen() {
   const [dialog, setDialog] = useState<Dialog>(null);
   const [now, setNow] = useState(() => new Date());
 
-  // 남은 시간과 자동 통과가 화면에서 바뀌도록 1분마다 시각을 새로 잡는다
+  // 남은 시간과 불인정이 화면에서 바뀌도록 1분마다 시각을 새로 잡는다
+  // 이번 주 금고. 투표나 새로고침 뒤에도 다시 받는다
+  useEffect(() => {
+    if (!id) return;
+    fetchPot(id).then(setPot);
+  }, [id, fetchPot, feed]);
+
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(timer);
@@ -179,6 +187,13 @@ export default function GroupScreen() {
         </Pressable>
       ) : null}
 
+      {tab === 'feed' && pot !== null ? (
+        <View style={styles.pot} accessible accessibilityLabel={`이번 주 금고 ${pot}냥`}>
+          <Text style={[type.label, styles.secondary]}>이번 주 금고</Text>
+          <Text style={[type.numberL, styles.ink]}>{pot.toLocaleString('ko-KR')}냥</Text>
+          <Text style={[type.caption, styles.secondary]}>인정 못 받은 보증금이 모여요. 월요일 0시에 이번 주 인정받은 사람끼리 인정 수만큼 나눠요.</Text>
+        </View>
+      ) : null}
       {tab === 'feed' && waiting > 0 ? (
         <View style={styles.banner}>
           <Text style={[type.label, styles.brand]}>인정을 기다리는 친구 인증이 {waiting}개 있어요</Text>
@@ -357,6 +372,7 @@ const styles = StyleSheet.create({
   brand: { color: color.brandPrimary },
   error: { color: color.debtFg },
   errorBox: { padding: 12, borderRadius: radius.md, backgroundColor: color.debtBg },
+  pot: { gap: 2, padding: 14, borderRadius: radius.lg, backgroundColor: color.mascotCream, borderWidth: stroke.hairline, borderColor: color.borderDefault },
   banner: { paddingVertical: 10, paddingHorizontal: 14, borderRadius: radius.md, backgroundColor: color.brandSoft },
   empty: { ...layout.panel, gap: 8, padding: 20 },
   section: { gap: 10 },
