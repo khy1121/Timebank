@@ -13,7 +13,10 @@ import {
   type NotifyPermission,
 } from '@/lib/notifications';
 
+import { registerPushToken } from '@/lib/push';
+
 import { useAuth } from './auth';
+import { useGroups } from './groups';
 import { useProfile } from './profile';
 import { useTodos } from './todos';
 
@@ -34,6 +37,8 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();
   const { profile } = useProfile();
   const { todos, today, hydrated } = useTodos();
+  const { groups } = useGroups();
+  const askedForFriends = useRef(false);
   const [permission, setPermission] = useState<NotifyPermission>('undetermined');
   const asked = useRef(false);
   const signedIn = !!session;
@@ -71,6 +76,20 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     request().catch((e) => console.warn('알림 권한을 묻지 못했어요', e));
   }, [signedIn, enabled, permission, openCount, request]);
 
+  // 그룹에 들어가 있는데 아직 권한을 물은 적이 없으면 친구 알림을 받으려고 묻는다
+  const pushFriends = profile?.pushFriends ?? false;
+  const inGroup = groups.length > 0;
+  useEffect(() => {
+    if (askedForFriends.current || !signedIn || !pushFriends || !inGroup || permission !== 'undetermined') return;
+    askedForFriends.current = true;
+    request().catch((e) => console.warn('알림 권한을 묻지 못했어요', e));
+  }, [signedIn, pushFriends, inGroup, permission, request]);
+
+  // 권한이 있으면 이 기기 토큰을 서버에 둔다. 받을지 말지는 서버가 설정(push_friends)을 보고 정한다
+  useEffect(() => {
+    if (signedIn && permission === 'granted') registerPushToken();
+  }, [signedIn, permission]);
+
   // 할 일, 날짜, 알림 설정이 바뀌면 예약을 다시 건다. 끄거나 로그아웃하면 전부 취소한다. (FR-032)
   const notifyTime = profile?.notifyTime;
   useEffect(() => {
@@ -84,10 +103,13 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     replaceScheduled(planNotifications(todos, { date: today, minutes: now.getHours() * 60 + now.getMinutes() }, parseTime(notifyTime)));
   }, [signedIn, enabled, permission, notifyTime, hydrated, todos, today]);
 
-  // 알림을 누르면 그 할 일의 상세 화면으로 간다
+  // 알림을 누르면 할 일 알림은 그 할 일로, 친구 알림은 그 그룹으로 간다
   useEffect(() => {
     if (!signedIn) return;
-    return onNotificationTap((todoId) => router.push({ pathname: '/todo/[id]', params: { id: todoId } }));
+    return onNotificationTap((target) => {
+      if ('todoId' in target) router.push({ pathname: '/todo/[id]', params: { id: target.todoId } });
+      else router.push({ pathname: '/group/[id]', params: { id: target.groupId } });
+    });
   }, [signedIn]);
 
   const store = useMemo<Store>(() => ({ permission, request }), [permission, request]);

@@ -24,6 +24,7 @@ import {
   type Vote,
 } from '@/domain/groups';
 import { track } from '@/lib/events';
+import { sendPush } from '@/lib/push';
 import { supabase } from '@/lib/supabase';
 
 import { useAuth } from './auth';
@@ -184,6 +185,7 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
         if (!r.ok) return r;
         // 코드를 못 찾으면 서버가 null을 돌려준다(틀린 횟수를 남기려고 오류를 내지 않는다)
         if (!r.value) return fail(groupErrorMessage({ hint: 'not_found' }, '초대 코드를 찾을 수 없어요'));
+        sendPush('join', r.value);
         await refresh();
         track('group_join');
         return r;
@@ -247,7 +249,10 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
 
       vote: async (proofId, vote) => {
         const r = await call<void>('vote_proof', { p_proof_id: proofId, p_vote: vote }, '투표하지 못했어요. 잠시 뒤에 다시 해 주세요');
-        if (r.ok && vote) track('proof_vote', { vote });
+        if (r.ok && vote) {
+          track('proof_vote', { vote });
+          sendPush('vote', proofId);
+        }
         return r;
       },
 
@@ -328,7 +333,10 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
             await flush();
             await wait(1500);
           }
-          if (ok) posted += 1;
+          if (ok) {
+            posted += 1;
+            sendPush('proof', id);
+          }
           else await supabase.storage.from('proofs').remove([path]);
         }
         if (posted === 0) return fail(lastError);

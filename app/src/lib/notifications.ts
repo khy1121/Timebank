@@ -87,11 +87,15 @@ export function cancelAllScheduled(): Promise<void> {
  * 알림을 눌렀을 때 해당 할 일의 ID를 넘긴다. 앱이 꺼진 상태에서 눌러 켠 경우도 포함한다.
  * 돌려주는 함수를 부르면 듣기를 멈춘다.
  */
-export function onNotificationTap(handler: (todoId: string) => void): () => void {
+export type NotificationTarget = { todoId: string } | { groupId: string };
+
+/** 할 일 알림은 todoId, 친구 알림(푸시)은 groupId를 담고 온다 */
+export function onNotificationTap(handler: (target: NotificationTarget) => void): () => void {
   if (!notificationsSupported) return () => {};
   const handle = (response: Notifications.NotificationResponse | null) => {
-    const todoId = response?.notification.request.content.data?.todoId;
-    if (typeof todoId === 'string') handler(todoId);
+    const data = response?.notification.request.content.data;
+    if (typeof data?.todoId === 'string') handler({ todoId: data.todoId });
+    else if (typeof data?.groupId === 'string') handler({ groupId: data.groupId });
   };
   handle(Notifications.getLastNotificationResponse());
   Notifications.clearLastNotificationResponse();
