@@ -211,6 +211,7 @@ export default function FriendsScreen() {
               <Text style={[type.caption, styles.secondary, styles.center]}>이 코드를 받은 사람이 나에게 친구 신청을 할 수 있어요.</Text>
             </View>
             <Button label="코드 보내기" onPress={share} disabled={!me} />
+            <Button label="카드로 만들어 공유 (인스타그램 등)" variant="secondary" onPress={() => router.push('/share-card')} disabled={!me} />
             <Pressable onPress={() => setRotating(true)} accessibilityRole="button" hitSlop={8} style={styles.center}>
               <Text style={[type.label, styles.muted]}>코드 바꾸기</Text>
             </Pressable>

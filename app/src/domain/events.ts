@@ -17,6 +17,7 @@ export type EventName =
   | 'nameplate_set'
   | 'bundle_add'
   | 'statement_share'
+  | 'friend_card_share'
   | 'standing_view'
   | 'voice_change'
   | 'closet_try'
@@ -54,6 +55,7 @@ const ALLOWED_KEYS: Record<EventName, string[]> = {
   nameplate_set: ['nameplate'],
   bundle_add: ['count'],
   statement_share: ['month'],
+  friend_card_share: ['image'],
   standing_view: ['status', 'rank', 'participants'],
   voice_change: ['voice'],
   closet_try: ['item_code', 'owned'],

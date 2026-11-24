@@ -49,7 +49,8 @@
           "cameraPermission": "할 일을 끝낸 모습을 찍어 친구 그룹에 인증으로 올려요.",
           "microphonePermission": false
         }
-      ]
+      ],
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true,
