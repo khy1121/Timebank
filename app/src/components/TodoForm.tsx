@@ -20,6 +20,8 @@ import { ConfirmSheet } from './ConfirmSheet';
 import { SpeechBubble } from './SpeechBubble';
 import { TopBar } from './TopBar';
 import { goBack } from '@/lib/navigation';
+import { REPEAT_BANK_STAGE, REPEAT_LABEL, type Repeat } from '@/domain/repeat';
+import type { StoredTodo } from '@/domain/sync';
 
 const LEVELS: Importance[] = [1, 2, 3, 4, 5];
 const QUICK = [
@@ -43,15 +45,18 @@ export function TodoForm({ original }: { original?: Todo }) {
   const [title, setTitle] = useState(original?.title ?? '');
   const [importance, setImportance] = useState<Importance>(original?.importance ?? 3);
   const [dueDate, setDueDate] = useState(original?.dueDate ?? addDays(today, 1));
+  const [repeat, setRepeat] = useState<Repeat | null>((original as StoredTodo | undefined)?.repeat ?? null);
+  // 반복은 시장 지점부터 (FR-111)
+  const canRepeat = account.bankStage >= REPEAT_BANK_STAGE;
   const [focused, setFocused] = useState(false);
   const [askDiscard, setAskDiscard] = useState(false);
 
   const dueLocked = original ? !canChangeDueDate(original, today) : false;
-  const input: TodoInput = { title, importance, dueDate };
+  const input: TodoInput = { title, importance, dueDate, repeat };
   const errors = validateInput(input, today, original);
   const principal = principalOf(importance);
   const dirty = original
-    ? title !== original.title || importance !== original.importance || dueDate !== original.dueDate
+    ? title !== original.title || importance !== original.importance || dueDate !== original.dueDate || repeat !== ((original as StoredTodo).repeat ?? null)
     : title.trim().length > 0;
   const offset = diffDays(today, dueDate);
 
@@ -167,6 +172,25 @@ export function TodoForm({ original }: { original?: Todo }) {
             </View>
           </View>
 
+          <View style={styles.field}>
+            <Text style={[type.headline, styles.question]}>반복할까요?</Text>
+            <View style={styles.rowWrap} accessibilityRole="radiogroup">
+              <Chip label="한 번만" selected={repeat === null} onPress={() => setRepeat(null)} />
+              {(['daily', 'weekly'] as const).map((k) => (
+                <View key={k} style={!canRepeat && styles.lockedChip} accessibilityState={{ disabled: !canRepeat }}>
+                  <Chip label={REPEAT_LABEL[k]} selected={repeat === k} onPress={() => canRepeat && setRepeat(k)} />
+                </View>
+              ))}
+            </View>
+            <Text style={[type.caption, styles.muted]}>
+              {!canRepeat
+                ? '🔒 시장 지점을 열면 반복할 수 있어요'
+                : repeat
+                  ? `끝내면 ${repeat === 'daily' ? '다음 날' : '일주일 뒤'} 할 일이 같은 원금으로 새로 생겨요.`
+                  : '한 번 끝내면 끝나요.'}
+            </Text>
+          </View>
+
           {!original && groups.length > 0 ? (
             <View style={styles.field}>
               <Text style={[type.headline, styles.question]}>그룹에 걸까요?</Text>
@@ -238,6 +262,7 @@ function Stepper({ label, glyph, disabled, onPress }: { label: string; glyph: st
 }
 
 const styles = themed(() => ({
+  lockedChip: { opacity: 0.45 },
   safe: layout.screen,
   flex: { flex: 1 },
   content: layout.content,
