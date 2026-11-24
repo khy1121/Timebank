@@ -3,7 +3,7 @@ export type DateString = string;
 
 const MS_PER_DAY = 86_400_000;
 
-function toUtcMs(date: DateString): number {
+export function toUtcMs(date: DateString): number {
   const [y, m, d] = date.split('-').map(Number);
   return Date.UTC(y, m - 1, d);
 }
