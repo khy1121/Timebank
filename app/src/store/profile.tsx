@@ -19,7 +19,7 @@ import { useAuth } from './auth';
  */
 
 const storageKey = (userId: string) => `todo-interest/profile/${userId}`;
-const COLUMNS = 'notify_enabled,notify_time,onboarded_at,signup_source,equipped,voice,created_at,push_friends';
+const COLUMNS = 'notify_enabled,notify_time,onboarded_at,signup_source,equipped,voice,created_at,push_friends,nameplate';
 
 type Store = {
   /** 아직 읽지 못했으면 null */
@@ -45,8 +45,8 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
         const raw = await AsyncStorage.getItem(storageKey(userId));
         // 상점이 생기기 전의 사본에는 equipped가 없다
         if (raw && active) {
-          const cached = JSON.parse(raw) as Partial<Profile> & Omit<Profile, 'equipped' | 'voice' | 'signupDate' | 'pushFriends'>;
-          setLoaded({ userId, profile: { ...cached, equipped: cached.equipped ?? {}, voice: cached.voice ?? 'spicy', signupDate: cached.signupDate ?? null, pushFriends: cached.pushFriends ?? true } });
+          const cached = JSON.parse(raw) as Partial<Profile> & Omit<Profile, 'equipped' | 'voice' | 'signupDate' | 'pushFriends' | 'nameplate'>;
+          setLoaded({ userId, profile: { ...cached, equipped: cached.equipped ?? {}, voice: cached.voice ?? 'spicy', signupDate: cached.signupDate ?? null, pushFriends: cached.pushFriends ?? true, nameplate: cached.nameplate ?? 'none' } });
         }
       } catch (e) {
         console.warn('설정 사본을 읽지 못했어요', e);
@@ -75,7 +75,13 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       const next = { ...profile, ...patch };
       setLoaded({ userId, profile: next });
       AsyncStorage.setItem(storageKey(userId), JSON.stringify(next)).catch((e) => console.warn('설정을 저장하지 못했어요', e));
-      const { error } = await supabase.from('profiles').update(profilePatchToRow(patch)).eq('id', userId);
+      if (patch.nameplate !== undefined) {
+        const { error } = await supabase.rpc('set_nameplate', { p_nameplate: patch.nameplate });
+        if (error) console.warn('이름표를 서버에 올리지 못했어요', error);
+      }
+      const row = profilePatchToRow(patch);
+      if (Object.keys(row).length === 0) return;
+      const { error } = await supabase.from('profiles').update(row).eq('id', userId);
       if (error) console.warn('설정을 서버에 올리지 못했어요', error);
     },
     [userId, profile],

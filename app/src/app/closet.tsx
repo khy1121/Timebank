@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useMemo, useRef, useState, type ComponentRef } from 'react';
-import { ScrollView, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,7 +9,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
 import { Mascot } from '@/components/Mascot';
+import { NameplateSwatch } from '@/components/Nameplate';
 import { TopBar } from '@/components/TopBar';
+import { bankOf, NAMEPLATE_LABEL, NAMEPLATES, nameplateStage, resolveNameplate, type Nameplate } from '@/domain/bank';
 import { outfitOf, sameOutfit, trialState, wear, wearLine, withOutfit, type Outfit } from '@/domain/closet';
 import { formatAmount } from '@/domain/interest';
 import { josa } from '@/domain/korean';
@@ -42,7 +44,7 @@ const inside = (r: Rect | null, x: number, y: number) => !!r && x >= r.x && x <=
  */
 export default function ClosetScreen() {
   const { profile, update } = useProfile();
-  const { owned, wallet, buyAll } = useTodos();
+  const { owned, wallet, buyAll, account } = useTodos();
   const saved = useMemo(() => outfitOf(profile?.equipped ?? {}, owned), [profile, owned]);
   const [trial, setTrial] = useState<Outfit | null>(null);
   const current = trial ?? saved;
@@ -184,6 +186,16 @@ export default function ClosetScreen() {
               />
             ))}
           </View>
+
+          <NameplatePicker
+            stage={account.bankStage}
+            current={resolveNameplate(profile?.nameplate, account.bankStage)}
+            onPick={(n) => {
+              update({ nameplate: n });
+              feedback.tap();
+              track('nameplate_set', { nameplate: n });
+            }}
+          />
         </ScrollView>
 
         <View style={styles.bar}>
@@ -352,4 +364,50 @@ const styles = StyleSheet.create({
   muted: { color: color.textSecondary },
   on: { color: color.brandPrimary },
   center: { textAlign: 'center' },
+});
+
+/** 이름표 고르기 (FR-113). 은행을 열 때마다 하나씩 열린다. 순위표·그룹 목록에서 내 줄 배경이 된다 */
+function NameplatePicker({ stage, current, onPick }: { stage: number; current: Nameplate; onPick: (n: Nameplate) => void }) {
+  return (
+    <View style={pickerStyles.wrap}>
+      <Text style={[type.headline, pickerStyles.ink]} accessibilityRole="header">
+        이름표
+      </Text>
+      <Text style={[type.caption, pickerStyles.muted]}>순위표와 그룹에서 내 줄 배경이 돼요. 은행을 키우면 더 좋은 이름표가 열려요.</Text>
+      <View style={pickerStyles.grid} accessibilityRole="radiogroup">
+        {NAMEPLATES.map((n) => {
+          const need = nameplateStage(n);
+          const open = need <= stage;
+          const on = current === n;
+          return (
+            <Pressable
+              key={n}
+              disabled={!open}
+              onPress={() => onPick(n)}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: on, disabled: !open }}
+              accessibilityLabel={`${NAMEPLATE_LABEL[n]} 이름표${open ? '' : `, ${bankOf(need).name}을 열면`}`}
+              style={({ pressed }) => [pickerStyles.cell, on && pickerStyles.cellOn, !open && pickerStyles.locked, pressed && pickerStyles.pressed]}>
+              <NameplateSwatch plate={n} />
+              <Text style={[type.caption, on ? pickerStyles.brand : pickerStyles.muted]} numberOfLines={1}>
+                {on ? '달고 있음' : open ? '달기' : `🔒 ${bankOf(need).name}`}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
+const pickerStyles = StyleSheet.create({
+  wrap: { gap: 8 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  cell: { width: '31%', flexGrow: 1, alignItems: 'center', gap: 6, paddingVertical: 10, borderRadius: radius.md, borderWidth: stroke.hairline, borderColor: color.borderDefault, backgroundColor: color.bgSurface },
+  cellOn: { borderWidth: stroke.outline, borderColor: color.inkOutline },
+  locked: { opacity: 0.55 },
+  pressed: { opacity: 0.8 },
+  ink: { color: color.textPrimary },
+  muted: { color: color.textSecondary },
+  brand: { color: color.brandPrimary },
 });

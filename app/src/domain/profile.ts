@@ -1,3 +1,4 @@
+import { NAMEPLATES, type Nameplate } from './bank';
 import type { Equipped } from './shop';
 import type { Voice } from './standing';
 
@@ -23,6 +24,8 @@ export type Profile = {
   signupDate: string | null;
   /** 친구 인증·투표·들어오기 푸시를 받는가 (그룹기획서 9절) */
   pushFriends: boolean;
+  /** 고른 이름표 (FR-113). 연 은행보다 높으면 화면에서 없음으로 보인다 */
+  nameplate: Nameplate;
 };
 
 export type ProfileRow = {
@@ -34,6 +37,7 @@ export type ProfileRow = {
   voice?: string | null;
   created_at?: string | null;
   push_friends?: boolean | null;
+  nameplate?: string | null;
 };
 
 export const DEFAULT_NOTIFY_TIME = '09:00';
@@ -85,10 +89,11 @@ export function profileFromRow(row: ProfileRow): Profile {
     voice: row.voice === 'mild' ? 'mild' : 'spicy',
     signupDate: row.created_at ? localDate(row.created_at) : null,
     pushFriends: row.push_friends ?? true,
+    nameplate: (NAMEPLATES as string[]).includes(row.nameplate ?? '') ? (row.nameplate as Nameplate) : 'none',
   };
 }
 
-/** 바꾼 항목만 서버 컬럼 이름으로 옮긴다. */
+/** 바꾼 항목만 서버 컬럼 이름으로 옮긴다. 이름표는 은행 단계를 서버가 확인해야 해서 set_nameplate로 따로 보낸다 */
 export function profilePatchToRow(patch: Partial<Profile>): Partial<ProfileRow> {
   const row: Partial<ProfileRow> = {};
   if (patch.notifyEnabled !== undefined) row.notify_enabled = patch.notifyEnabled;
