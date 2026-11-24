@@ -15,6 +15,7 @@ export type EventName =
   | 'push_friends_toggle'
   | 'item_buy'
   | 'nameplate_set'
+  | 'bundle_add'
   | 'standing_view'
   | 'voice_change'
   | 'closet_try'
@@ -50,6 +51,7 @@ const ALLOWED_KEYS: Record<EventName, string[]> = {
   push_friends_toggle: ['enabled'],
   item_buy: ['item_code', 'price'],
   nameplate_set: ['nameplate'],
+  bundle_add: ['count'],
   standing_view: ['status', 'rank', 'participants'],
   voice_change: ['voice'],
   closet_try: ['item_code', 'owned'],
