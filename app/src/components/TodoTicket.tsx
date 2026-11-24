@@ -22,7 +22,8 @@ type Props = { view: TodoView; onRepay?: () => void; onOpen?: () => void };
 
 /**
  * 할 일 한 건. 절취선이 있는 차용증 모양.
- * 왼쪽 조각을 누르면 상환(완료), 나머지를 누르면 상세로 간다. (FR-013, 014, 018, 028)
+ * 왼쪽 조각을 누르면 끝내기, 나머지를 누르면 상세로 간다. (FR-013, 014, 018, 028)
+ * 금액은 걸어 둔 원금이고, 연체 중이면 지금 끝냈을 때 돌려받는 냥(원금 − 연체료)이다 (시간적금기획서 4.4)
  */
 export function TodoTicket({ view, onRepay, onOpen }: Props) {
   const { todo, state } = view;
@@ -32,7 +33,7 @@ export function TodoTicket({ view, onRepay, onOpen }: Props) {
       <Pressable
         onPress={onRepay}
         accessibilityRole="button"
-        accessibilityLabel={`${todo.title} 상환하기`}
+        accessibilityLabel={`${todo.title} 끝내기`}
         style={[styles.stub, { backgroundColor: STUB_BG[state] }]}>
         <View style={styles.check} />
       </Pressable>
@@ -52,7 +53,7 @@ export function TodoTicket({ view, onRepay, onOpen }: Props) {
         </View>
         <View style={styles.rowAmount}>
           <CoinMeter level={todo.importance} />
-          <Amount value={overdue ? view.debt : view.principal} tone={overdue ? 'debt' : 'ink'} />
+          <Amount value={overdue ? view.principal - view.interest : view.principal} tone={overdue ? 'debt' : 'ink'} />
         </View>
         {overdue ? (
           <View style={styles.meter}>
@@ -60,7 +61,9 @@ export function TodoTicket({ view, onRepay, onOpen }: Props) {
               <View style={[styles.fill, { width: `${Math.max(4, Math.round(view.capRatio * 100))}%` }]} />
             </View>
             <Text style={[type.caption, styles.speed]}>
-              {view.capped ? '상한에 닿아서 더 붙지 않아요' : `하루에 ${formatAmount(view.nextDayInterest)}냥씩 붙는 중`}
+              {view.capped
+                ? '상한에 닿아서 더 깎이지 않아요'
+                : `원금 ${formatAmount(view.principal)}냥에서 하루에 ${formatAmount(view.nextDayInterest)}냥씩 깎이는 중`}
             </Text>
           </View>
         ) : null}
