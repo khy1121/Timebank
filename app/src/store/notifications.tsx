@@ -103,12 +103,13 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     replaceScheduled(planNotifications(todos, { date: today, minutes: now.getHours() * 60 + now.getMinutes() }, parseTime(notifyTime)));
   }, [signedIn, enabled, permission, notifyTime, hydrated, todos, today]);
 
-  // 알림을 누르면 할 일 알림은 그 할 일로, 친구 알림은 그 그룹으로 간다
+  // 알림을 누르면 할 일 알림은 그 할 일로, 그룹 알림은 그 그룹으로, 친구 신청 알림은 친구 화면으로 간다
   useEffect(() => {
     if (!signedIn) return;
     return onNotificationTap((target) => {
       if ('todoId' in target) router.push({ pathname: '/todo/[id]', params: { id: target.todoId } });
-      else router.push({ pathname: '/group/[id]', params: { id: target.groupId } });
+      else if ('groupId' in target) router.push({ pathname: '/group/[id]', params: { id: target.groupId } });
+      else router.push('/friends');
     });
   }, [signedIn]);
 
