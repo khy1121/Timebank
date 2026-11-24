@@ -21,6 +21,8 @@ export type Profile = {
   voice: Voice;
   /** 가입한 날(기기 현지 날짜). 신입 판정에 쓴다. 모르면 null */
   signupDate: string | null;
+  /** 친구 인증·투표·들어오기 푸시를 받는가 (그룹기획서 9절) */
+  pushFriends: boolean;
 };
 
 export type ProfileRow = {
@@ -31,6 +33,7 @@ export type ProfileRow = {
   equipped?: Record<string, unknown> | null;
   voice?: string | null;
   created_at?: string | null;
+  push_friends?: boolean | null;
 };
 
 export const DEFAULT_NOTIFY_TIME = '09:00';
@@ -81,6 +84,7 @@ export function profileFromRow(row: ProfileRow): Profile {
     equipped: equippedFromRow(row.equipped),
     voice: row.voice === 'mild' ? 'mild' : 'spicy',
     signupDate: row.created_at ? localDate(row.created_at) : null,
+    pushFriends: row.push_friends ?? true,
   };
 }
 
@@ -93,6 +97,7 @@ export function profilePatchToRow(patch: Partial<Profile>): Partial<ProfileRow> 
   if (patch.signupSource !== undefined) row.signup_source = patch.signupSource;
   if (patch.equipped !== undefined) row.equipped = patch.equipped;
   if (patch.voice !== undefined) row.voice = patch.voice;
+  if (patch.pushFriends !== undefined) row.push_friends = patch.pushFriends;
   return row;
 }
 

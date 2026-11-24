@@ -16,6 +16,7 @@ const profile = (over: Partial<Profile> = {}): Profile => ({
   equipped: {},
   voice: 'spicy',
   signupDate: null,
+  pushFriends: true,
   ...over,
 });
 
@@ -42,7 +43,8 @@ describe('사용자 설정 변환', () => {
   it('서버 행을 앱의 모양으로 옮긴다', () => {
     expect(
       profileFromRow({ notify_enabled: false, notify_time: '18:00:00', onboarded_at: null, signup_source: 'sns' }),
-    ).toEqual({ notifyEnabled: false, notifyTime: '18:00', onboardedAt: null, signupSource: 'sns', equipped: {}, voice: 'spicy', signupDate: null });
+    ).toEqual({ notifyEnabled: false, notifyTime: '18:00', onboardedAt: null, signupSource: 'sns', equipped: {}, voice: 'spicy', signupDate: null, pushFriends: true });
+    expect(profileFromRow({ notify_enabled: true, notify_time: '09:00', onboarded_at: null, signup_source: 'sns', push_friends: false }).pushFriends).toBe(false);
   });
 
   it('모르는 유입 경로는 unknown으로 읽는다', () => {
@@ -52,6 +54,7 @@ describe('사용자 설정 변환', () => {
 
   it('바꾼 항목만 서버 컬럼으로 옮긴다', () => {
     expect(profilePatchToRow({ notifyEnabled: false })).toEqual({ notify_enabled: false });
+    expect(profilePatchToRow({ pushFriends: false })).toEqual({ push_friends: false });
     expect(profilePatchToRow({ onboardedAt: '2026-11-23T00:00:00.000Z', signupSource: 'friend' })).toEqual({
       onboarded_at: '2026-11-23T00:00:00.000Z',
       signup_source: 'friend',
