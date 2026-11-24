@@ -12,6 +12,7 @@ import { TopBar } from '@/components/TopBar';
 import { gradeOf, nextStep, partItems, signed, tagOf, titleOf, voiceLine } from '@/domain/credit';
 import { dayOfMonth, weekdayLabel } from '@/domain/dates';
 import { weekdayLine, weekdayReport, WEEKDAY_BANK_STAGE, type WeekdayReport } from '@/domain/weekday';
+import { STATEMENT_BANK_STAGE } from '@/domain/statement';
 import { useCredit } from '@/store/credit';
 import { useProfile } from '@/store/profile';
 import { useTodos } from '@/store/todos';
@@ -116,6 +117,7 @@ export default function CreditScreen() {
         <WeekdayPanel unlocked={account.bankStage >= WEEKDAY_BANK_STAGE} report={weekdayReport(todos, repayments)} />
 
         <Button label="등급표" variant="secondary" onPress={() => router.push('/grades')} />
+        <Button label={account.bankStage >= STATEMENT_BANK_STAGE ? '지난달 명세서' : '🔒 지난달 명세서 (중앙은행)'} variant="secondary" onPress={() => router.push('/statement')} />
         <Text style={[type.caption, styles.muted]}>점수는 서버에 저장된 기록으로 매겨요. 방금 한 일은 서버에 올라간 뒤에 반영돼요.</Text>
       </ScrollView>
     </SafeAreaView>
