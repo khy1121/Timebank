@@ -257,7 +257,8 @@ export type SyncState = 'idle' | 'syncing' | 'error';
 
 type Store = {
   hydrated: boolean;
-  todos: Todo[];
+  /** 할 일. stakeGroupId가 있으면 그룹 보증금으로 건 것이다 */
+  todos: StoredTodo[];
   repayments: StoredRepayment[];
   purchases: Purchase[];
   /** 통장·적금·순자산·빚·파산 (시간적금기획서) */
