@@ -20,6 +20,7 @@ import { bankOf } from '@/domain/bank';
 import type { Progress } from '@/domain/bankConditions';
 import { BANK_NAMES, bankStage, canBuy, ITEMS, itemOf, itemsOf, nextBank, SLOT_LABEL, SLOTS, type ShopItem } from '@/domain/shop';
 import { toShape } from '@/domain/stampShape';
+import { THEMES, toThemeCode, type ThemeCode } from '@/theme/themes';
 import { STREAK_STEP } from '@/domain/wallet';
 import { feedback } from '@/lib/feedback';
 import { tokenColor, useLook } from '@/store/look';
@@ -148,6 +149,7 @@ export default function ShopScreen() {
 
 /** 확인 창 문구. 은행이면 새로 생기는 혜택과 열리는 물건까지 알려준다. */
 function buyMessage(item: ShopItem): string {
+  if (item.slot === 'theme') return `${formatAmount(item.price)}냥이 잔고에서 빠지고 앱 전체의 색과 글꼴이 바로 바뀌어요. 산 테마는 언제든 다시 고를 수 있어요.`;
   if (item.slot !== 'bank') return `${formatAmount(item.price)}냥이 잔고에서 빠지고 바로 착용해요.`;
   const b = bankOf(item.stage ?? 0);
   const unlocks = ITEMS.filter((i) => i.needsBank === item.stage).map((i) => i.name);
@@ -224,6 +226,7 @@ function NeedRow({ done, text, ratio }: { done: boolean; text: string; ratio: nu
 }
 
 function Preview({ item }: { item: ShopItem }) {
+  if (item.slot === 'theme') return <ThemeSwatch code={toThemeCode(item.value)} />;
   if (item.slot === 'stampInk') return <Stamp kind="saved" size={48} ink={tokenColor(item.value, color.inkRed)} />;
   if (item.slot === 'stampWord') return <Stamp kind="saved" size={48} word={item.value} />;
   if (item.slot === 'stampShape') return <Stamp kind="saved" size={48} shape={toShape(item.value)} />;
@@ -231,6 +234,24 @@ function Preview({ item }: { item: ShopItem }) {
   return (
     <View style={[styles.bubble, { backgroundColor: tokenColor(item.value, color.bubbleCream) }]}>
       <Text style={[type.caption, styles.ink]}>안녕하세요</Text>
+    </View>
+  );
+}
+
+/** 테마 견본: 바탕, 카드, 주 색, 글자색을 그 테마의 모서리로 보여 준다 */
+function ThemeSwatch({ code }: { code: ThemeCode }) {
+  const th = THEMES[code];
+  const v = th.v6;
+  const r = Math.min(th.radius.md, 12);
+  return (
+    <View style={[styles.themeSwatch, { backgroundColor: v.white, borderRadius: r, borderColor: v.line, borderWidth: th.stroke.outline ? 1.5 : 0 }]} accessible={false}>
+      <View style={[styles.themeCard, { backgroundColor: v.cream, borderRadius: Math.max(0, r - 4), borderColor: v.line, borderWidth: th.stroke.outline ? 1 : 0, boxShadow: th.cardShadow ?? undefined }]}>
+        <View style={[styles.themeDot, { backgroundColor: v.brand, borderRadius: th.radius.full >= 99 ? 99 : th.radius.sm }]} />
+        <View style={styles.themeLines}>
+          <View style={[styles.themeLine, { backgroundColor: v.ink, width: 34 }]} />
+          <View style={[styles.themeLine, { backgroundColor: v.mute, width: 24 }]} />
+        </View>
+      </View>
     </View>
   );
 }
@@ -243,7 +264,7 @@ function Action({ label, onPress, primary }: { label: string; onPress: () => voi
       accessibilityLabel={primary ? `${label}에 사기` : label}
       hitSlop={6}
       style={({ pressed }) => [styles.action, primary ? styles.actionPrimary : styles.actionPlain, pressed && styles.pressed]}>
-      <Text style={[type.label, { color: primary ? color.textOnPrimary : color.inkOutline }]}>{label}</Text>
+      <Text style={[type.label, { color: primary ? color.textOnPrimary : color.textPrimary }]}>{label}</Text>
     </Pressable>
   );
 }
@@ -270,10 +291,10 @@ const styles = themed(() => ({
   },
   streakOn: { backgroundColor: color.accentCoin },
   group: { gap: 10 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 10, justifyContent: 'space-between' },
+  // 칸 수가 홀수여도 마지막 칸이 혼자 늘어나지 않게 너비를 고정한다
   card: {
-    width: '48%',
-    flexGrow: 1,
+    width: '48.5%',
     alignItems: 'center',
     gap: 8,
     paddingVertical: 16,
@@ -339,8 +360,13 @@ const styles = themed(() => ({
     padding: 12,
   },
   closetText: { flex: 1, gap: 2 },
-  chev: { color: color.inkOutline },
+  chev: { color: color.textPrimary },
   closetPressed: { opacity: 0.8 },
+  themeSwatch: { width: 84, height: 56, padding: 8, justifyContent: 'center' },
+  themeCard: { flexDirection: 'row', alignItems: 'center', gap: 6, padding: 6 },
+  themeDot: { width: 14, height: 14 },
+  themeLines: { gap: 4 },
+  themeLine: { height: 4, borderRadius: 2 },
   bgThumb: { width: 72, height: 48, borderRadius: radius.md, borderWidth: stroke.outline, borderColor: color.inkOutline },
   lockBanner: { paddingVertical: 12, paddingHorizontal: 14, borderRadius: 12, backgroundColor: color.debtBg },
   lockText: { color: color.debtFg },

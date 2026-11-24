@@ -81,21 +81,23 @@ function buildFont(th: ThemeDef) {
   return { regular: f.body, medium: f.bodyMedium, semiBold: f.display, bold: f.display, extraBold: f.display };
 }
 
-function buildType(font: ReturnType<typeof buildFont>) {
+function buildType(font: ReturnType<typeof buildFont>, scale = 1) {
+  // 제목·숫자 글꼴만 키운다. 본문 글꼴은 그대로
+  const d = (fontFamily: string, size: number, line: number, spacing = 0) => t(fontFamily, Math.round(size * scale), Math.round(line * scale), spacing);
   return {
-    display: t(font.bold, 36, 44),
-    title: t(font.bold, 22, 30),
-    headline: t(font.semiBold, 17, 24),
+    display: d(font.bold, 36, 44),
+    title: d(font.bold, 22, 30),
+    headline: d(font.semiBold, 17, 24),
     body: t(font.regular, 16, 24),
     label: t(font.medium, 14, 20),
     caption: t(font.regular, 13, 18),
-    numberXL: t(font.extraBold, 44, 48, -0.88),
-    numberL: t(font.bold, 28, 34, -0.42),
-    numberM: t(font.bold, 18, 24, -0.18),
-    unitL: t(font.semiBold, 20, 48),
-    unitM: t(font.semiBold, 15, 34),
+    numberXL: d(font.extraBold, 44, 48, -0.88),
+    numberL: d(font.bold, 28, 34, -0.42),
+    numberM: d(font.bold, 18, 24, -0.18),
+    unitL: d(font.semiBold, 20, 48),
+    unitM: d(font.semiBold, 15, 34),
     unitS: t(font.medium, 12, 24),
-    stamp: t(font.extraBold, 15, 18, 0.3),
+    stamp: d(font.extraBold, 15, 18, 0.3),
   };
 }
 
@@ -136,7 +138,7 @@ export function applyTheme(code: ThemeCode): void {
   Object.assign(radius, th.radius);
   Object.assign(stroke, th.stroke);
   Object.assign(font, buildFont(th));
-  Object.assign(type, buildType(font));
+  Object.assign(type, buildType(font, th.fonts.displayScale ?? 1));
   shadow.card = th.cardShadow;
   shadow.drop = th.buttonDrop;
   current = code;

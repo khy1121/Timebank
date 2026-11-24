@@ -35,5 +35,5 @@ const styles = themed(() => ({
     paddingVertical: 12,
     paddingHorizontal: 14,
   },
-  text: { color: color.inkOutline },
+  text: { color: color.textPrimary },
 }));

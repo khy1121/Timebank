@@ -163,7 +163,7 @@ const styles = themed(() => ({
   safe: { flex: 1, backgroundColor: color.bgPage },
   header: { height: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingLeft: 12, paddingRight: 16 },
   lead: { width: 48, height: 44, justifyContent: 'center', paddingLeft: 8 },
-  glyph: { fontSize: 26, lineHeight: 30, color: color.inkOutline, fontFamily: type.body.fontFamily },
+  glyph: { fontSize: 26, lineHeight: 30, color: color.textPrimary, fontFamily: type.body.fontFamily },
   dots: { flexDirection: 'row', gap: 6 },
   dot: { width: 8, height: 8, borderRadius: radius.full, backgroundColor: color.borderDefault },
   dotOn: { width: 20, backgroundColor: color.inkOutline },

@@ -20,11 +20,19 @@ const OPACITY: Record<string, number> = { 'bg-coins': 0.07, 'bg-hanji': 0.55, 'b
 const TILE = 256;
 
 /**
- * 홈 화면 뒤에 상점에서 산 배경 무늬를 깐다. (FR-064, 상점기획서 3.3)
+ * 홈 화면 뒤에 상점에서 산 배경 무늬를 깐다. (FR-064, 상점기획서 3.3) 지금은 보류라 테마 바탕색만 깐다.
  * 이미지의 repeat 모드는 웹에서 한 장만 그려져서, 화면 크기에 맞춰 타일을 직접 늘어놓는다.
  */
 export function HomeBackground({ children }: { children: ReactNode }) {
   const { background } = useLook();
+  // 홈 배경은 테마로 바뀌어 보류했다(상점기획서 11.3절). 무늬를 다시 쓰기로 하면 SHOW_PATTERN을 켠다
+  if (!SHOW_PATTERN) return <View style={styles.fill}>{children}</View>;
+  return <Pattern background={background}>{children}</Pattern>;
+}
+
+const SHOW_PATTERN = false;
+
+function Pattern({ background, children }: { background: string; children: ReactNode }) {
   const [size, setSize] = useState({ w: 0, h: 0 });
   const source = BACKGROUNDS[background] ?? BACKGROUNDS['bg-coins'];
   const cols = Math.ceil(size.w / TILE);

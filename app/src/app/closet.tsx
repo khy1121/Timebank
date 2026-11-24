@@ -315,7 +315,7 @@ const styles = themed(() => ({
     paddingVertical: 10,
     paddingHorizontal: 14,
   },
-  speechText: { color: color.inkOutline, textAlign: 'center' },
+  speechText: { color: color.textPrimary, textAlign: 'center' },
   drop: { borderRadius: radius.full, borderWidth: 2, borderColor: 'transparent', borderStyle: 'dashed', padding: 6 },
   dropHover: { borderColor: color.brandPrimary, backgroundColor: color.brandSoft },
   balance: { color: color.textSecondary },
@@ -339,7 +339,7 @@ const styles = themed(() => ({
   dim: { opacity: 0.35 },
   lockMark: {
     position: 'absolute',
-    color: color.inkOutline,
+    color: color.textPrimary,
     backgroundColor: color.bgSurface,
     borderWidth: stroke.outline,
     borderColor: color.inkOutline,

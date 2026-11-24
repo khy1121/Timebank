@@ -3,6 +3,7 @@ import Stack from 'expo-router/stack';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { router, usePathname } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AuthProvider, useAuth } from '@/store/auth';
@@ -10,7 +11,8 @@ import { CreditProvider } from '@/store/credit';
 import { FriendsProvider } from '@/store/friends';
 import { GroupsProvider } from '@/store/groups';
 import { NotificationsProvider } from '@/store/notifications';
-import { ProfileProvider } from '@/store/profile';
+import { useLook } from '@/store/look';
+import { ProfileProvider, useProfile } from '@/store/profile';
 import { StandingProvider } from '@/store/standing';
 import { UsageTracker } from '@/store/usage';
 import { ThemeProvider, useTheme } from '@/store/theme';
@@ -39,6 +41,7 @@ export default function RootLayout() {
             <CreditProvider>
               <StatusBar style="dark" />
               <UsageTracker />
+              <ThemeSync />
               <Screens />
             </CreditProvider>
             </StandingProvider>
@@ -51,6 +54,29 @@ export default function RootLayout() {
     </ThemeProvider>
     </GestureHandlerRootView>
   );
+}
+
+/**
+ * 상점·옷장에서 고른 테마(profiles.equipped.theme)를 앱에 적용한다 (FR-112).
+ * 다른 기기에서 바꿨어도 설정을 받아 오면 따라간다. 테마를 바꾸면 화면을 다시 그리므로, 있던 화면으로 돌아간다.
+ */
+function ThemeSync() {
+  const { profile } = useProfile();
+  const look = useLook();
+  const { theme, setTheme } = useTheme();
+  const path = usePathname();
+  const want = look.theme;
+  useEffect(() => {
+    // 설정을 아직 못 받았으면 기기에 저장된 테마를 그대로 쓴다
+    if (!profile || want === theme) return;
+    const back = path;
+    setTheme(want).then((ok) => {
+      if (ok && back && back !== '/') setTimeout(() => router.replace(back as never), 0);
+    });
+    // path는 바뀌는 순간의 화면만 기억하면 된다
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile, want, theme, setTheme]);
+  return null;
 }
 
 /** 로그인 여부에 따라 갈 수 있는 화면을 나눈다. (FR-001, FR-002) */

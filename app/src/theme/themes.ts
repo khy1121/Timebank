@@ -17,6 +17,8 @@ export type FontSet = {
   bodyMedium: string;
   /** 시간 통장처럼 굵기를 나눠 쓰는 글꼴이면 true (제목은 Bold, 큰 숫자는 ExtraBold) */
   weighted?: boolean;
+  /** 제목·숫자 글꼴의 글자가 작게 그려지면 키우는 비율 (손글씨 Gaegu) */
+  displayScale?: number;
 };
 
 export type ThemeDef = {
@@ -107,7 +109,7 @@ export const THEMES: Record<ThemeCode, ThemeDef> = {
     stroke: { outline: 1.5, hairline: 1 },
     cardShadow: '2px 3px 0px 0px #2B2F3A',
     buttonDrop: { color: '#2B2F3A', x: 2, y: 3 },
-    fonts: { display: 'Gaegu-Bold', body: 'GowunDodum', bodyMedium: 'GowunDodum' },
+    fonts: { display: 'Gaegu-Bold', body: 'GowunDodum', bodyMedium: 'GowunDodum', displayScale: 1.2 },
   },
   arcade: {
     code: 'arcade',

@@ -434,7 +434,7 @@ const styles = themed(() => ({
   meBar: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, backgroundColor: color.brandPrimary },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   rowBorder: { borderTopWidth: stroke.hairline, borderTopColor: color.borderDefault },
-  rank: { width: 20, color: color.inkOutline },
+  rank: { width: 20, color: color.textPrimary },
   who: { flex: 1, gap: 4, alignItems: 'flex-start' },
   score: { alignItems: 'flex-end' },
 }));
