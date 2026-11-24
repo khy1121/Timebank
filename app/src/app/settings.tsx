@@ -40,6 +40,7 @@ export default function SettingsScreen() {
 
   const unsupported = permission === 'unsupported';
   const notifyOn = !!profile?.notifyEnabled && !unsupported;
+  const friendsOn = !!profile?.pushFriends && !unsupported;
   const syncText =
     pendingCount > 0
       ? syncState === 'syncing'
@@ -51,6 +52,12 @@ export default function SettingsScreen() {
     track('notify_toggle', { enabled: next });
     await update({ notifyEnabled: next });
     // 켰는데 아직 권한을 물은 적이 없으면 지금 묻는다
+    if (next && permission === 'undetermined') await request();
+  };
+
+  const toggleFriends = async (next: boolean) => {
+    track('push_friends_toggle', { enabled: next });
+    await update({ pushFriends: next });
     if (next && permission === 'undetermined') await request();
   };
 
@@ -90,7 +97,12 @@ export default function SettingsScreen() {
             tone={notifyOn ? 'default' : 'muted'}
             onPress={notifyOn ? () => setDialog('time') : undefined}
           />
-          {notifyOn && permission === 'denied' ? (
+          <SettingRow
+            label="친구 알림"
+            hint={unsupported ? '알림은 휴대폰 앱에서만 받을 수 있어요' : '그룹 친구가 인증을 올리거나, 내 인증이 통과하거나 의심받으면 알려요'}
+            right={<Toggle value={friendsOn} onChange={toggleFriends} label="친구 알림" disabled={unsupported || !profile} />}
+          />
+          {(notifyOn || friendsOn) && permission === 'denied' ? (
             <SettingRow
               label="기기 알림 권한이 꺼져 있어요"
               hint="기기 설정에서 켜야 알림이 와요"
