@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -6,6 +5,7 @@ import { TopBar } from '@/components/TopBar';
 import { PRIVACY_EFFECTIVE_DATE, PRIVACY_SECTIONS } from '@/domain/privacy';
 import * as layout from '@/theme/layout';
 import { color, themed, type } from '@/theme/tokens';
+import { goBack } from '@/lib/navigation';
 
 const CONTACT = process.env.EXPO_PUBLIC_CONTACT_EMAIL ?? '';
 
@@ -13,7 +13,7 @@ const CONTACT = process.env.EXPO_PUBLIC_CONTACT_EMAIL ?? '';
 export default function PrivacyScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <TopBar title="개인정보 처리방침" onLead={() => router.back()} />
+      <TopBar title="개인정보 처리방침" onLead={goBack} />
       <ScrollView contentContainerStyle={styles.content}>
         {PRIVACY_SECTIONS.map((section) => (
           <View key={section.title} style={styles.section}>

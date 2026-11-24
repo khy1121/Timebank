@@ -46,6 +46,11 @@ function buildColor(th: ThemeDef) {
     accentCoinDeep: v.warn,
     accentCheek: '#FF8A3D',
     accentSprout: v.ok,
+    // 아래 탭 막대: 어두운 바탕, 고른 칸은 tabOn (피그마 v6/tabOn)
+    tabBar: v.ink,
+    tabOn: v.tabOn,
+    tabOnText: v.tabOnText,
+    tabOff: mix(v.ink, '#FFFFFF', 0.62),
     // 홈 무대 (피그마 v6/sky, v6/hill)
     stageSky: v.sky,
     stageHill: v.hill,

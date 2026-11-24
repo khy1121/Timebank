@@ -15,6 +15,7 @@ import { josa } from '@/domain/korean';
 import { useGroups } from '@/store/groups';
 import * as layout from '@/theme/layout';
 import { color, radius, stroke, themed, type } from '@/theme/tokens';
+import { goBack } from '@/lib/navigation';
 
 type Dialog = { kind: 'leave' } | { kind: 'rotate' } | { kind: 'kick'; member: Member } | null;
 
@@ -57,14 +58,14 @@ export default function GroupSettingsScreen() {
   if (!group) {
     return (
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-        <TopBar title="그룹 설정" onLead={() => router.back()} />
+        <TopBar title="그룹 설정" onLead={goBack} />
       </SafeAreaView>
     );
   }
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <TopBar title="그룹 설정" onLead={() => router.back()} />
+      <TopBar title="그룹 설정" onLead={goBack} />
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.invite}>
           <Text style={[type.label, styles.secondary]}>초대 코드</Text>

@@ -16,6 +16,7 @@ import { useProfile } from '@/store/profile';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
 import { color, radius, themed, type } from '@/theme/tokens';
+import { goBack } from '@/lib/navigation';
 
 /** TI-SCR-20 내 신용 (FR-097~100). 순위 탭의 내 점수 카드, 홈의 신용 카드에서 온다. 피그마 111:254, 111:353 */
 export default function CreditScreen() {
@@ -33,7 +34,7 @@ export default function CreditScreen() {
   if (!info) {
     return (
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-        <TopBar title="내 신용" onLead={() => router.back()} />
+        <TopBar title="내 신용" onLead={goBack} />
         <View style={styles.content}>
           <Text style={[type.body, styles.secondary]}>{failed ? '신용 점수를 받아 오지 못했어요. 연결되면 다시 받아요.' : '불러오는 중이에요.'}</Text>
         </View>
@@ -54,7 +55,7 @@ export default function CreditScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <TopBar title="내 신용" onLead={() => router.back()} />
+      <TopBar title="내 신용" onLead={goBack} />
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.hero}>
           <Mascot size={88} />

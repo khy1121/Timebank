@@ -4,17 +4,16 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Path } from 'react-native-svg';
 
-import { Button } from '@/components/Button';
-import { Chip } from '@/components/Chip';
 import { GradeSheet } from '@/components/GradeSheet';
 import { HistoryList } from '@/components/HistoryList';
-import { HomeBackground } from '@/components/HomeBackground';
+import { GRADE_TONE } from '@/components/GradeBadge';
+import { HomeStage } from '@/components/HomeStage';
 import { Mascot } from '@/components/Mascot';
 import { Snackbar } from '@/components/Snackbar';
-import { SummaryCard } from '@/components/SummaryCard';
 import { TodoTicket } from '@/components/TodoTicket';
-import { WalletChip } from '@/components/WalletChip';
-import { sortViews, summarize, viewOf } from '@/domain/interest';
+import { gradeOf, titleOf } from '@/domain/credit';
+import { diffDays } from '@/domain/dates';
+import { formatAmount, sortViews, summarize, viewOf } from '@/domain/interest';
 import { homeMessage, repayMessage } from '@/domain/messages';
 import { completionPreview, shopLockReason } from '@/domain/savings';
 import { feedback } from '@/lib/feedback';
@@ -25,13 +24,13 @@ import { useCredit } from '@/store/credit';
 import { useStanding } from '@/store/standing';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
-import { color, themed, type } from '@/theme/tokens';
+import { color, hardShadow, radius, shadow, themed, type } from '@/theme/tokens';
 
 const UNDO_MS = 5000;
 
 type View_ = 'open' | 'done';
 
-/** TI-SCR-03 홈 (v4): 요약 카드 하나와 할 일 목록. 피그마 57:1847, 57:2021 */
+/** TI-SCR-03 홈 (v6): 위는 마스코트 무대, 아래 흰 판에 순자산·한마디·할 일 목록. 피그마 109:118 */
 export default function HomeScreen() {
   const { todos, today, repay, undoRepay, account, repayments, settlementFor } = useTodos();
   const standing = useStanding();
@@ -70,43 +69,45 @@ export default function HomeScreen() {
   if (needsOnboarding) return <Redirect href="/onboarding" />;
 
   return (
-    <HomeBackground>
+    <View style={styles.root}>
       <SafeAreaView style={styles.safe} edges={['top']}>
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          <View style={styles.header}>
-            <Text style={[type.title, styles.title]} accessibilityRole="header">
-              할 일 이자
-            </Text>
-            <WalletChip
-              balance={account.cash}
-              onPress={() => {
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          {/* 피그마 v6 홈 109:118: 위는 무대, 아래는 흰 판 */}
+          <View style={styles.top}>
+            <View style={styles.header}>
+              <Text style={[type.title, styles.title]} accessibilityRole="header">
+                할 일 이자
+              </Text>
+              <Pressable onPress={() => router.push('/settings')} accessibilityRole="button" accessibilityLabel="설정" hitSlop={12}>
+                <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+                  <Circle cx={12} cy={12} r={3} stroke={color.textPrimary} strokeWidth={2} />
+                  <Path
+                    d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"
+                    stroke={color.textPrimary}
+                    strokeWidth={2}
+                    strokeLinecap="round"
+                  />
+                </Svg>
+              </Pressable>
+            </View>
+            <HomeStage
+              cash={account.cash}
+              score={credit?.score ?? null}
+              rank={credit?.rank ?? null}
+              participants={credit?.participants ?? null}
+              onRank={() => router.navigate('/standing')}
+              onGrade={() => setGradeOpen(true)}
+              onWallet={() => {
                 const lock = shopLockReason(account, today);
                 if (lock) setLockNote(lock);
                 else router.navigate('/shop');
               }}
             />
-            <Pressable onPress={() => router.push('/settings')} accessibilityRole="button" accessibilityLabel="설정" hitSlop={12}>
-              <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                <Circle cx={12} cy={12} r={3} stroke={color.inkOutline} strokeWidth={2} />
-                <Path
-                  d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"
-                  stroke={color.inkOutline}
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                />
-              </Svg>
-            </Pressable>
           </View>
 
-          <SummaryCard
-            summary={summary}
-            account={account}
-            message={message}
-            credit={credit}
-            onPress={() => router.navigate('/standing')}
-            onGrade={() => setGradeOpen(true)}
-            today={today}
-          />
+          <View style={styles.sheet}>
+            <WorthRow account={account} score={credit?.score ?? null} today={today} />
+            <Text style={[type.body, styles.ink]}>{message}</Text>
 
           {account.state !== 'normal' ? (
             <Pressable
@@ -121,9 +122,22 @@ export default function HomeScreen() {
           ) : null}
 
           <View style={layout.section}>
-            <View style={styles.filters} accessibilityRole="tablist">
-              <Chip label={`진행 중 ${views.length}`} selected={showing === 'open'} onPress={() => setShowing('open')} />
-              <Chip label="끝낸 일" selected={showing === 'done'} onPress={() => setShowing('done')} />
+            <View style={styles.filters}>
+              <Segmented
+                items={[
+                  { key: 'open', label: `진행 중 ${views.length}` },
+                  { key: 'done', label: '끝낸 일' },
+                ]}
+                value={showing}
+                onChange={(k) => setShowing(k as View_)}
+              />
+              <Pressable
+                onPress={() => router.push('/todo/new')}
+                accessibilityRole="button"
+                accessibilityLabel="할 일 추가"
+                style={({ pressed }) => [styles.plus, !pressed && hardShadow(4), pressed && styles.plusPressed]}>
+                <Text style={styles.plusText}>+</Text>
+              </Pressable>
             </View>
 
             {showing === 'done' ? (
@@ -137,7 +151,7 @@ export default function HomeScreen() {
             ) : views.length === 0 ? (
               <View style={styles.empty}>
                 <View accessible={false} importantForAccessibility="no-hide-descendants">
-                  <Mascot size={120} />
+                  <Mascot size={96} />
                 </View>
                 <Text style={[type.headline, styles.ink]}>미룰 일이 하나도 없네요</Text>
                 <Text style={[type.body, styles.secondary, styles.center]}>할 일을 적고 기한 안에 끝내면 냥을 벌어요.</Text>
@@ -164,6 +178,7 @@ export default function HomeScreen() {
               </View>
             )}
           </View>
+          </View>
         </ScrollView>
 
         <View style={styles.footer}>
@@ -187,28 +202,100 @@ export default function HomeScreen() {
               }}
             />
           ) : null}
-          <Button label="+ 할 일 추가" onPress={() => router.push('/todo/new')} />
         </View>
         <GradeSheet visible={gradeOpen} score={credit?.score ?? null} onClose={() => setGradeOpen(false)} />
       </SafeAreaView>
-    </HomeBackground>
+    </View>
+  );
+}
+
+/** 순자산과 칭호 (흰 판 맨 위). 빚이 있으면 빨강, 파산 중이면 회생까지 남은 날 */
+function WorthRow({ account, score, today }: { account: ReturnType<typeof useTodos>['account']; score: number | null; today: string }) {
+  const bankrupt = account.state === 'bankrupt' && !!account.rehabOn;
+  const negative = account.netWorth < 0;
+  const big = bankrupt ? '파산 중' : `${negative ? '−' : ''}${formatAmount(Math.abs(account.netWorth))}냥`;
+  const sub = bankrupt
+    ? `회생까지 ${Math.max(0, diffDays(today, account.rehabOn!))}일 · 회생 지원금 5,000냥`
+    : `통장 ${account.cash < 0 ? '−' : ''}${formatAmount(Math.abs(account.cash))}냥 · 걸어 둔 적금 ${formatAmount(account.savings)}냥`;
+  const grade = score === null ? null : gradeOf(score);
+  const title = score === null ? null : titleOf(score, account.state === 'bankrupt');
+  return (
+    <View style={styles.worthWrap} accessible accessibilityLabel={`순자산 ${big}. ${sub}${title ? `. 칭호 ${title}` : ''}`}>
+      <View style={styles.worth}>
+        <Text style={[type.body, styles.secondary]}>순자산</Text>
+        <Text style={[type.numberM, { color: negative || bankrupt ? color.debtFg : color.textPrimary }]}>{big}</Text>
+        <View style={styles.flex} />
+        {grade && title ? (
+          <View style={[styles.titleBadge, { backgroundColor: GRADE_TONE[grade.tone].fg }]}>
+            <Text style={[type.label, styles.onBrand]}>{title}</Text>
+          </View>
+        ) : null}
+      </View>
+      <Text style={[type.caption, styles.secondary]}>{sub}</Text>
+    </View>
+  );
+}
+
+/** 두 칸 고르기. 연한 바탕 위에서 고른 칸만 하얗게 떠 있다 (피그마 v6 고르기 탭) */
+function Segmented({ items, value, onChange }: { items: { key: string; label: string }[]; value: string; onChange: (key: string) => void }) {
+  return (
+    <View style={styles.seg} accessibilityRole="tablist">
+      {items.map((it) => {
+        const on = it.key === value;
+        return (
+          <Pressable
+            key={it.key}
+            onPress={() => onChange(it.key)}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: on }}
+            style={[styles.segItem, on && styles.segOn]}>
+            <Text style={[type.label, { color: on ? color.textPrimary : color.textSecondary }]}>{it.label}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
   );
 }
 
 const styles = themed(() => ({
-  // 배경 무늬가 보이도록 화면 자체는 투명하게 둔다
-  safe: { flex: 1 },
-  content: layout.content,
-  header: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  root: { flex: 1, backgroundColor: color.bgPage },
+  // 위쪽 안전 영역도 하늘색으로 이어지게
+  safe: { flex: 1, backgroundColor: color.stageSky },
+  scroll: { flexGrow: 1, backgroundColor: color.bgPage },
+  top: { backgroundColor: color.stageSky },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: layout.GUTTER, paddingTop: 8 },
   title: { flex: 1, color: color.textPrimary },
-  filters: { flexDirection: 'row', gap: 8 },
+  // 무대 위로 살짝 올라오는 흰 판
+  sheet: {
+    flexGrow: 1,
+    marginTop: -24,
+    paddingHorizontal: layout.GUTTER,
+    paddingTop: 20,
+    paddingBottom: 96,
+    gap: layout.SECTION_GAP,
+    backgroundColor: color.bgPage,
+    borderTopLeftRadius: radius.xl,
+    borderTopRightRadius: radius.xl,
+  },
+  worthWrap: { gap: 2 },
+  worth: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
+  titleBadge: { alignSelf: 'center', paddingHorizontal: 12, paddingVertical: 4, borderRadius: radius.full },
+  onBrand: { color: color.textOnPrimary },
+  flex: { flex: 1 },
+  filters: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  seg: { flex: 1, flexDirection: 'row', padding: 4, borderRadius: radius.full, backgroundColor: color.bgSunken },
+  segItem: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: radius.full },
+  segOn: { backgroundColor: color.bgPage, ...(shadow.card ? { boxShadow: shadow.card } : {}) },
+  plus: { width: 48, height: 48, borderRadius: radius.full >= 99 ? 24 : radius.md, backgroundColor: color.brandPrimary, alignItems: 'center', justifyContent: 'center' },
+  plusPressed: { backgroundColor: color.brandPressed },
+  plusText: { color: color.textOnPrimary, fontSize: 28, lineHeight: 32, fontFamily: type.title.fontFamily },
   list: { gap: 12 },
   empty: { alignItems: 'center', gap: 8, paddingTop: 24 },
   ink: { color: color.textPrimary },
   secondary: { color: color.textSecondary },
   center: { textAlign: 'center' },
-  // 배경 무늬 위에서도 버튼 영역이 구분되도록 바탕색을 깐다
-  footer: layout.footer,
+  // 되돌리기·잠김 안내 띠
+  footer: { position: 'absolute', left: layout.GUTTER, right: layout.GUTTER, bottom: 12, gap: 8 },
   debtBanner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -216,7 +303,7 @@ const styles = themed(() => ({
     gap: 8,
     paddingVertical: 12,
     paddingHorizontal: 14,
-    borderRadius: 12,
+    borderRadius: radius.md,
     backgroundColor: color.debtBg,
   },
   debtText: { color: color.debtFg },

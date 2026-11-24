@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -13,6 +13,7 @@ import { useGroups } from '@/store/groups';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
 import { color, radius, themed, type } from '@/theme/tokens';
+import { goBack } from '@/lib/navigation';
 
 type Dialog = 'remove' | 'block' | null;
 
@@ -60,12 +61,12 @@ export default function FriendScreen() {
         return;
       }
     }
-    router.back();
+    goBack();
   };
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <TopBar title={name} onLead={() => router.back()} />
+      <TopBar title={name} onLead={goBack} />
       <ScrollView contentContainerStyle={styles.content}>
         {message ? (
           <View style={styles.errorBox}>

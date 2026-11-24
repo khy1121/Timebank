@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,6 +6,7 @@ import { TopBar } from '@/components/TopBar';
 import { CODE_LENGTH, formatCountdown, isCompleteCode, normalizeCode, RESEND_SECONDS } from '@/domain/auth';
 import { useAuth } from '@/store/auth';
 import { color, radius, stroke, themed, type } from '@/theme/tokens';
+import { goBack } from '@/lib/navigation';
 
 /** TI-SCR-02 인증 코드. 메일로 받은 6자리 코드를 확인한다. (FR-001) */
 export default function VerifyScreen() {
@@ -26,7 +26,7 @@ export default function VerifyScreen() {
 
   const back = () => {
     cancelPending();
-    router.back();
+    goBack();
   };
 
   const check = async (value: string) => {

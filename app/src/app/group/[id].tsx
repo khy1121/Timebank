@@ -27,6 +27,7 @@ import { useFriends } from '@/store/friends';
 import { useGroups } from '@/store/groups';
 import * as layout from '@/theme/layout';
 import { color, radius, stroke, themed, type } from '@/theme/tokens';
+import { goBack } from '@/lib/navigation';
 
 type Tab = 'feed' | 'standing' | 'members';
 const TABS: { key: Tab; label: string }[] = [
@@ -174,7 +175,7 @@ export default function GroupScreen() {
   if (loaded && !group) {
     return (
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-        <TopBar title="그룹" onLead={() => router.back()} />
+        <TopBar title="그룹" onLead={goBack} />
         <View style={styles.content}>
           <Text style={[type.body, styles.secondary]}>이 그룹에 들어가 있지 않아요. 나갔거나 내보내졌을 수 있어요.</Text>
         </View>
@@ -249,7 +250,7 @@ export default function GroupScreen() {
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <TopBar
         title={group?.name ?? '그룹'}
-        onLead={() => router.back()}
+        onLead={goBack}
         action="설정"
         onAction={() => router.push({ pathname: '/group-settings/[id]', params: { id: id! } })}
       />

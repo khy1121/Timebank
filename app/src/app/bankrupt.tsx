@@ -14,6 +14,7 @@ import { BANKRUPT_AT, completionPreview, REHAB_GRANT } from '@/domain/savings';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
 import { color, radius, stroke, themed, type } from '@/theme/tokens';
+import { goBack } from '@/lib/navigation';
 
 const won = (n: number) => `${n < 0 ? '−' : ''}${formatAmount(Math.abs(n))}`;
 
@@ -30,7 +31,7 @@ export default function BankruptScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <TopBar lead="close" title={bankrupt ? '파산' : '빚'} onLead={() => router.back()} />
+      <TopBar lead="close" title={bankrupt ? '파산' : '빚'} onLead={goBack} />
       <ScrollView contentContainerStyle={styles.content}>
         {bankrupt ? (
           <Bankrupt rehabOn={account.rehabOn!} today={today} />

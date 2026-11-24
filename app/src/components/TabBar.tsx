@@ -2,7 +2,7 @@ import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { Pressable, Text, View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
-import { color, font, stroke, themed, type } from '@/theme/tokens';
+import { color, font, radius, stroke, themed, type } from '@/theme/tokens';
 
 /** 탭 이름(라우트) → 표시 이름과 아이콘. 피그마 TabBar 56:1931 */
 const TABS: Record<string, { label: string; icon: (c: string) => React.ReactNode }> = {
@@ -51,12 +51,13 @@ export function TabBar({
   onBlocked,
 }: BottomTabBarProps & { badges?: Record<string, number>; blocked?: Record<string, string>; onBlocked?: (reason: string) => void }) {
   return (
-    <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, 10) }]} accessibilityRole="tablist">
+    <View style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, 10) }]}>
+    <View style={styles.bar} accessibilityRole="tablist">
       {state.routes.map((route, i) => {
         const tab = TABS[route.name];
         if (!tab) return null;
         const focused = state.index === i;
-        const tint = focused ? color.brandPrimary : color.textTertiary;
+        const tint = focused ? color.tabOnText : color.tabOff;
         const badge = badges?.[route.name] ?? 0;
         return (
           <Pressable
@@ -69,7 +70,7 @@ export function TabBar({
               if (reason && !focused) onBlocked?.(reason);
               else if (!focused) navigateToTab(route.key);
             }}
-            style={styles.item}>
+            style={[styles.item, focused && styles.itemOn]}>
             <View>
               <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
                 {tab.icon(tint)}
@@ -85,18 +86,24 @@ export function TabBar({
         );
       })}
     </View>
+    </View>
   );
 }
 
 const styles = themed(() => ({
+  // 피그마 v6: 화면 아래에 떠 있는 어두운 막대, 고른 칸은 둥근 바탕 (TabBar 106:33)
+  wrap: { paddingHorizontal: 16, paddingTop: 6, backgroundColor: color.bgPage },
   bar: {
     flexDirection: 'row',
-    paddingTop: 8,
-    backgroundColor: color.bgSurface,
-    borderTopWidth: stroke.outline,
-    borderTopColor: color.inkOutline,
+    padding: 6,
+    gap: 4,
+    borderRadius: Math.min(radius.xl, 28),
+    backgroundColor: color.tabBar,
+    borderWidth: stroke.outline,
+    borderColor: color.inkOutline,
   },
-  item: { flex: 1, alignItems: 'center', gap: 2 },
+  item: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: 8, borderRadius: Math.min(radius.lg, 22) },
+  itemOn: { backgroundColor: color.tabOn },
   badge: {
     position: 'absolute',
     top: -4,

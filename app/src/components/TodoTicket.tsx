@@ -1,127 +1,98 @@
 import { Pressable, Text, View } from 'react-native';
 
 import { formatAmount, type TodoView } from '@/domain/interest';
-import { color, live, radius, stroke, themed, type } from '@/theme/tokens';
-
-import { Amount } from './Amount';
-import { Badge } from './Badge';
-import { CoinMeter } from './CoinMeter';
-
-const STUB_WIDTH = 56;
-const NOTCH = 14;
-
-const STUB_BG = live(() => ({ overdue: color.debtBg, today: color.brandSoft, upcoming: color.bgSurface }) as const);
-
-function badgeOf(view: TodoView) {
-  if (view.state === 'overdue') return <Badge kind="overdue" label={`연체 ${view.overdueDays}일`} />;
-  if (view.state === 'today') return <Badge kind="today" label="오늘까지" />;
-  return <Badge kind="due" label={`D-${view.daysLeft}`} />;
-}
+import { color, radius, shadow, stroke, themed, type } from '@/theme/tokens';
 
 type Props = { view: TodoView; onRepay?: () => void; onOpen?: () => void };
 
+const DAY_WORD: Record<number, string> = { 1: '하루', 2: '이틀', 3: '사흘', 4: '나흘' };
+
+/** 할 일 아래 한 줄: 연체 정도, 오늘까지, 남은 날 */
+export function ticketLine(view: TodoView): string {
+  if (view.state === 'overdue') {
+    if (view.capped) return `${view.overdueDays}일 늦음, 상한에 닿아 더 깎이지 않아요`;
+    return `${view.overdueDays}일 늦음, 하루에 ${formatAmount(view.nextDayInterest)}냥씩 깎이는 중`;
+  }
+  if (view.state === 'today') return '오늘까지';
+  if (view.daysLeft === 1) return '내일까지';
+  return `${DAY_WORD[view.daysLeft] ?? `${view.daysLeft}일`} 남음`;
+}
+
 /**
- * 할 일 한 건. 절취선이 있는 차용증 모양.
- * 왼쪽 조각을 누르면 끝내기, 나머지를 누르면 상세로 간다. (FR-013, 014, 018, 028)
- * 금액은 걸어 둔 원금이고, 연체 중이면 지금 끝냈을 때 돌려받는 냥(원금 − 연체료)이다 (시간적금기획서 4.4)
+ * 할 일 한 건 (피그마 v6 홈 109:118). 왼쪽 동그라미를 누르면 끝내기, 나머지를 누르면 상세로 간다. (FR-013, 014, 018, 028)
+ * 금액 알약은 걸어 둔 원금이고, 연체 중이면 지금 끝냈을 때 돌려받는 냥(원금 − 연체료)이다 (시간적금기획서 4.4)
  */
 export function TodoTicket({ view, onRepay, onOpen }: Props) {
   const { todo, state } = view;
   const overdue = state === 'overdue';
+  const amount = overdue ? view.principal - view.interest : view.principal;
+  const line = ticketLine(view);
   return (
-    <View style={styles.ticket}>
+    <View style={[styles.card, overdue && styles.cardOverdue]}>
       <Pressable
         onPress={onRepay}
         accessibilityRole="button"
         accessibilityLabel={`${todo.title} 끝내기`}
-        style={[styles.stub, { backgroundColor: STUB_BG[state] }]}>
-        <View style={styles.check} />
-      </Pressable>
-
-      <View style={styles.dashes} pointerEvents="none">
-        {Array.from({ length: 14 }, (_, i) => (
-          <View key={i} style={styles.dash} />
-        ))}
-      </View>
-
-      <Pressable onPress={onOpen} accessibilityRole="button" accessibilityLabel={`${todo.title} 자세히 보기`} style={styles.body}>
-        <View style={styles.rowTitle}>
+        hitSlop={8}
+        style={({ pressed }) => [styles.check, pressed && styles.checkPressed]}
+      />
+      <Pressable
+        onPress={onOpen}
+        accessibilityRole="button"
+        accessibilityLabel={`${todo.title}. ${line}. ${amount < 0 ? '마이너스 ' : ''}${formatAmount(Math.abs(amount))}냥. 자세히 보기`}
+        style={styles.body}>
+        <View style={styles.text}>
           <Text style={[type.headline, styles.title]} numberOfLines={1}>
             {todo.title}
           </Text>
-          {badgeOf(view)}
+          <Text style={[type.caption, overdue ? styles.lineOverdue : styles.line]} numberOfLines={1}>
+            {line}
+          </Text>
         </View>
-        <View style={styles.rowAmount}>
-          <CoinMeter level={todo.importance} />
-          <Amount value={overdue ? view.principal - view.interest : view.principal} tone={overdue ? 'debt' : 'ink'} />
+        <View style={[styles.pill, overdue ? styles.pillOverdue : styles.pillCoin]}>
+          <Text style={[type.label, styles.pillText, overdue && styles.pillTextOverdue]}>
+            {amount < 0 ? '−' : ''}
+            {formatAmount(Math.abs(amount))}
+          </Text>
         </View>
-        {overdue ? (
-          <View style={styles.meter}>
-            <View style={styles.track}>
-              <View style={[styles.fill, { width: `${Math.max(4, Math.round(view.capRatio * 100))}%` }]} />
-            </View>
-            <Text style={[type.caption, styles.speed]}>
-              {view.capped
-                ? '상한에 닿아서 더 깎이지 않아요'
-                : `원금 ${formatAmount(view.principal)}냥에서 하루에 ${formatAmount(view.nextDayInterest)}냥씩 깎이는 중`}
-            </Text>
-          </View>
-        ) : null}
       </Pressable>
-
-      <View style={[styles.notch, styles.notchTop]} pointerEvents="none" />
-      <View style={[styles.notch, styles.notchBottom]} pointerEvents="none" />
     </View>
   );
 }
 
 const styles = themed(() => ({
-  ticket: {
+  card: {
     flexDirection: 'row',
-    backgroundColor: color.bgSurface,
-    borderRadius: radius.md,
-    borderWidth: stroke.outline,
-    borderColor: color.inkOutline,
-    overflow: 'hidden',
-  },
-  stub: { width: STUB_WIDTH, alignItems: 'center', justifyContent: 'center' },
-  check: {
-    width: 26,
-    height: 26,
-    borderRadius: radius.full,
-    borderWidth: stroke.outline,
-    borderColor: color.inkOutline,
-    backgroundColor: color.bgSurface,
-  },
-  dashes: {
-    position: 'absolute',
-    left: STUB_WIDTH - 1,
-    top: 0,
-    bottom: 0,
-    width: 2,
-    justifyContent: 'space-around',
     alignItems: 'center',
-    overflow: 'hidden',
-  },
-  dash: { width: 1.5, height: 4, backgroundColor: color.inkOutline },
-  body: { flex: 1, paddingVertical: 12, paddingHorizontal: 14, gap: 8 },
-  rowTitle: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  title: { flex: 1, color: color.textPrimary },
-  rowAmount: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  meter: { gap: 4 },
-  track: { height: 6, borderRadius: radius.full, backgroundColor: color.bgSunken, overflow: 'hidden' },
-  fill: { height: 6, borderRadius: radius.full, backgroundColor: color.debtFg },
-  speed: { color: color.debtFg },
-  notch: {
-    position: 'absolute',
-    left: STUB_WIDTH - NOTCH / 2 - stroke.outline,
-    width: NOTCH,
-    height: NOTCH,
-    borderRadius: radius.full,
-    backgroundColor: color.bgPage,
+    gap: 12,
+    paddingVertical: 14,
+    paddingLeft: 14,
+    paddingRight: 12,
+    backgroundColor: color.bgSurface,
+    borderRadius: radius.lg,
     borderWidth: stroke.outline,
     borderColor: color.inkOutline,
+    ...(shadow.card ? { boxShadow: shadow.card } : {}),
   },
-  notchTop: { top: -NOTCH / 2 - stroke.outline },
-  notchBottom: { bottom: -NOTCH / 2 - stroke.outline },
+  cardOverdue: { backgroundColor: color.debtBg },
+  check: {
+    width: 28,
+    height: 28,
+    borderRadius: radius.full >= 99 ? 14 : radius.sm,
+    backgroundColor: color.bgPage,
+    borderWidth: stroke.outline || 0,
+    borderColor: color.inkOutline,
+    ...(shadow.card ? { boxShadow: shadow.card } : {}),
+  },
+  checkPressed: { backgroundColor: color.okBg },
+  body: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  text: { flex: 1, minWidth: 0, gap: 2 },
+  title: { color: color.textPrimary },
+  line: { color: color.textSecondary },
+  lineOverdue: { color: color.debtFg },
+  pill: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: radius.full, minWidth: 64, alignItems: 'center' },
+  pillCoin: { backgroundColor: color.accentCoin },
+  pillOverdue: { backgroundColor: color.debtFg },
+  pillText: { color: color.textPrimary, fontFamily: type.numberM.fontFamily },
+  pillTextOverdue: { color: color.textOnPrimary },
 }));

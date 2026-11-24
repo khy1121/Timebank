@@ -8,6 +8,7 @@ import { useOpenProofs } from '@/store/openProofs';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
 import { themed } from '@/theme/tokens';
+import { goBack } from '@/lib/navigation';
 
 /** TI-SCR-06 상환 내역 (FR-016, FR-024) */
 export default function HistoryScreen() {
@@ -15,7 +16,7 @@ export default function HistoryScreen() {
   const openProofs = useOpenProofs();
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <TopBar title="상환 내역" onLead={() => router.back()} />
+      <TopBar title="상환 내역" onLead={goBack} />
       <ScrollView contentContainerStyle={styles.content}>
         <HistoryList
           repayments={repayments}

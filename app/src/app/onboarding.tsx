@@ -14,6 +14,7 @@ import { GUIDE_PAGES, SOURCE_QUESTION } from '@/domain/messages';
 import { SOURCE_OPTIONS, type SignupSource } from '@/domain/profile';
 import { useProfile } from '@/store/profile';
 import { color, radius, stroke, themed, type } from '@/theme/tokens';
+import { goBack } from '@/lib/navigation';
 
 const LEVELS: Importance[] = [1, 2, 3, 4, 5];
 const EXAMPLE_PRINCIPAL = 3000;
@@ -37,7 +38,7 @@ export default function OnboardingScreen() {
 
   const finish = async (picked: SignupSource | null) => {
     if (isReview) {
-      router.back();
+      goBack();
       return;
     }
     setBusy(true);

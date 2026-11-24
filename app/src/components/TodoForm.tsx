@@ -1,4 +1,3 @@
-import { router } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,6 +19,7 @@ import { CoinMeter } from './CoinMeter';
 import { ConfirmSheet } from './ConfirmSheet';
 import { SpeechBubble } from './SpeechBubble';
 import { TopBar } from './TopBar';
+import { goBack } from '@/lib/navigation';
 
 const LEVELS: Importance[] = [1, 2, 3, 4, 5];
 const QUICK = [
@@ -62,7 +62,7 @@ export function TodoForm({ original }: { original?: Todo }) {
   const commit = () => {
     if (original) update(original.id, input);
     else add(input, stakeGroupId);
-    router.back();
+    goBack();
   };
 
   const save = () => {
@@ -77,7 +77,7 @@ export function TodoForm({ original }: { original?: Todo }) {
 
   const close = () => {
     if (dirty) setAskDiscard(true);
-    else router.back();
+    else goBack();
   };
 
   return (
@@ -214,7 +214,7 @@ export function TodoForm({ original }: { original?: Todo }) {
         danger
         onConfirm={() => {
           setAskDiscard(false);
-          router.back();
+          goBack();
         }}
         onCancel={() => setAskDiscard(false)}
       />

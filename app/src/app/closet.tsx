@@ -1,5 +1,4 @@
 import { Image } from 'expo-image';
-import { router } from 'expo-router';
 import { useMemo, useRef, useState, type ComponentRef } from 'react';
 import { Pressable, ScrollView, Text, View, type LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -22,6 +21,7 @@ import { useProfile } from '@/store/profile';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
 import { color, radius, stroke, themed, type } from '@/theme/tokens';
+import { goBack } from '@/lib/navigation';
 
 const THUMBS: Record<string, number> = {
   '': require('@/assets/images/outfits/none.png'),
@@ -148,7 +148,7 @@ export default function ClosetScreen() {
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <View ref={rootRef} style={styles.root} onLayout={measure} collapsable={false}>
-        <TopBar title="옷장" onLead={() => router.back()} />
+        <TopBar title="옷장" onLead={goBack} />
         <ScrollView contentContainerStyle={styles.content} scrollEnabled={!dragging} onScroll={measure} scrollEventThrottle={64}>
           <View style={styles.stage}>
             <View style={styles.speech} accessibilityLiveRegion="polite">

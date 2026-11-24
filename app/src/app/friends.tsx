@@ -28,6 +28,7 @@ import { useFriends } from '@/store/friends';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
 import { color, inputType, live, radius, stroke, themed, type } from '@/theme/tokens';
+import { goBack } from '@/lib/navigation';
 
 const TONE: Record<Tone, string> = live(() => ({
   ok: color.okFg,
@@ -147,7 +148,7 @@ export default function FriendsScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <TopBar title="친구" onLead={() => router.back()} />
+      <TopBar title="친구" onLead={goBack} />
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           {message ? (

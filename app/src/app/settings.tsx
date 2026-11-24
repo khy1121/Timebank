@@ -21,6 +21,7 @@ import { useProfile } from '@/store/profile';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
 import { color, inputType, radius, stroke, themed, type } from '@/theme/tokens';
+import { goBack } from '@/lib/navigation';
 
 const CONTACT = process.env.EXPO_PUBLIC_CONTACT_EMAIL ?? '';
 const VERSION = Constants.expoConfig?.version ?? '1.0.0';
@@ -84,7 +85,7 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <TopBar title="설정" onLead={() => router.back()} />
+      <TopBar title="설정" onLead={goBack} />
       <ScrollView contentContainerStyle={styles.content}>
         <Group label="알림">
           <SettingRow

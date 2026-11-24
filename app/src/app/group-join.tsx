@@ -12,6 +12,7 @@ import { feedback } from '@/lib/feedback';
 import { useGroups, type GroupPreview } from '@/store/groups';
 import * as layout from '@/theme/layout';
 import { color, inputType, radius, stroke, themed, type } from '@/theme/tokens';
+import { goBack } from '@/lib/navigation';
 
 /** 찾지 못했으면 null, 서버 오류면 그 문구 */
 type Lookup = { code: string; result: GroupPreview | null | { error: string } };
@@ -69,7 +70,7 @@ export default function JoinGroupScreen() {
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-      <TopBar title="들어가기" onLead={() => router.back()} />
+      <TopBar title="들어가기" onLead={goBack} />
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <Text style={[type.title, styles.ink]}>초대 코드 {CODE_LENGTH}자리를 넣어 주세요</Text>
