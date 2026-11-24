@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
@@ -12,7 +12,7 @@ import { useFriends } from '@/store/friends';
 import { useGroups } from '@/store/groups';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
-import { color, radius, type } from '@/theme/tokens';
+import { color, radius, themed, type } from '@/theme/tokens';
 
 type Dialog = 'remove' | 'block' | null;
 
@@ -151,7 +151,7 @@ function Stat({ label, value, tone }: { label: string; value: string; tone: stri
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   safe: layout.screen,
   content: layout.content,
   section: layout.section,
@@ -168,4 +168,4 @@ const styles = StyleSheet.create({
   muted: { color: color.textTertiary },
   error: { color: color.debtFg },
   errorBox: { padding: 12, borderRadius: radius.md, backgroundColor: color.debtBg },
-});
+}));

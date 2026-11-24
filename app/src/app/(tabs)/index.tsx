@@ -1,6 +1,6 @@
 import { Redirect, router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Path } from 'react-native-svg';
 
@@ -25,7 +25,7 @@ import { useCredit } from '@/store/credit';
 import { useStanding } from '@/store/standing';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
-import { color, type } from '@/theme/tokens';
+import { color, themed, type } from '@/theme/tokens';
 
 const UNDO_MS = 5000;
 
@@ -195,7 +195,7 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   // 배경 무늬가 보이도록 화면 자체는 투명하게 둔다
   safe: { flex: 1 },
   content: layout.content,
@@ -221,4 +221,4 @@ const styles = StyleSheet.create({
   },
   debtText: { color: color.debtFg },
   pressed: { opacity: 0.8 },
-});
+}));

@@ -1,8 +1,8 @@
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
-import { color, font, stroke, type } from '@/theme/tokens';
+import { color, font, stroke, themed, type } from '@/theme/tokens';
 
 /** 탭 이름(라우트) → 표시 이름과 아이콘. 피그마 TabBar 56:1931 */
 const TABS: Record<string, { label: string; icon: (c: string) => React.ReactNode }> = {
@@ -88,7 +88,7 @@ export function TabBar({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   bar: {
     flexDirection: 'row',
     paddingTop: 8,
@@ -110,4 +110,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   badgeText: { color: color.textOnPrimary, fontSize: 11, lineHeight: 14, fontFamily: font.bold },
-});
+}));

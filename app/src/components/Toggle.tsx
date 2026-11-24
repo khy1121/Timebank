@@ -1,6 +1,6 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 
-import { color, radius, stroke } from '@/theme/tokens';
+import { color, radius, stroke, themed } from '@/theme/tokens';
 
 type Props = { value: boolean; onChange: (next: boolean) => void; label: string; disabled?: boolean };
 
@@ -20,7 +20,7 @@ export function Toggle({ value, onChange, label, disabled }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   track: {
     width: 52,
     height: 32,
@@ -43,4 +43,4 @@ const styles = StyleSheet.create({
   knobOn: { alignSelf: 'flex-end' },
   knobOff: { alignSelf: 'flex-start' },
   disabled: { opacity: 0.45 },
-});
+}));

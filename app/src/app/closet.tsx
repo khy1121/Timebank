@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useMemo, useRef, useState, type ComponentRef } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { Pressable, ScrollView, Text, View, type LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,7 +21,7 @@ import { feedback } from '@/lib/feedback';
 import { useProfile } from '@/store/profile';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
-import { color, radius, stroke, type } from '@/theme/tokens';
+import { color, radius, stroke, themed, type } from '@/theme/tokens';
 
 const THUMBS: Record<string, number> = {
   '': require('@/assets/images/outfits/none.png'),
@@ -291,7 +291,7 @@ function Tile({ item, wearing, owned, lock, onTap, onDragStart, onDragMove, onDr
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   safe: layout.screen,
   root: { flex: 1 },
   content: layout.content,
@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
   muted: { color: color.textSecondary },
   on: { color: color.brandPrimary },
   center: { textAlign: 'center' },
-});
+}));
 
 /** 이름표 고르기 (FR-113). 은행을 열 때마다 하나씩 열린다. 순위표·그룹 목록에서 내 줄 배경이 된다 */
 function NameplatePicker({ stage, current, onPick }: { stage: number; current: Nameplate; onPick: (n: Nameplate) => void }) {
@@ -400,7 +400,7 @@ function NameplatePicker({ stage, current, onPick }: { stage: number; current: N
   );
 }
 
-const pickerStyles = StyleSheet.create({
+const pickerStyles = themed(() => ({
   wrap: { gap: 8 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   // 일곱 칸이라 마지막 줄이 혼자 늘어나지 않게 너비를 고정한다
@@ -411,4 +411,4 @@ const pickerStyles = StyleSheet.create({
   ink: { color: color.textPrimary },
   muted: { color: color.textSecondary },
   brand: { color: color.brandPrimary },
-});
+}));

@@ -1,7 +1,7 @@
 import * as Linking from 'expo-linking';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, ScrollView, Share, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
@@ -15,7 +15,7 @@ import { feedback } from '@/lib/feedback';
 import { useGroups } from '@/store/groups';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
-import { color, radius, stroke, type } from '@/theme/tokens';
+import { color, radius, stroke, themed, type } from '@/theme/tokens';
 
 /** TI-SCR-15 그룹 만들기 (FR-075). 만들면 초대 코드를 보여준다. 피그마 53:1594 */
 export default function NewGroupScreen() {
@@ -121,7 +121,7 @@ export default function NewGroupScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   themeField: { gap: 8 },
   themeLabel: { color: color.textSecondary },
   themes: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
@@ -144,4 +144,4 @@ const styles = StyleSheet.create({
   },
   code: { color: color.inkOutline, letterSpacing: 6 },
   footer: layout.footer,
-});
+}));

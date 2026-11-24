@@ -1,6 +1,6 @@
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, Text, View } from 'react-native';
 
-import { color, radius, stroke, type } from '@/theme/tokens';
+import { color, radius, stroke, themed, type } from '@/theme/tokens';
 
 import { Button } from './Button';
 
@@ -34,7 +34,7 @@ export function ConfirmSheet({ visible, title, message, confirmLabel, danger, on
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   backdrop: { flex: 1, backgroundColor: 'rgba(22, 34, 74, 0.45)', justifyContent: 'flex-end', padding: 16 },
   sheet: {
     backgroundColor: color.bgSurface,
@@ -47,4 +47,4 @@ const styles = StyleSheet.create({
   title: { color: color.textPrimary },
   message: { color: color.textSecondary },
   actions: { gap: 12, marginTop: 8 },
-});
+}));

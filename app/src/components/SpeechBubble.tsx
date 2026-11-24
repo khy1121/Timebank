@@ -1,7 +1,7 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { useLook } from '@/store/look';
-import { color, radius, stroke, type } from '@/theme/tokens';
+import { color, radius, stroke, themed, type } from '@/theme/tokens';
 
 import { Mascot } from './Mascot';
 
@@ -23,7 +23,7 @@ export function SpeechBubble({ text, tint }: { text: string; tint?: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   row: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
   mascot: { width: 60, height: 60 },
   bubble: {
@@ -36,4 +36,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   text: { color: color.inkOutline },
-});
+}));

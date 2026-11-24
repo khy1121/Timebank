@@ -1,10 +1,10 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { themeName, type GroupTheme } from '@/domain/groups';
-import { color, radius, type } from '@/theme/tokens';
+import { color, live, radius, themed, type } from '@/theme/tokens';
 
 /** 테마마다 글자색과 바탕색. 색만으로 구분하지 않도록 늘 이름을 함께 쓴다 (NFR-008) */
-const TONE: Record<GroupTheme, { fg: string; bg: string }> = {
+const TONE: Record<GroupTheme, { fg: string; bg: string }> = live(() => ({
   study: { fg: color.brandPrimary, bg: color.brandSoft },
   workout: { fg: color.okFg, bg: color.okBg },
   reading: { fg: color.accentCoinDeep, bg: color.mascotCream },
@@ -13,7 +13,7 @@ const TONE: Record<GroupTheme, { fg: string; bg: string }> = {
   work: { fg: color.inkOutline, bg: color.bgSunken },
   hobby: { fg: color.accentCheek, bg: color.mascotCream },
   etc: { fg: color.textSecondary, bg: color.bgSunken },
-};
+}));
 
 /** 그룹 테마 표시 (시간적금기획서 11절) */
 export function ThemeBadge({ theme, label }: { theme: GroupTheme; label?: string | null }) {
@@ -28,6 +28,6 @@ export function ThemeBadge({ theme, label }: { theme: GroupTheme; label?: string
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   badge: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.full, maxWidth: 120 },
-});
+}));

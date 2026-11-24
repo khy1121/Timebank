@@ -1,6 +1,6 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
-import { color, radius, stroke, type } from '@/theme/tokens';
+import { color, radius, stroke, themed, type } from '@/theme/tokens';
 
 type Props = { label: string; selected: boolean; onPress: () => void };
 
@@ -19,7 +19,7 @@ export function OptionRow({ label, selected, onPress }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   row: {
     minHeight: 54,
     flexDirection: 'row',
@@ -44,4 +44,4 @@ const styles = StyleSheet.create({
   radioOn: { borderColor: color.inkOutline },
   dot: { width: 10, height: 10, borderRadius: radius.full, backgroundColor: color.brandPrimary },
   label: { color: color.textPrimary },
-});
+}));

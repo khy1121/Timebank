@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
@@ -13,7 +13,7 @@ import { useCredit } from '@/store/credit';
 import { useFriends } from '@/store/friends';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
-import { color, stroke, type } from '@/theme/tokens';
+import { color, stroke, themed, type } from '@/theme/tokens';
 
 type Board = 'global' | 'friends';
 
@@ -139,7 +139,7 @@ function BoardList({ rows, board }: { rows: BoardRow[]; board: Board }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   safe: layout.screen,
   content: layout.content,
   flex: { flex: 1, minWidth: 0 },
@@ -161,4 +161,4 @@ const styles = StyleSheet.create({
   ink: { color: color.textPrimary },
   secondary: { color: color.textSecondary },
   muted: { color: color.textTertiary },
-});
+}));

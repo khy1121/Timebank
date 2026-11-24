@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ActionSheet } from '@/components/ActionSheet';
@@ -19,7 +19,7 @@ import { feedback } from '@/lib/feedback';
 import { useGroups } from '@/store/groups';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
-import { color, radius, stroke, type } from '@/theme/tokens';
+import { color, radius, stroke, themed, type } from '@/theme/tokens';
 
 /** TI-SCR-05 할 일 상세. 지금 끝내면 돌려받는 냥과 깎이는 원금을 보여준다 (시간적금기획서 4.4, 피그마 71:523) */
 export default function TodoDetailScreen() {
@@ -211,7 +211,7 @@ export default function TodoDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   safe: layout.screen,
   missing: { padding: 24 },
   content: layout.content,
@@ -247,4 +247,4 @@ const styles = StyleSheet.create({
   },
   extendText: { color: color.brandPrimary },
   pressed: { opacity: 0.7 },
-});
+}));

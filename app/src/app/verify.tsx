@@ -1,12 +1,12 @@
 import { router } from 'expo-router';
 import { useEffect, useRef, useState, type ComponentRef } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { TopBar } from '@/components/TopBar';
 import { CODE_LENGTH, formatCountdown, isCompleteCode, normalizeCode, RESEND_SECONDS } from '@/domain/auth';
 import { useAuth } from '@/store/auth';
-import { color, radius, stroke, type } from '@/theme/tokens';
+import { color, radius, stroke, themed, type } from '@/theme/tokens';
 
 /** TI-SCR-02 인증 코드. 메일로 받은 6자리 코드를 확인한다. (FR-001) */
 export default function VerifyScreen() {
@@ -130,7 +130,7 @@ export default function VerifyScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   safe: { flex: 1, backgroundColor: color.bgPage },
   content: { flex: 1, paddingHorizontal: 24, paddingTop: 8, gap: 24 },
   heading: { gap: 8 },
@@ -151,4 +151,4 @@ const styles = StyleSheet.create({
   hiddenInput: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, opacity: 0.01, color: 'transparent' },
   error: { color: color.debtFg },
   ok: { color: color.okFg },
-});
+}));

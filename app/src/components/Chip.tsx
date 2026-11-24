@@ -1,6 +1,6 @@
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, Text } from 'react-native';
 
-import { color, radius, stroke, type } from '@/theme/tokens';
+import { color, radius, stroke, themed, type } from '@/theme/tokens';
 
 type Props = { label: string; selected: boolean; onPress: () => void; grow?: boolean; a11yLabel?: string; disabled?: boolean };
 
@@ -24,7 +24,7 @@ export function Chip({ label, selected, onPress, grow, a11yLabel, disabled }: Pr
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   chip: {
     minWidth: 48,
     paddingVertical: 8,
@@ -38,4 +38,4 @@ const styles = StyleSheet.create({
   on: { backgroundColor: color.brandPrimary, borderColor: color.inkOutline },
   off: { backgroundColor: color.bgSurface, borderColor: color.borderDefault },
   disabled: { opacity: 0.45 },
-});
+}));

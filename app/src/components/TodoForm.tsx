@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { addDays, diffDays, formatKoreanDate } from '@/domain/dates';
@@ -12,7 +12,7 @@ import { rewardFor } from '@/domain/wallet';
 import { useGroups } from '@/store/groups';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
-import { color, inputType, radius, stroke, type } from '@/theme/tokens';
+import { color, inputType, radius, stroke, themed, type } from '@/theme/tokens';
 
 import { Amount } from './Amount';
 import { Chip } from './Chip';
@@ -237,7 +237,7 @@ function Stepper({ label, glyph, disabled, onPress }: { label: string; glyph: st
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   safe: layout.screen,
   flex: { flex: 1 },
   content: layout.content,
@@ -278,4 +278,4 @@ const styles = StyleSheet.create({
   },
   stepperOff: { opacity: 0.35 },
   stepperGlyph: { fontSize: 24, lineHeight: 28, color: color.inkOutline, fontFamily: type.body.fontFamily },
-});
+}));

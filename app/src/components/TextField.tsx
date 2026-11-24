@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
+import { Text, TextInput, View, type TextInputProps } from 'react-native';
 
-import { color, inputType, radius, stroke, type } from '@/theme/tokens';
+import { color, inputType, radius, stroke, themed, type } from '@/theme/tokens';
 
 type Props = {
   label: string;
@@ -47,7 +47,7 @@ export function TextField({ label, value, onChangeText, maxLength, placeholder, 
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   field: { gap: 8 },
   label: { color: color.textSecondary },
   input: {
@@ -60,4 +60,4 @@ const styles = StyleSheet.create({
   },
   hint: { color: color.textTertiary },
   error: { color: color.debtFg },
-});
+}));

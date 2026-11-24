@@ -1,19 +1,19 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { formatAmount } from '@/domain/interest';
-import { color, type } from '@/theme/tokens';
+import { color, live, themed, type } from '@/theme/tokens';
 
 type Size = 'XL' | 'L' | 'M';
 type Tone = 'ink' | 'debt' | 'onBrand' | 'muted';
 
-const NUMBER = { XL: type.numberXL, L: type.numberL, M: type.numberM } as const;
-const UNIT = { XL: type.unitL, L: type.unitM, M: type.unitS } as const;
-const TONE = {
+const NUMBER = live(() => ({ XL: type.numberXL, L: type.numberL, M: type.numberM }) as const);
+const UNIT = live(() => ({ XL: type.unitL, L: type.unitM, M: type.unitS }) as const);
+const TONE = live(() => ({
   ink: color.textPrimary,
   debt: color.debtFg,
   onBrand: color.textOnPrimary,
   muted: color.textTertiary,
-} as const;
+}) as const);
 
 type Props = { value: number; size?: Size; tone?: Tone; prefix?: string };
 
@@ -28,7 +28,7 @@ export function Amount({ value, size = 'M', tone = 'ink', prefix }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   row: { flexDirection: 'row', alignItems: 'baseline', gap: 2 },
   unit: { opacity: 0.65 },
-});
+}));

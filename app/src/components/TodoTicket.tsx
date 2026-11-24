@@ -1,7 +1,7 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { formatAmount, type TodoView } from '@/domain/interest';
-import { color, radius, stroke, type } from '@/theme/tokens';
+import { color, live, radius, stroke, themed, type } from '@/theme/tokens';
 
 import { Amount } from './Amount';
 import { Badge } from './Badge';
@@ -10,7 +10,7 @@ import { CoinMeter } from './CoinMeter';
 const STUB_WIDTH = 56;
 const NOTCH = 14;
 
-const STUB_BG = { overdue: color.debtBg, today: color.brandSoft, upcoming: color.bgSurface } as const;
+const STUB_BG = live(() => ({ overdue: color.debtBg, today: color.brandSoft, upcoming: color.bgSurface }) as const);
 
 function badgeOf(view: TodoView) {
   if (view.state === 'overdue') return <Badge kind="overdue" label={`연체 ${view.overdueDays}일`} />;
@@ -75,7 +75,7 @@ export function TodoTicket({ view, onRepay, onOpen }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   ticket: {
     flexDirection: 'row',
     backgroundColor: color.bgSurface,
@@ -124,4 +124,4 @@ const styles = StyleSheet.create({
   },
   notchTop: { top: -NOTCH / 2 - stroke.outline },
   notchBottom: { bottom: -NOTCH / 2 - stroke.outline },
-});
+}));

@@ -3,7 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useLook } from '@/store/look';
-import { color } from '@/theme/tokens';
+import { color, themed } from '@/theme/tokens';
 
 /** 홈 배경 무늬 그림. 모두 이음새 없이 이어지는 512px 타일이다. */
 export const BACKGROUNDS: Record<string, number> = {
@@ -48,8 +48,8 @@ export function HomeBackground({ children }: { children: ReactNode }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   fill: { flex: 1, backgroundColor: color.bgPage },
   clip: { overflow: 'hidden' },
   tile: { position: 'absolute', width: TILE, height: TILE },
-});
+}));

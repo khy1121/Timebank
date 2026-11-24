@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
@@ -10,7 +10,7 @@ import { perksOf } from '@/domain/bank';
 import { useGroups } from '@/store/groups';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
-import { color, radius, type } from '@/theme/tokens';
+import { color, radius, themed, type } from '@/theme/tokens';
 
 /** TI-SCR-14 그룹 목록 (FR-075, FR-076). 피그마 53:1511 */
 export default function GroupsScreen() {
@@ -60,7 +60,7 @@ export default function GroupsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   safe: layout.screen,
   content: layout.content,
   ink: { color: color.textPrimary },
@@ -77,4 +77,4 @@ const styles = StyleSheet.create({
     borderColor: color.borderDefault,
   },
   footer: layout.footer,
-});
+}));

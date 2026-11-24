@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Defs, Line, LinearGradient, Pattern, Rect, Stop } from 'react-native-svg';
 
 import { NAMEPLATE_LABEL, nameplateDecor, type Nameplate } from '@/domain/bank';
-import { color, type } from '@/theme/tokens';
+import { color, themed, type } from '@/theme/tokens';
 
 /**
  * 이름표 (FR-113, 상점기획서 11.4절). 순위표·그룹 목록 한 줄 전체의 배경.
@@ -98,7 +98,7 @@ export function NameplateSwatch({ plate, size = 56 }: { plate: Nameplate; size?:
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   inner: { position: 'absolute', top: 2, left: 2, right: 2, bottom: 2, borderWidth: 1 },
   underline: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 2 },
   stamp: { borderWidth: 1.5, borderRadius: 4, paddingHorizontal: 3, transform: [{ rotate: '-6deg' }] },
@@ -107,4 +107,4 @@ const styles = StyleSheet.create({
   swatch: { borderRadius: 8, overflow: 'hidden', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: color.bgSurface },
   swatchNone: { borderWidth: 1, borderColor: color.borderDefault },
   swatchText: { color: color.textPrimary },
-});
+}));

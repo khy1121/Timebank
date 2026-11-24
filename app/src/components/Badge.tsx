@@ -1,15 +1,15 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
-import { color, radius, type } from '@/theme/tokens';
+import { color, live, radius, themed, type } from '@/theme/tokens';
 
 type Kind = 'overdue' | 'today' | 'due' | 'done';
 
-const STYLE = {
+const STYLE = live(() => ({
   overdue: { bg: color.debtBg, fg: color.debtFg, mark: '!' },
   today: { bg: color.brandSoft, fg: color.brandPrimary, mark: null },
   due: { bg: color.bgSunken, fg: color.textSecondary, mark: null },
   done: { bg: color.okBg, fg: color.okFg, mark: '✓' },
-} as const;
+}) as const);
 
 /** 기한 상태. 색만이 아니라 글자와 기호로도 구분한다. (NFR-008) */
 export function Badge({ kind, label }: { kind: Kind; label: string }) {
@@ -22,7 +22,7 @@ export function Badge({ kind, label }: { kind: Kind; label: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -32,4 +32,4 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
   },
   mark: { ...type.label, fontFamily: type.headline.fontFamily },
-});
+}));

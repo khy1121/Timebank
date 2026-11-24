@@ -1,7 +1,7 @@
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, Pressable, Text, View } from 'react-native';
 
 import { gradeOf, gradeRange, GRADES } from '@/domain/credit';
-import { color, radius, stroke, type } from '@/theme/tokens';
+import { color, radius, stroke, themed, type } from '@/theme/tokens';
 
 import { Button } from './Button';
 import { GRADE_TONE } from './GradeBadge';
@@ -49,7 +49,7 @@ export function GradeSheet({ visible, score, onClose }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   backdrop: { flex: 1, backgroundColor: 'rgba(22, 34, 74, 0.45)', justifyContent: 'flex-end', padding: 16 },
   sheet: {
     backgroundColor: color.bgSurface,
@@ -69,4 +69,4 @@ const styles = StyleSheet.create({
   ink: { color: color.textPrimary },
   muted: { color: color.textSecondary },
   me: { color: color.brandPrimary },
-});
+}));

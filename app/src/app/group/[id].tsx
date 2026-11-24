@@ -1,6 +1,6 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ActionSheet, type SheetAction } from '@/components/ActionSheet';
@@ -26,7 +26,7 @@ import { feedback } from '@/lib/feedback';
 import { useFriends } from '@/store/friends';
 import { useGroups } from '@/store/groups';
 import * as layout from '@/theme/layout';
-import { color, radius, stroke, type } from '@/theme/tokens';
+import { color, radius, stroke, themed, type } from '@/theme/tokens';
 
 type Tab = 'feed' | 'standing' | 'members';
 const TABS: { key: Tab; label: string }[] = [
@@ -411,7 +411,7 @@ function MemberList({
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   safe: layout.screen,
   content: { ...layout.content, gap: 0 },
   headerBlock: { gap: 16, marginBottom: 16 },
@@ -437,4 +437,4 @@ const styles = StyleSheet.create({
   rank: { width: 20, color: color.inkOutline },
   who: { flex: 1, gap: 4, alignItems: 'flex-start' },
   score: { alignItems: 'flex-end' },
-});
+}));

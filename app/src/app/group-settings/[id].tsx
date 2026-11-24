@@ -1,7 +1,7 @@
 import * as Linking from 'expo-linking';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Share, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
@@ -14,7 +14,7 @@ import { GROUP_THEMES, inviteMessage, type Member } from '@/domain/groups';
 import { josa } from '@/domain/korean';
 import { useGroups } from '@/store/groups';
 import * as layout from '@/theme/layout';
-import { color, radius, stroke, type } from '@/theme/tokens';
+import { color, radius, stroke, themed, type } from '@/theme/tokens';
 
 type Dialog = { kind: 'leave' } | { kind: 'rotate' } | { kind: 'kick'; member: Member } | null;
 
@@ -175,7 +175,7 @@ export default function GroupSettingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   safe: layout.screen,
   content: layout.content,
   secondary: { color: color.textSecondary },
@@ -193,4 +193,4 @@ const styles = StyleSheet.create({
   list: layout.list,
   themeField: { gap: 8 },
   themes: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-});
+}));

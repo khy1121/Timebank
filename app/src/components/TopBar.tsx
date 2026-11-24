@@ -1,6 +1,6 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
-import { color, type } from '@/theme/tokens';
+import { color, themed, type } from '@/theme/tokens';
 
 type Props = {
   /** none: 탭 화면처럼 돌아갈 곳이 없을 때 */
@@ -44,10 +44,10 @@ export function TopBar({ lead = 'back', title, onLead, action, onAction, actionD
   );
 }
 
-const styles = StyleSheet.create({
+const styles = themed(() => ({
   bar: { height: 56, flexDirection: 'row', alignItems: 'center', gap: 8, paddingLeft: 12, paddingRight: 16 },
   barTab: { paddingLeft: 16 },
   lead: { width: 32, height: 44, alignItems: 'center', justifyContent: 'center' },
   glyph: { fontSize: 26, lineHeight: 30, color: color.inkOutline, fontFamily: type.body.fontFamily },
   title: { flex: 1, color: color.textPrimary },
-});
+}));
