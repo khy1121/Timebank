@@ -50,7 +50,7 @@ export default function CreditScreen() {
   const bars =
     range === 'week'
       ? info.week.map((d) => ({ key: d.day, value: d.delta, label: d.day === today ? '오늘' : weekdayLabel(d.day), caption: d.delta ? signed(d.delta) : undefined }))
-      : info.weeks.map((w, i) => ({ key: w.weekEnd, value: w.score, label: i === info.weeks.length - 1 ? '이번 주' : `${dayOfMonth(w.weekEnd)}일`, caption: String(w.score) }));
+      : monthBars(info.weeks);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
@@ -97,9 +97,9 @@ export default function CreditScreen() {
           <BarChart
             bars={bars}
             signed={range === 'week'}
-            summary={range === 'week' ? '최근 7일 하루별 점수 변화' : '최근 5주 주말 점수'}
+            summary={range === 'week' ? '최근 7일 하루별 점수 변화' : `최근 ${info.weeks.length}주 주말 점수`}
           />
-          <Text style={[type.caption, styles.muted]}>{range === 'week' ? '최근 7일, 하루에 오르내린 점수' : '최근 5주, 주마다 점수'}</Text>
+          <Text style={[type.caption, styles.muted]}>{range === 'week' ? '최근 7일, 하루에 오르내린 점수' : weeksCaption(info.weeks.length)}</Text>
         </View>
 
         <View style={styles.parts} accessibilityLabel={`이번 주 ${items.map((i) => `${i.label} ${signed(i.value)}`).join(', ')}`}>
@@ -116,6 +116,26 @@ export default function CreditScreen() {
       </ScrollView>
     </SafeAreaView>
   );
+}
+
+/** 주가 많으면(은행 혜택으로 13주·52주) 막대가 빽빽해지지 않게 4주마다 하나만 남긴다. 마지막(이번 주)은 늘 남긴다 */
+function monthBars(weeks: { weekEnd: string; score: number }[]) {
+  const step = weeks.length > 13 ? 4 : weeks.length > 7 ? 2 : 1;
+  const last = weeks.length - 1;
+  return weeks
+    .map((w, i) => ({ w, i }))
+    .filter(({ i }) => (last - i) % step === 0)
+    .map(({ w, i }) => ({
+      key: w.weekEnd,
+      value: w.score,
+      label: i === last ? '이번 주' : step >= 4 ? `${Number(w.weekEnd.slice(5, 7))}월` : `${dayOfMonth(w.weekEnd)}일`,
+      caption: step === 1 ? String(w.score) : undefined,
+    }));
+}
+
+function weeksCaption(n: number): string {
+  const tail = n >= 52 ? ' (본점 혜택)' : n >= 13 ? ' (동네 창구 혜택)' : '';
+  return `최근 ${n}주, 주마다 점수${tail}`;
 }
 
 const styles = StyleSheet.create({
