@@ -1,4 +1,5 @@
 import { NAMEPLATES, type Nameplate } from './bank';
+import { bundlesFromJson, type Bundle } from './bundles';
 import type { Equipped } from './shop';
 import type { Voice } from './standing';
 
@@ -26,6 +27,8 @@ export type Profile = {
   pushFriends: boolean;
   /** 고른 이름표 (FR-113). 연 은행보다 높으면 화면에서 없음으로 보인다 */
   nameplate: Nameplate;
+  /** 할 일 묶음 (FR-111, 시장 지점 혜택) */
+  todoBundles: Bundle[];
 };
 
 export type ProfileRow = {
@@ -38,6 +41,7 @@ export type ProfileRow = {
   created_at?: string | null;
   push_friends?: boolean | null;
   nameplate?: string | null;
+  todo_bundles?: unknown;
 };
 
 export const DEFAULT_NOTIFY_TIME = '09:00';
@@ -90,6 +94,7 @@ export function profileFromRow(row: ProfileRow): Profile {
     signupDate: row.created_at ? localDate(row.created_at) : null,
     pushFriends: row.push_friends ?? true,
     nameplate: (NAMEPLATES as string[]).includes(row.nameplate ?? '') ? (row.nameplate as Nameplate) : 'none',
+    todoBundles: bundlesFromJson(row.todo_bundles),
   };
 }
 
@@ -103,6 +108,7 @@ export function profilePatchToRow(patch: Partial<Profile>): Partial<ProfileRow> 
   if (patch.equipped !== undefined) row.equipped = patch.equipped;
   if (patch.voice !== undefined) row.voice = patch.voice;
   if (patch.pushFriends !== undefined) row.push_friends = patch.pushFriends;
+  if (patch.todoBundles !== undefined) row.todo_bundles = patch.todoBundles;
   return row;
 }
 
