@@ -1,4 +1,4 @@
-import { formatAmount, type Summary, type TodoView } from './interest';
+import { debtFor, formatAmount, type Summary, type TodoView } from './interest';
 
 /**
  * 마스코트 문구. 미리 정한 문구에서 고르며 인공지능을 쓰지 않는다. (FR-055)
@@ -26,10 +26,24 @@ export function homeMessage(summary: Summary, views: TodoView[]): string | null 
 }
 
 /** 첫 실행 안내의 장마다 보여줄 제목과 설명. 금액은 화면에서 계산값을 그린다. (FR-050) */
+/** 첫 실행 안내 3장. mascot은 장마다 마스코트가 하는 한마디 (FR-050, FR-055) */
 export const GUIDE_PAGES = [
-  { title: '할 일에 원금을 걸어요', body: '중요한 일일수록 엽전을 많이 걸어요. 엽전 하나가 1,000냥이에요.' },
-  { title: '미루면 하루 10%씩 불어나요', body: '기한을 넘긴 날부터 이자가 붙어요. 이자에도 이자가 붙어서 갈수록 빨라져요.' },
-  { title: '끝내면 상환돼요', body: '끝낸 할 일에는 완납 도장이 찍혀요. 냥은 앱 안에서만 쓰는 단위라 실제 돈은 오가지 않아요.' },
+  {
+    title: '할 일에 원금을 걸어요',
+    body: '중요한 일일수록 엽전을 많이 걸어요. 엽전 하나가 1,000냥이에요.',
+    mascot: '제일 중요한 일엔 엽전 다섯 개! 그만큼 꼭 해낼 거죠?',
+  },
+  {
+    title: '미루면 하루 10%씩 불어나요',
+    body: '기한을 넘긴 날부터 이자가 붙어요. 이자에도 이자가 붙어서 갈수록 빨라져요.',
+    // 2장 그래프와 같은 예: 원금 3,000냥을 사흘 미루면
+    mascot: `3,000냥짜리를 사흘만 미뤄도 ${formatAmount(debtFor(3000, 3))}냥이에요. 저는 밀리는 거 싫어요.`,
+  },
+  {
+    title: '끝내면 상환돼요',
+    body: '끝낸 할 일에는 완납 도장이 찍혀요. 냥은 앱 안에서만 쓰는 단위라 실제 돈은 오가지 않아요.',
+    mascot: '끝내면 제가 도장을 쾅 찍어 드릴게요. 기한 안에 끝내면 냥도 벌어요.',
+  },
 ] as const;
 
 /** 상환 직후 화면 아래 알림 띠 문구. 잔고가 어떻게 바뀌었는지 알려준다. (FR-060~062) */
