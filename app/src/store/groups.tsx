@@ -182,6 +182,8 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
       join: async (code, nickname) => {
         const r = await call<string>('join_group', { p_code: code, p_nickname: nickname.trim() }, '들어가지 못했어요. 잠시 뒤에 다시 해 주세요');
         if (!r.ok) return r;
+        // 코드를 못 찾으면 서버가 null을 돌려준다(틀린 횟수를 남기려고 오류를 내지 않는다)
+        if (!r.value) return fail(groupErrorMessage({ hint: 'not_found' }, '초대 코드를 찾을 수 없어요'));
         await refresh();
         track('group_join');
         return r;

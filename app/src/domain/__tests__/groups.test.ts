@@ -107,6 +107,7 @@ describe('보너스와 문구', () => {
   });
   it('서버 이유를 문구로 바꾸고 모르는 것은 기본 문구', () => {
     expect(groupErrorMessage({ hint: 'group_full' }, 'x')).toContain('꽉 찼어요');
+    expect(groupErrorMessage({ hint: 'too_many_attempts' }, 'x')).toContain('1시간 뒤');
     expect(groupErrorMessage({ hint: 'weird' }, '다시 해 주세요')).toBe('다시 해 주세요');
     expect(groupErrorMessage(null, '다시')).toBe('다시');
   });

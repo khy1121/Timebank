@@ -12,7 +12,8 @@ import { useGroups, type GroupPreview } from '@/store/groups';
 import * as layout from '@/theme/layout';
 import { color, radius, stroke, type } from '@/theme/tokens';
 
-type Lookup = { code: string; result: GroupPreview | null | 'error' };
+/** 찾지 못했으면 null, 서버 오류면 그 문구 */
+type Lookup = { code: string; result: GroupPreview | null | { error: string } };
 
 /** TI-SCR-15 그룹 들어가기 (FR-076). 초대 링크로 오면 코드가 채워져 있다. 피그마 53:1560 */
 export default function JoinGroupScreen() {
@@ -31,7 +32,7 @@ export default function JoinGroupScreen() {
     if (!complete) return;
     let active = true;
     preview(code).then((r) => {
-      if (active) setLookup({ code, result: r.ok ? r.value : 'error' });
+      if (active) setLookup({ code, result: r.ok ? r.value : { error: r.message } });
     });
     return () => {
       active = false;
@@ -39,7 +40,8 @@ export default function JoinGroupScreen() {
   }, [code, complete, preview]);
 
   const found = lookup && lookup.code === code ? lookup.result : undefined;
-  const group = found && found !== 'error' ? found : null;
+  const failed = found && 'error' in found ? found.error : null;
+  const group = found && !('error' in found) ? found : null;
   const nickErr = touched ? nicknameError(nickname) : null;
   const full = !!group && !group.isMember && group.members >= MAX_MEMBERS;
 
@@ -84,7 +86,7 @@ export default function JoinGroupScreen() {
 
           {complete && found === undefined ? <Text style={[type.caption, styles.muted]}>그룹을 찾는 중이에요</Text> : null}
           {found === null ? <Text style={[type.label, styles.error]}>이 코드의 그룹이 없어요. 코드를 다시 확인해 주세요.</Text> : null}
-          {found === 'error' ? <Text style={[type.label, styles.error]}>그룹을 찾지 못했어요. 인터넷 연결을 확인해 주세요.</Text> : null}
+          {failed ? <Text style={[type.label, styles.error]}>{failed}</Text> : null}
 
           {group ? (
             <View style={styles.preview}>

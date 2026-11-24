@@ -163,6 +163,7 @@ const HINT_MESSAGE: Record<string, string> = {
   too_many_groups: `그룹은 ${MAX_GROUPS}개까지 들 수 있어요`,
   group_full: `그룹이 꽉 찼어요. ${MAX_MEMBERS}명까지 들어갈 수 있어요`,
   not_found: '초대 코드를 찾을 수 없어요',
+  too_many_attempts: '초대 코드를 너무 많이 틀렸어요. 1시간 뒤에 다시 해 주세요',
   own_proof: '내 인증에는 투표할 수 없어요',
   closed: '24시간이 지나 투표할 수 없어요',
   blocked: '이 인증에는 투표할 수 없어요',
