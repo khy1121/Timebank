@@ -53,6 +53,8 @@ type Store = {
   loaded: boolean;
   /** 친구 인증이 통과한 내 상환 ID. 냥 보너스에 쓴다 (FR-080) */
   verified: ReadonlySet<string>;
+  /** 최근 내가 인증을 올린 그룹. 상환 ID → 그룹 ID들. 상환 내역에서 남은 그룹에만 올리게 한다 */
+  posted: ReadonlyMap<string, ReadonlySet<string>>;
   /** 인증 이용 수칙에 동의했는가 (FR-083) */
   rulesAgreed: boolean;
   refresh: () => Promise<void>;
@@ -80,6 +82,7 @@ const GroupsContext = createContext<Store | null>(null);
 
 /** 빈 목록을 매번 새로 만들면 잔고 계산이 매번 다시 돈다 */
 const NO_IDS: ReadonlySet<string> = new Set();
+const NO_POSTED: ReadonlyMap<string, ReadonlySet<string>> = new Map();
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const fail = (message: string): Result<never> => ({ ok: false, message });
@@ -88,7 +91,7 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();
   const userId = session?.user.id ?? null;
   // 계정 ID와 함께 저장해 다른 계정 것이 섞이지 않게 한다
-  const [data, setData] = useState<{ userId: string; groups: MyGroup[]; verified: Set<string>; rulesAgreed: boolean } | null>(null);
+  const [data, setData] = useState<{ userId: string; groups: MyGroup[]; verified: Set<string>; posted: Map<string, Set<string>>; rulesAgreed: boolean } | null>(null);
 
   // 상태는 응답을 받은 뒤 콜백에서만 바꾼다
   const refresh = useCallback((): Promise<void> => {
@@ -96,16 +99,24 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
     return Promise.all([
       supabase.rpc('my_groups'),
       supabase.rpc('my_verified_repayments'),
+      supabase.rpc('my_proof_targets'),
       supabase.from('profiles').select('proof_rules_at').eq('id', userId).maybeSingle(),
-    ]).then(([g, v, p]) => {
-      if (g.error || v.error) {
-        console.warn('그룹을 받아 오지 못했어요', g.error?.message ?? v.error?.message);
+    ]).then(([g, v, t, p]) => {
+      if (g.error || v.error || t.error) {
+        console.warn('그룹을 받아 오지 못했어요', g.error?.message ?? v.error?.message ?? t.error?.message);
         return;
+      }
+      const posted = new Map<string, Set<string>>();
+      for (const row of (t.data ?? []) as { repayment_id: string; group_id: string }[]) {
+        const set = posted.get(row.repayment_id) ?? new Set<string>();
+        set.add(row.group_id);
+        posted.set(row.repayment_id, set);
       }
       setData({
         userId,
         groups: ((g.data ?? []) as MyGroupRow[]).map(groupFromRow),
         verified: new Set(((v.data ?? []) as string[]).map(String)),
+        posted,
         rulesAgreed: !!(p.data as { proof_rules_at: string | null } | null)?.proof_rules_at,
       });
     });
@@ -122,7 +133,7 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
   }, [userId, refresh]);
 
   // 함수들은 데이터가 바뀌어도 그대로 둔다. 화면이 이 함수들을 effect의 의존성으로 써도 다시 돌지 않게 하려는 것이다.
-  type Actions = Omit<Store, 'groups' | 'loaded' | 'verified' | 'rulesAgreed' | 'refresh'>;
+  type Actions = Omit<Store, 'groups' | 'loaded' | 'verified' | 'posted' | 'rulesAgreed' | 'refresh'>;
   const actions = useMemo<Actions>(() => {
     const call = async <T,>(fn: string, args: Record<string, unknown>, fallback: string): Promise<Result<T>> => {
       const { data: out, error } = await supabase.rpc(fn, args);
@@ -312,6 +323,7 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
       groups: mine?.groups ?? [],
       loaded: !!mine,
       verified: mine?.verified ?? NO_IDS,
+      posted: mine?.posted ?? NO_POSTED,
       rulesAgreed: mine?.rulesAgreed ?? false,
       refresh,
       ...actions,
