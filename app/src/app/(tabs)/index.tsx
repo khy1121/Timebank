@@ -6,6 +6,7 @@ import Svg, { Circle, Path } from 'react-native-svg';
 
 import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
+import { GradeSheet } from '@/components/GradeSheet';
 import { HistoryList } from '@/components/HistoryList';
 import { HomeBackground } from '@/components/HomeBackground';
 import { Mascot } from '@/components/Mascot';
@@ -38,6 +39,7 @@ export default function HomeScreen() {
   const { needsOnboarding } = useProfile();
   const [lastRepaid, setLastRepaid] = useState<{ id: string; text: string } | null>(null);
   const [showing, setShowing] = useState<View_>('open');
+  const [gradeOpen, setGradeOpen] = useState(false);
 
   const { summary, views } = useMemo(() => {
     const open = todos.filter((t) => t.status === 'open');
@@ -86,6 +88,7 @@ export default function HomeScreen() {
             current={standing.current}
             change={standing.change}
             onPress={() => router.navigate('/standing')}
+            onGrade={() => setGradeOpen(true)}
           />
 
           <View style={layout.section}>
@@ -146,6 +149,7 @@ export default function HomeScreen() {
           ) : null}
           <Button label="+ 할 일 추가" onPress={() => router.push('/todo/new')} />
         </View>
+        <GradeSheet visible={gradeOpen} grade={summary.grade} totalInterest={summary.totalInterest} onClose={() => setGradeOpen(false)} />
       </SafeAreaView>
     </HomeBackground>
   );
