@@ -19,6 +19,7 @@ import {
   sendResultMessage,
   sortFriends,
   type FriendSort,
+  type KakaoMatch,
   type Tone,
 } from '@/domain/friends';
 import { codeFromText, CODE_LENGTH, isCompleteCode, normalizeCode } from '@/domain/groups';
@@ -41,7 +42,7 @@ const TONE: Record<Tone, string> = {
  */
 export default function FriendsScreen() {
   const params = useLocalSearchParams<{ code?: string; editName?: string }>();
-  const { me, friends, requests, loaded, refresh, sendByCode, respond, cancel, rotateCode, setName } = useFriends();
+  const { me, friends, requests, loaded, refresh, sendByCode, sendToUser, respond, cancel, rotateCode, setName, findKakaoFriends } = useFriends();
   const { today } = useTodos();
   const [code, setCode] = useState(() => (params.code ? normalizeCode(params.code) : ''));
   const [sort, setSort] = useState<FriendSort>('active');
@@ -52,6 +53,9 @@ export default function FriendsScreen() {
   const [nameDraft, setNameDraft] = useState('');
   const [nameTouched, setNameTouched] = useState(false);
   const [rotating, setRotating] = useState(false);
+  // 카카오톡 친구 중 앱을 쓰는 사람. null: 아직 찾지 않음
+  const [kakao, setKakao] = useState<KakaoMatch[] | null>(null);
+  const [finding, setFinding] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -104,6 +108,29 @@ export default function FriendsScreen() {
       say(true, '친구가 됐어요');
       feedback.buy();
     }
+  };
+
+  const findKakao = async () => {
+    if (finding) return;
+    setFinding(true);
+    const r = await findKakaoFriends();
+    setFinding(false);
+    if (!r.ok) {
+      say(false, r.message);
+      return;
+    }
+    setKakao(r.value);
+  };
+
+  const askKakao = async (m: KakaoMatch) => {
+    const r = await sendToUser(m.userId, 'kakao');
+    if (!r.ok) {
+      say(false, r.message);
+      return;
+    }
+    say(true, r.value === 'friends' ? `${m.name}님과 친구가 됐어요` : `${m.name}님에게 친구 신청을 보냈어요`);
+    feedback.buy();
+    setKakao((list) => list && list.map((x) => (x.userId === m.userId ? { ...x, state: r.value === 'friends' ? 'friend' : 'sent' } : x)));
   };
 
   const saveName = async () => {
@@ -208,6 +235,39 @@ export default function FriendsScreen() {
                 <Button label={busy ? '…' : '신청'} variant="secondary" onPress={submit} disabled={!complete || busy} />
               </View>
             </View>
+          </View>
+
+          {/* 카카오톡 친구 (FR-108) */}
+          <View style={styles.section}>
+            <Text style={[type.label, styles.secondary]}>카카오톡 친구</Text>
+            {kakao === null ? (
+              <>
+                <Button label={finding ? '카카오에서 찾는 중…' : '카카오톡 친구 찾기'} variant="kakao" onPress={findKakao} disabled={finding} />
+                <Text style={[type.caption, styles.muted]}>앱을 쓰는 카카오톡 친구만 보여요. 친구 목록은 저장하지 않아요.</Text>
+              </>
+            ) : kakao.length === 0 ? (
+              <View style={styles.empty}>
+                <Text style={[type.body, styles.secondary]}>아직 앱을 쓰는 카카오톡 친구가 없어요. 위의 코드를 보내 보세요.</Text>
+              </View>
+            ) : (
+              <View style={styles.list}>
+                {kakao.map((m, i) => (
+                  <View key={m.userId} style={[styles.listRow, i > 0 && styles.rowBorder]}>
+                    <View style={styles.who}>
+                      <Text style={[type.label, styles.ink]}>{m.name}</Text>
+                      {m.kakaoName ? <Text style={[type.caption, styles.muted]}>카카오톡: {m.kakaoName}</Text> : null}
+                    </View>
+                    {m.state === 'none' || m.state === 'received' ? (
+                      <Pressable onPress={() => askKakao(m)} accessibilityRole="button" hitSlop={8} style={styles.pill}>
+                        <Text style={[type.label, styles.onBrand]}>{m.state === 'received' ? '수락' : '신청'}</Text>
+                      </Pressable>
+                    ) : (
+                      <Text style={[type.label, styles.muted]}>{m.state === 'friend' ? '친구' : '신청함'}</Text>
+                    )}
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
 
           {/* 받은 신청 */}

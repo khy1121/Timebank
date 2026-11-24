@@ -27,7 +27,8 @@ export type EventName =
   | 'bankrupt'
   | 'friend_request'
   | 'friend_accept'
-  | 'friend_remove';
+  | 'friend_remove'
+  | 'kakao_friends_find';
 
 export type EventProps = Record<string, string | number | boolean>;
 
@@ -61,6 +62,7 @@ const ALLOWED_KEYS: Record<EventName, string[]> = {
   friend_request: ['via', 'result'],
   friend_accept: [],
   friend_remove: [],
+  kakao_friends_find: ['count'],
 };
 
 /** 정해진 키만 남기고, 글자 값은 짧게 자른다. 제목 같은 것이 섞여 들어가지 않게 한다 */

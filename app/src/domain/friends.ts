@@ -43,6 +43,16 @@ export function profileFromRow(r: ProfileRow): FriendProfile {
   return { ...friendFromRow(r), verifiedWeek: r.verified_week, commonGroups: r.common_groups ?? [] };
 }
 
+/** 카카오톡 친구 중 앱을 쓰는 사람 (FR-108). kakaoName: 카카오가 준 닉네임(저장하지 않는다) */
+export type KakaoMatchRow = { user_id: string; kakao_id: string; name: string; state: string };
+export type KakaoMatch = { userId: string; name: string; kakaoName: string; state: FriendState };
+
+export function kakaoMatchesFromRows(rows: KakaoMatchRow[], nicknames: Record<string, string>): KakaoMatch[] {
+  return rows
+    .map((r) => ({ userId: r.user_id, name: r.name, kakaoName: nicknames[r.kakao_id] ?? '', state: toFriendState(r.state) }))
+    .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+}
+
 export function toFriendState(v: string | null | undefined): FriendState {
   return v === 'friend' || v === 'sent' || v === 'received' || v === 'blocked' ? v : 'none';
 }

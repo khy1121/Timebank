@@ -5,6 +5,7 @@ import {
   friendErrorMessage,
   friendFromRow,
   friendShareMessage,
+  kakaoMatchesFromRows,
   requestFromRow,
   requestOrigin,
   sendResultMessage,
@@ -96,5 +97,21 @@ describe('그 밖', () => {
     const m = friendShareMessage('HY8K2Q', 'todointerest://friends?code=HY8K2Q');
     expect(m).toContain('HY8K2Q');
     expect(m).toContain('todointerest://friends?code=HY8K2Q');
+  });
+});
+
+describe('카카오톡 친구 (FR-108)', () => {
+  it('서버가 맞춰 준 사람에 카카오 닉네임을 붙이고 이름 순으로', () => {
+    const out = kakaoMatchesFromRows(
+      [
+        { user_id: 'u2', kakao_id: '222', name: '하늘', state: 'sent' },
+        { user_id: 'u1', kakao_id: '111', name: '가람', state: 'none' },
+      ],
+      { '111': '박가람', '222': '이하늘' },
+    );
+    expect(out).toEqual([
+      { userId: 'u1', name: '가람', kakaoName: '박가람', state: 'none' },
+      { userId: 'u2', name: '하늘', kakaoName: '이하늘', state: 'sent' },
+    ]);
   });
 });

@@ -4,6 +4,7 @@ import { AppState } from 'react-native';
 import {
   friendErrorMessage,
   friendFromRow,
+  kakaoMatchesFromRows,
   profileFromRow,
   requestFromRow,
   toFriendState,
@@ -14,11 +15,14 @@ import {
   type FriendRow,
   type FriendState,
   type FriendVia,
+  type KakaoMatch,
+  type KakaoMatchRow,
   type ProfileRow,
   type RequestRow,
   type SendResult,
 } from '@/domain/friends';
 import { track } from '@/lib/events';
+import { fetchKakaoFriends } from '@/lib/kakao';
 import { supabase } from '@/lib/supabase';
 
 import { useAuth } from './auth';
@@ -51,6 +55,8 @@ type Store = {
   setName: (name: string) => Promise<Result>;
   profile: (userId: string) => Promise<Result<FriendProfile | null>>;
   states: (userIds: string[]) => Promise<Record<string, FriendState>>;
+  /** 카카오톡 친구 중 앱을 쓰는 사람 (FR-108) */
+  findKakaoFriends: () => Promise<Result<KakaoMatch[]>>;
 };
 
 const FriendsContext = createContext<Store | null>(null);
@@ -58,7 +64,7 @@ const FriendsContext = createContext<Store | null>(null);
 const fail = (message: string): Result<never> => ({ ok: false, message });
 
 export function FriendsProvider({ children }: { children: ReactNode }) {
-  const { session } = useAuth();
+  const { session, kakaoFriendsToken } = useAuth();
   const userId = session?.user.id ?? null;
   // 계정 ID와 함께 저장해 다른 계정 것이 섞이지 않게 한다
   const [data, setData] = useState<{ userId: string; me: Me | null; friends: Friend[]; requests: FriendRequest[] } | null>(null);
@@ -158,6 +164,20 @@ export function FriendsProvider({ children }: { children: ReactNode }) {
         return { ok: true, value: row ? profileFromRow(row) : null };
       },
 
+      findKakaoFriends: async () => {
+        const t = await kakaoFriendsToken();
+        if (!t.ok) return fail(t.message);
+        const k = await fetchKakaoFriends(t.token);
+        if (!k.ok) return fail(k.message);
+        if (!k.friends.length) return { ok: true, value: [] };
+        const nicknames: Record<string, string> = {};
+        for (const f of k.friends) nicknames[f.id] = f.nickname;
+        const r = await call<KakaoMatchRow[]>('match_kakao_friends', { p_kakao_ids: k.friends.map((f) => f.id) }, '앱을 쓰는 친구를 찾지 못했어요');
+        if (!r.ok) return r;
+        track('kakao_friends_find', { count: (r.value ?? []).length });
+        return { ok: true, value: kakaoMatchesFromRows(r.value ?? [], nicknames) };
+      },
+
       states: async (uids) => {
         if (!uids.length) return {};
         const r = await call<{ user_id: string; state: string }[]>('my_friend_states', { p_users: uids }, '');
@@ -166,7 +186,7 @@ export function FriendsProvider({ children }: { children: ReactNode }) {
         return out;
       },
     };
-  }, [refresh]);
+  }, [refresh, kakaoFriendsToken]);
 
   const mine = data && data.userId === userId ? data : null;
   const store = useMemo<Store>(
