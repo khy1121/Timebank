@@ -114,6 +114,8 @@ export type CreditInfo = {
   participants: number;
   lastActive: DateString | null;
   joinedOn: DateString | null;
+  /** 신용 점수를 켠 날. 이 앞의 주말 점수는 계산한 값이 아니라 시작 점수다 */
+  start: DateString | null;
 };
 
 type Json = Record<string, unknown>;
@@ -148,6 +150,7 @@ export function creditFromJson(v: unknown): CreditInfo | null {
     participants: num(j.participants, 1),
     lastActive: str(j.last_active),
     joinedOn: str(j.joined_on),
+    start: str(j.start),
   };
 }
 

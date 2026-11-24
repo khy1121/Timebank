@@ -35,7 +35,7 @@ export const BANKS: BankDef[] = [
   { stage: 3, code: 'bank-3', name: '시장 지점', price: 25000, condition: 'proofs', target: 10, nameplate: 'silver', perks: ['그룹원 15명', '반복 할 일', '할 일 묶음', '은 이름표'], soon: [] },
   { stage: 4, code: 'bank-vault', name: '읍내 금고', price: 40000, condition: 'earn30', target: 20000, nameplate: 'gold', perks: ['그룹 5개', '5번 연속 보너스 1,500냥', '적금 우대 +5%', '요일 분석', '금 이름표'], soon: [] },
   { stage: 5, code: 'bank-4', name: '시간은행 본점', price: 60000, condition: 'debtFree30', target: 30, nameplate: 'platinum', perks: ['적금 우대 +10%', '내가 만든 그룹 금고 +10%', '신용 그래프 1년', '백금 이름표'], soon: [] },
-  { stage: 6, code: 'bank-central', name: '중앙은행', price: 100000, condition: 'earnNoDebt', target: 100000, nameplate: 'diamond', perks: ['그룹 7개, 그룹원 20명', '다이아 이름표'], soon: ['월간 명세서'] },
+  { stage: 6, code: 'bank-central', name: '중앙은행', price: 100000, condition: 'earnNoDebt', target: 100000, nameplate: 'diamond', perks: ['그룹 7개, 그룹원 20명', '월간 명세서', '다이아 이름표'], soon: [] },
 ];
 
 export const BANK_NAMES = BANKS.map((b) => b.name);
