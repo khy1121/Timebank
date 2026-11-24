@@ -97,3 +97,10 @@ describe('서버 값', () => {
     ]);
   });
 });
+
+describe('은행원 말투 (FR-111)', () => {
+  it('등급마다 정중한 문구', () => {
+    expect(voiceLine(882, 'banker')).toContain('고객');
+    expect(voiceLine(100, 'banker')).toContain('부도');
+  });
+});
