@@ -2,6 +2,7 @@ import { addDays, diffDays, formatKoreanDate, weekdayLabel } from '../dates';
 import {
   capRatio,
   creditGrade,
+  gradeTable,
   debtFor,
   formatAmount,
   gaugeFilled,
@@ -134,6 +135,15 @@ describe('신용등급 (TC-025, TC-029)', () => {
     expect(creditGrade(3000)).toBe(4);
     expect(creditGrade(99999)).toBe(9);
     expect(creditGrade(100000)).toBe(10);
+  });
+
+  test('기준표는 화면설계서 6절과 같고 계산과 맞는다', () => {
+    const table = gradeTable();
+    expect(table).toHaveLength(10);
+    expect(table[0]).toEqual({ grade: 1, label: '0냥' });
+    expect(table[1]).toEqual({ grade: 2, label: '1,000냥 미만' });
+    expect(table[8]).toEqual({ grade: 9, label: '100,000냥 미만' });
+    expect(table[9]).toEqual({ grade: 10, label: '100,000냥 이상' });
   });
 
   test('게이지 칸 수와 색 구간', () => {

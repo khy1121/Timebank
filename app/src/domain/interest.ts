@@ -94,6 +94,15 @@ export function creditGrade(totalInterest: number): number {
   return 10;
 }
 
+/** 등급 기준표의 줄. 화면설계서 6절과 같은 문구 */
+export function gradeTable(): { grade: number; label: string }[] {
+  return [
+    { grade: 1, label: '0냥' },
+    ...GRADE_UPPER_BOUNDS.map((upper, i) => ({ grade: i + 2, label: `${formatAmount(upper)}냥 미만` })),
+    { grade: 10, label: `${formatAmount(GRADE_UPPER_BOUNDS[GRADE_UPPER_BOUNDS.length - 1])}냥 이상` },
+  ];
+}
+
 export type GradeLevel = 'good' | 'warn' | 'bad';
 
 /** 1~3 양호, 4~7 주의, 8~10 위험. (FR-029) */
