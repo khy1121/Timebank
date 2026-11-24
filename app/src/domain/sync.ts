@@ -1,3 +1,4 @@
+import { toRepeat, type Repeat } from './repeat';
 import type { DateString } from './dates';
 import type { Todo } from './interest';
 import type { Repayment } from './records';
@@ -15,7 +16,7 @@ export type SyncMeta = { updatedAt: string; deletedAt: string | null };
  * createdAt: 기기에서 등록한 시각(1시간 무료 수정, 원금을 건 날). 예전 사본에는 없을 수 있다.
  * stakeGroupId: 그룹 보증금으로 걸었으면 그 그룹 (시간적금기획서 4.7)
  */
-export type StoredTodo = Todo & SyncMeta & { createdAt?: string; stakeGroupId?: string | null };
+export type StoredTodo = Todo & SyncMeta & { createdAt?: string; stakeGroupId?: string | null; repeat?: Repeat | null; repeatFrom?: string | null };
 export type StoredRepayment = Repayment & SyncMeta;
 export type StoredPurchase = Purchase & SyncMeta;
 
@@ -67,6 +68,8 @@ export type TodoRow = {
   deleted_at: string | null;
   created_at?: string | null;
   stake_group_id?: string | null;
+  repeat?: string | null;
+  repeat_from?: string | null;
 };
 
 export type RepaymentRow = {
@@ -93,6 +96,8 @@ export function todoFromRow(row: TodoRow): StoredTodo {
     deletedAt: row.deleted_at,
     createdAt: row.created_at ?? undefined,
     stakeGroupId: row.stake_group_id ?? null,
+    repeat: toRepeat(row.repeat),
+    repeatFrom: row.repeat_from ?? null,
   };
 }
 
@@ -108,6 +113,8 @@ export function todoToParams(todo: StoredTodo) {
     p_deleted_at: todo.deletedAt,
     p_created_at: todo.createdAt ?? null,
     p_stake_group_id: todo.stakeGroupId ?? null,
+    p_repeat: todo.repeat ?? null,
+    p_repeat_from: todo.repeatFrom ?? null,
   };
 }
 
