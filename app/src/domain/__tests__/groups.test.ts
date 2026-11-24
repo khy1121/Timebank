@@ -12,7 +12,10 @@ import {
   photoPath,
   proofBonus,
   proofNote,
+  proofHint,
   proofState,
+  themeName,
+  toTheme,
   timeAgo,
   toStatusCode,
   withVote,
@@ -141,5 +144,24 @@ describe('사진', () => {
     expect(Array.from(base64ToBytes('aGk='))).toEqual([104, 105]);
     expect(Array.from(base64ToBytes('data:image/jpeg;base64,/9j/'))).toEqual([255, 216, 255]);
     expect(Array.from(base64ToBytes('YWJj'))).toEqual([97, 98, 99]);
+  });
+});
+
+describe('그룹 테마 (시간적금기획서 11절)', () => {
+  it('모르는 값은 기타로 읽는다', () => {
+    expect(toTheme('workout')).toBe('workout');
+    expect(toTheme('swim')).toBe('etc');
+    expect(toTheme(null)).toBe('etc');
+  });
+
+  it('기타에 이름을 적었으면 그 이름, 아니면 테마 이름', () => {
+    expect(themeName('study', null)).toBe('공부');
+    expect(themeName('etc', '피아노')).toBe('피아노');
+    expect(themeName('etc', '  ')).toBe('기타');
+    expect(themeName('study', '무시됨')).toBe('공부');
+  });
+
+  it('인증 안내는 테마에 맞는 사진', () => {
+    expect(proofHint('cooking')).toBe('만든 요리');
   });
 });

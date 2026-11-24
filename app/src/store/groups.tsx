@@ -6,6 +6,7 @@ import {
   base64ToBytes,
   groupErrorMessage,
   groupFromRow,
+  toTheme,
   groupStandingFromRow,
   memberFromRow,
   photoPath,
@@ -13,6 +14,7 @@ import {
   proofFromRow,
   type FeedRow,
   type GroupPreviewRow,
+  type GroupTheme,
   type GroupStanding,
   type GroupStandingRow,
   type Member,
@@ -37,7 +39,7 @@ import { useAuth } from './auth';
 
 export type Result<T = void> = { ok: true; value: T } | { ok: false; message: string };
 
-export type GroupPreview = { id: string; name: string; members: number; ownerNickname: string | null; isMember: boolean };
+export type GroupPreview = { id: string; name: string; members: number; ownerNickname: string | null; isMember: boolean; theme: GroupTheme; themeLabel: string | null };
 
 export type PostProofInput = {
   repaymentId: string;
@@ -59,7 +61,9 @@ type Store = {
   /** 인증 이용 수칙에 동의했는가 (FR-083) */
   rulesAgreed: boolean;
   refresh: () => Promise<void>;
-  create: (name: string, nickname: string) => Promise<Result<{ id: string; code: string }>>;
+  create: (name: string, nickname: string, theme?: GroupTheme, themeLabel?: string | null) => Promise<Result<{ id: string; code: string }>>;
+  /** 방장이 그룹 테마를 바꾼다 */
+  setTheme: (groupId: string, theme: GroupTheme, themeLabel: string | null) => Promise<Result>;
   preview: (code: string) => Promise<Result<GroupPreview | null>>;
   join: (code: string, nickname: string) => Promise<Result<string>>;
   leave: (groupId: string) => Promise<Result>;
@@ -163,8 +167,11 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
     };
 
     return {
-      create: async (name, nickname) => {
-        const r = await call<{ id: string; invite_code: string }[]>('create_group', { p_name: name.trim(), p_nickname: nickname.trim() }, '그룹을 만들지 못했어요. 잠시 뒤에 다시 해 주세요');
+      create: async (name, nickname, theme = 'etc', themeLabel = null) => {
+        const r = await call<{ id: string; invite_code: string }[]>(
+          'create_group',
+          { p_name: name.trim(), p_nickname: nickname.trim(), p_theme: theme, p_theme_label: themeLabel },
+          '그룹을 만들지 못했어요. 잠시 뒤에 다시 해 주세요');
         if (!r.ok) return r;
         const row = r.value[0];
         track('group_create');
@@ -178,7 +185,9 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
         const row = r.value[0];
         return {
           ok: true,
-          value: row ? { id: row.id, name: row.name, members: row.members, ownerNickname: row.owner_nickname, isMember: row.is_member } : null,
+          value: row
+            ? { id: row.id, name: row.name, members: row.members, ownerNickname: row.owner_nickname, isMember: row.is_member, theme: toTheme(row.theme), themeLabel: row.theme_label ?? null }
+            : null,
         };
       },
 
@@ -230,6 +239,12 @@ export function GroupsProvider({ children }: { children: ReactNode }) {
       pot: async (groupId) => {
         const r = await call<number>('group_pot_now', { p_group_id: groupId }, '금고를 받아 오지 못했어요');
         return r.ok ? (r.value ?? 0) : 0;
+      },
+
+      setTheme: async (groupId, theme, themeLabel) => {
+        const r = await call<void>('set_group_theme', { p_group_id: groupId, p_theme: theme, p_theme_label: themeLabel }, '테마를 바꾸지 못했어요');
+        if (r.ok) await refresh();
+        return r;
       },
 
       standing: async (groupId) => {

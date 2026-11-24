@@ -185,11 +185,65 @@ export function toStatusCode(v: string | null | undefined): StatusCode | null {
 // 서버 행 ↔ 앱
 // ---------------------------------------------------------------------------
 
-export type MyGroupRow = { id: string; name: string; invite_code: string; is_owner: boolean; members: number; new_proofs: number; joined_at: string };
-export type MyGroup = { id: string; name: string; inviteCode: string; isOwner: boolean; members: number; newProofs: number };
+// ---------------------------------------------------------------------------
+// 그룹 테마 (시간적금기획서 11절)
+// ---------------------------------------------------------------------------
+
+export type GroupTheme = 'study' | 'workout' | 'reading' | 'cooking' | 'habit' | 'work' | 'hobby' | 'etc';
+
+/** 고르는 순서이기도 하다. proof: 인증 화면에서 "~을 사진으로 보여 주세요" 앞에 쓰는 말 */
+export const GROUP_THEMES: { code: GroupTheme; label: string; proof: string }[] = [
+  { code: 'study', label: '공부', proof: '공부한 노트나 화면' },
+  { code: 'workout', label: '운동', proof: '운동한 모습이나 기록' },
+  { code: 'reading', label: '독서', proof: '읽은 책과 쪽수' },
+  { code: 'cooking', label: '요리', proof: '만든 요리' },
+  { code: 'habit', label: '생활 습관', proof: '해낸 모습' },
+  { code: 'work', label: '일', proof: '끝낸 결과물' },
+  { code: 'hobby', label: '취미', proof: '만들거나 한 모습' },
+  { code: 'etc', label: '기타', proof: '끝낸 모습' },
+];
+
+export const THEME_LABEL_MAX = 10;
+
+export function toTheme(v: string | null | undefined): GroupTheme {
+  return GROUP_THEMES.some((t) => t.code === v) ? (v as GroupTheme) : 'etc';
+}
+
+/** 화면에 보여줄 테마 이름. 기타에 이름을 적었으면 그 이름 */
+export function themeName(theme: GroupTheme, label: string | null | undefined): string {
+  if (theme === 'etc' && label && label.trim()) return label.trim();
+  return GROUP_THEMES.find((t) => t.code === theme)!.label;
+}
+
+/** 인증 화면 안내: 그룹 테마에 맞는 사진 */
+export function proofHint(theme: GroupTheme): string {
+  return GROUP_THEMES.find((t) => t.code === theme)!.proof;
+}
+
+export type MyGroupRow = {
+  id: string;
+  name: string;
+  invite_code: string;
+  is_owner: boolean;
+  members: number;
+  new_proofs: number;
+  joined_at: string;
+  theme?: string | null;
+  theme_label?: string | null;
+};
+export type MyGroup = { id: string; name: string; inviteCode: string; isOwner: boolean; members: number; newProofs: number; theme: GroupTheme; themeLabel: string | null };
 
 export function groupFromRow(r: MyGroupRow): MyGroup {
-  return { id: r.id, name: r.name, inviteCode: r.invite_code, isOwner: r.is_owner, members: r.members, newProofs: r.new_proofs };
+  return {
+    id: r.id,
+    name: r.name,
+    inviteCode: r.invite_code,
+    isOwner: r.is_owner,
+    members: r.members,
+    newProofs: r.new_proofs,
+    theme: toTheme(r.theme),
+    themeLabel: r.theme_label ?? null,
+  };
 }
 
 export type FeedRow = {
@@ -274,7 +328,15 @@ export function passedLabel(n: number): string {
   return n > 0 ? `인증 ${n}개 통과` : '통과한 인증 없음';
 }
 
-export type GroupPreviewRow = { id: string; name: string; members: number; owner_nickname: string | null; is_member: boolean };
+export type GroupPreviewRow = {
+  id: string;
+  name: string;
+  members: number;
+  owner_nickname: string | null;
+  is_member: boolean;
+  theme?: string | null;
+  theme_label?: string | null;
+};
 
 // ---------------------------------------------------------------------------
 // 사진 올리기: base64 → 바이트. 저장소는 바이트를 받는다.
