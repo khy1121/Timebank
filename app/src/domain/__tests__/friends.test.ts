@@ -18,8 +18,17 @@ import {
 const TODAY = '2026-11-24';
 
 function friend(name: string, lastActive: string | null, doneWeek = 0, overdueNow = 0): Friend {
-  return { userId: name, name, since: '2026-11-01T00:00:00Z', doneWeek, overdueNow, lastActive };
+  return { userId: name, name, since: '2026-11-01T00:00:00Z', doneWeek, overdueNow, lastActive, nameplate: 'none' };
 }
+
+describe('친구 행 변환', () => {
+  it('이름표를 받고, 모르는 값이나 빈 값은 없음으로 본다', () => {
+    const base = { user_id: 'u', name: '민지', since: '2026-11-01T00:00:00Z', done_week: 1, overdue_now: 0, last_active: null };
+    expect(friendFromRow({ ...base, nameplate: 'gold' }).nameplate).toBe('gold');
+    expect(friendFromRow({ ...base, nameplate: 'rainbow' }).nameplate).toBe('none');
+    expect(friendFromRow(base).nameplate).toBe('none');
+  });
+});
 
 describe('표시 이름 (FR-103)', () => {
   it('비었거나 10자를 넘으면 이유를 알려 준다', () => {
@@ -80,7 +89,7 @@ describe('신청 (FR-105)', () => {
 describe('서버 행', () => {
   it('친구와 신청을 앱 모양으로', () => {
     expect(friendFromRow({ user_id: 'u', name: '준호', since: 's', done_week: 3, overdue_now: 1, last_active: TODAY })).toEqual({
-      userId: 'u', name: '준호', since: 's', doneWeek: 3, overdueNow: 1, lastActive: TODAY,
+      userId: 'u', name: '준호', since: 's', doneWeek: 3, overdueNow: 1, lastActive: TODAY, nameplate: 'none',
     });
     expect(requestFromRow({ id: 'r', user_id: 'u', name: '지우', via: '???', incoming: true, created_at: 'c', common_group: null }).via).toBe('code');
     expect(toFriendState('sent')).toBe('sent');

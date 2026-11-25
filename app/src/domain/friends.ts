@@ -1,3 +1,4 @@
+import { toNameplate, type Nameplate } from './bank';
 import { diffDays, type DateString } from './dates';
 
 /**
@@ -21,11 +22,11 @@ export type SendResult = 'sent' | 'friends' | 'not_found';
 // 서버 행 ↔ 앱
 // ---------------------------------------------------------------------------
 
-export type FriendRow = { user_id: string; name: string; since: string; done_week: number; overdue_now: number; last_active: string | null };
-export type Friend = { userId: string; name: string; since: string; doneWeek: number; overdueNow: number; lastActive: DateString | null };
+export type FriendRow = { user_id: string; name: string; since: string; done_week: number; overdue_now: number; last_active: string | null; nameplate?: string | null };
+export type Friend = { userId: string; name: string; since: string; doneWeek: number; overdueNow: number; lastActive: DateString | null; nameplate: Nameplate };
 
 export function friendFromRow(r: FriendRow): Friend {
-  return { userId: r.user_id, name: r.name, since: r.since, doneWeek: r.done_week, overdueNow: r.overdue_now, lastActive: r.last_active };
+  return { userId: r.user_id, name: r.name, since: r.since, doneWeek: r.done_week, overdueNow: r.overdue_now, lastActive: r.last_active, nameplate: toNameplate(r.nameplate) };
 }
 
 export type RequestRow = { id: string; user_id: string; name: string; via: string; incoming: boolean; created_at: string; common_group: string | null };
