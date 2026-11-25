@@ -19,7 +19,7 @@ describe('의견 보내기 (TC-051)', () => {
     const url = feedbackMailto({ address: 'help@example.com', version: '1.0.0', platform: 'android' });
     expect(url.startsWith('mailto:help@example.com?subject=')).toBe(true);
     const query = new URLSearchParams(url.split('?')[1]);
-    expect(query.get('subject')).toBe('[할 일 이자] 의견');
+    expect(query.get('subject')).toBe('[할일통장] 의견');
     expect(query.get('body')).toContain('앱 버전: 1.0.0');
     expect(query.get('body')).toContain('기기: android');
   });

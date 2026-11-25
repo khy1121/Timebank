@@ -62,14 +62,14 @@ describe('오류 문구', () => {
 
 describe('카카오 로그인', () => {
   test('돌아온 주소의 # 뒤에서 로그인 정보를 꺼낸다', () => {
-    const r = parseAuthCallback('todointerest://auth-callback#access_token=aaa.bbb&refresh_token=ccc&token_type=bearer');
+    const r = parseAuthCallback('todobank://auth-callback#access_token=aaa.bbb&refresh_token=ccc&token_type=bearer');
     expect(r.accessToken).toBe('aaa.bbb');
     expect(r.refreshToken).toBe('ccc');
     expect(r.error).toBeUndefined();
   });
 
   test('? 뒤의 code도 읽는다', () => {
-    expect(parseAuthCallback('todointerest://auth-callback?code=xyz').code).toBe('xyz');
+    expect(parseAuthCallback('todobank://auth-callback?code=xyz').code).toBe('xyz');
   });
 
   test('오류 설명을 읽는다', () => {
@@ -79,7 +79,7 @@ describe('카카오 로그인', () => {
   });
 
   test('아무것도 없으면 빈 결과', () => {
-    expect(parseAuthCallback('todointerest://auth-callback')).toEqual({});
+    expect(parseAuthCallback('todobank://auth-callback')).toEqual({});
   });
 
   test('오류 문구', () => {
@@ -99,8 +99,8 @@ describe('다시 받기까지 남은 시간', () => {
 
 describe('카카오 친구 목록 권한 (FR-108)', () => {
   it('돌아온 주소에서 카카오 토큰을 꺼낸다', () => {
-    expect(parseAuthCallback('todointerest://auth-callback#access_token=a&refresh_token=b&provider_token=kakao123').providerToken).toBe('kakao123');
-    expect(parseAuthCallback('todointerest://auth-callback#access_token=a').providerToken).toBeUndefined();
+    expect(parseAuthCallback('todobank://auth-callback#access_token=a&refresh_token=b&provider_token=kakao123').providerToken).toBe('kakao123');
+    expect(parseAuthCallback('todobank://auth-callback#access_token=a').providerToken).toBeUndefined();
   });
   it('실패 이유를 문구로', () => {
     expect(kakaoFriendsErrorMessage('invalid_scope')).toBe('카카오톡 친구 목록 권한이 아직 켜지지 않았어요.');

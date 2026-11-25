@@ -40,7 +40,7 @@ const TONE: Record<Tone, string> = live(() => ({
 
 /**
  * TI-SCR-21·22 친구 (FR-103~107). 1·2단계는 한 화면에 둔다: 내 코드와 공유, 코드로 신청, 받은·보낸 신청, 친구 목록.
- * 친구 코드 링크(todointerest://friends?code=...)로 오면 코드가 채워져 있다. 피그마 155:3386, 155:3500
+ * 친구 코드 링크(todobank://friends?code=...)로 오면 코드가 채워져 있다. 피그마 155:3386, 155:3500
  */
 export default function FriendsScreen() {
   const params = useLocalSearchParams<{ code?: string; editName?: string }>();

@@ -80,7 +80,7 @@ export function statementOf(
 /** 공유하는 한 덩어리 글 */
 export function statementText(s: Statement): string {
   const lines = [
-    `[할 일 이자] ${s.label} 명세서`,
+    `[할일통장] ${s.label} 명세서`,
     `끝낸 일 ${s.done}건 (기한 안 ${s.onTime}건${s.late ? `, 늦게 ${s.late}건` : ''}${s.forgiven ? `, 포기 ${s.forgiven}건` : ''})`,
     `번 냥 ${s.earned.toLocaleString('ko-KR')}냥`,
   ];
