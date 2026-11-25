@@ -7,6 +7,7 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import { GradeSheet } from '@/components/GradeSheet';
 import { HistoryList } from '@/components/HistoryList';
 import { GRADE_TONE } from '@/components/GradeBadge';
+import { Segmented } from '@/components/Segmented';
 import { HomeStage } from '@/components/HomeStage';
 import { Mascot } from '@/components/Mascot';
 import { Snackbar } from '@/components/Snackbar';
@@ -24,7 +25,7 @@ import { useCredit } from '@/store/credit';
 import { useStanding } from '@/store/standing';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
-import { color, hardShadow, radius, shadow, themed, type } from '@/theme/tokens';
+import { color, hardShadow, radius, themed, type } from '@/theme/tokens';
 
 const UNDO_MS = 5000;
 
@@ -236,27 +237,6 @@ function WorthRow({ account, score, today }: { account: ReturnType<typeof useTod
   );
 }
 
-/** 두 칸 고르기. 연한 바탕 위에서 고른 칸만 하얗게 떠 있다 (피그마 v6 고르기 탭) */
-function Segmented({ items, value, onChange }: { items: { key: string; label: string }[]; value: string; onChange: (key: string) => void }) {
-  return (
-    <View style={styles.seg} accessibilityRole="tablist">
-      {items.map((it) => {
-        const on = it.key === value;
-        return (
-          <Pressable
-            key={it.key}
-            onPress={() => onChange(it.key)}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: on }}
-            style={[styles.segItem, on && styles.segOn]}>
-            <Text style={[type.label, { color: on ? color.textPrimary : color.textSecondary }]}>{it.label}</Text>
-          </Pressable>
-        );
-      })}
-    </View>
-  );
-}
-
 const styles = themed(() => ({
   root: { flex: 1, backgroundColor: color.bgPage },
   // 위쪽 안전 영역도 하늘색으로 이어지게
@@ -283,9 +263,6 @@ const styles = themed(() => ({
   onBrand: { color: color.textOnPrimary },
   flex: { flex: 1 },
   filters: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  seg: { flex: 1, flexDirection: 'row', padding: 4, borderRadius: radius.full, backgroundColor: color.bgSunken },
-  segItem: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: radius.full },
-  segOn: { backgroundColor: color.bgPage, ...(shadow.card ? { boxShadow: shadow.card } : {}) },
   plus: { width: 48, height: 48, borderRadius: radius.full >= 99 ? 24 : radius.md, backgroundColor: color.brandPrimary, alignItems: 'center', justifyContent: 'center' },
   plusPressed: { backgroundColor: color.brandPressed },
   plusText: { color: color.textOnPrimary, fontSize: 28, lineHeight: 32, fontFamily: type.title.fontFamily },
