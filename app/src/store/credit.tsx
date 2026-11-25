@@ -25,7 +25,7 @@ type Store = {
 
 const CreditContext = createContext<Store | null>(null);
 
-type Row = { rank: number; user_id?: string | null; name: string; score: number; week_delta: number; is_me: boolean };
+type Row = { rank: number; user_id?: string | null; name: string; score: number; week_delta: number; is_me: boolean; nameplate?: string | null; outfit?: unknown };
 
 export function CreditProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();
