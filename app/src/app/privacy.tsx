@@ -3,11 +3,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { TopBar } from '@/components/TopBar';
 import { PRIVACY_EFFECTIVE_DATE, PRIVACY_SECTIONS } from '@/domain/privacy';
+import { CONTACT_EMAIL } from '@/domain/settings';
 import * as layout from '@/theme/layout';
 import { color, themed, type } from '@/theme/tokens';
 import { goBack } from '@/lib/navigation';
 
-const CONTACT = process.env.EXPO_PUBLIC_CONTACT_EMAIL ?? '';
 
 /** TI-SCR-08 개인정보 처리방침. 로그인 전에도 볼 수 있다. (FR-052) */
 export default function PrivacyScreen() {
@@ -35,7 +35,7 @@ export default function PrivacyScreen() {
           </Text>
           <View style={styles.card}>
             <Text style={[type.body, styles.line]}>
-              {CONTACT ? `${CONTACT} 으로 메일을 보내 주세요.` : '설정의 "의견 보내기"로 알려 주세요.'}
+              {`문의는 메일 ${CONTACT_EMAIL} 앞으로 보내 주세요. 설정의 "의견 보내기"를 누르면 메일 앱이 바로 열려요.`}
             </Text>
           </View>
         </View>
