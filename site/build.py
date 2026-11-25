@@ -1,5 +1,5 @@
 """
-할일통장 공개 페이지(지원·개인정보 처리방침)를 만든다.
+todobank 공개 페이지(지원·개인정보 처리방침)를 만든다.
 
 처리방침 본문은 앱 안 처리방침(app/src/domain/privacy.ts)에서 그대로 읽어 온다.
 앱 처리방침을 고치면 이 스크립트를 다시 돌려 site/privacy.html을 새로 만든다.
@@ -18,7 +18,7 @@ SITE = ROOT / 'site'
 PRIVACY_TS = ROOT / 'app' / 'src' / 'domain' / 'privacy.ts'
 SETTINGS_TS = ROOT / 'app' / 'src' / 'domain' / 'settings.ts'
 
-APP = '할일통장'
+APP = 'todobank'
 
 
 def read_privacy():

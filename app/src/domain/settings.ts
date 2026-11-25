@@ -18,7 +18,7 @@ type Feedback = { address: string; version: string; platform: string };
 
 /** 메일 앱을 여는 주소. 받는 주소, 제목, 앱 버전과 기기 종류를 미리 채운다. */
 export function feedbackMailto({ address, version, platform }: Feedback): string {
-  const subject = '[할일통장] 의견';
+  const subject = '[todobank] 의견';
   const body = `\n\n---\n앱 버전: ${version}\n기기: ${platform}`;
   return `mailto:${address.trim()}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
