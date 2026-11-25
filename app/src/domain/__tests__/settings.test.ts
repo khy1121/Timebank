@@ -1,4 +1,4 @@
-import { feedbackMailto, isDeleteConfirmed } from '../settings';
+import { CONTACT_EMAIL, feedbackMailto, isDeleteConfirmed } from '../settings';
 
 describe('계정 삭제 확인 (TC-005)', () => {
   it('"삭제"라고 정확히 입력해야 통과한다', () => {
@@ -22,5 +22,11 @@ describe('의견 보내기 (TC-051)', () => {
     expect(query.get('subject')).toBe('[할일통장] 의견');
     expect(query.get('body')).toContain('앱 버전: 1.0.0');
     expect(query.get('body')).toContain('기기: android');
+  });
+});
+
+describe('문의 메일', () => {
+  it('환경 변수가 없으면 앱 전용 Gmail을 쓴다', () => {
+    expect(CONTACT_EMAIL).toBe('todobank.help@gmail.com');
   });
 });

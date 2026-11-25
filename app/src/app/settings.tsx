@@ -11,7 +11,7 @@ import { SettingRow } from '@/components/SettingRow';
 import { Toggle } from '@/components/Toggle';
 import { TopBar } from '@/components/TopBar';
 import { formatTimeLabel, NOTIFY_TIMES } from '@/domain/profile';
-import { DELETE_WORD, feedbackMailto, isDeleteConfirmed } from '@/domain/settings';
+import { CONTACT_EMAIL, DELETE_WORD, feedbackMailto, isDeleteConfirmed } from '@/domain/settings';
 import { clearEvents, flush, track } from '@/lib/events';
 import { feedback, getSettings, setSettings, subscribe } from '@/lib/feedback';
 import { useAuth } from '@/store/auth';
@@ -31,7 +31,6 @@ const VOICE_HINT = {
   banker: '은행원: 창구 직원처럼 정중하게 말해요',
 } as const;
 
-const CONTACT = process.env.EXPO_PUBLIC_CONTACT_EMAIL ?? '';
 const VERSION = Constants.expoConfig?.version ?? '1.0.0';
 
 type Dialog = 'signOut' | 'time' | 'deleteWarn' | 'deleteType' | null;
@@ -190,10 +189,10 @@ export default function SettingsScreen() {
 
         <Group label="도움말">
           <SettingRow first label="이자 규칙 다시 보기" onPress={() => router.push({ pathname: '/onboarding', params: { review: '1' } })} />
-          {CONTACT ? (
+          {CONTACT_EMAIL ? (
             <SettingRow
               label="의견 보내기"
-              onPress={() => Linking.openURL(feedbackMailto({ address: CONTACT, version: VERSION, platform: Platform.OS }))}
+              onPress={() => Linking.openURL(feedbackMailto({ address: CONTACT_EMAIL, version: VERSION, platform: Platform.OS }))}
             />
           ) : null}
           <SettingRow label="개인정보 처리방침" onPress={() => router.push('/privacy')} />

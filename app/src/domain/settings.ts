@@ -9,6 +9,9 @@ export function isDeleteConfirmed(input: string): boolean {
   return input.trim() === DELETE_WORD;
 }
 
+/** 의견·문의를 받는 메일. 공개용 주소라 코드에 둔다. 환경 변수로 바꿀 수 있다 */
+export const CONTACT_EMAIL = process.env.EXPO_PUBLIC_CONTACT_EMAIL || 'todobank.help@gmail.com';
+
 export const DELETE_FAILED = '삭제하지 못했어요. 연결을 확인하고 다시 시도해 주세요.';
 
 type Feedback = { address: string; version: string; platform: string };
