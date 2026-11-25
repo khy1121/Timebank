@@ -1,3 +1,4 @@
+import { outfitFromServer, type Outfit } from './closet';
 import { STATUS, type StatusCode } from './standing';
 import { toNameplate, type Nameplate } from './bank';
 import { rewardFor } from './wallet';
@@ -316,18 +317,18 @@ export function withVote(p: Proof, vote: Vote | null): Proof {
   return { ...p, approvals, doubts, myVote: vote };
 }
 
-export type MemberRow = { user_id: string; nickname: string; is_owner: boolean; is_me: boolean; joined_at: string; status_code: string | null; blocked: boolean; credit_score?: number | null; nameplate?: string | null };
-export type Member = { userId: string; nickname: string; isOwner: boolean; isMe: boolean; status: StatusCode | null; blocked: boolean; creditScore: number | null; nameplate: Nameplate };
+export type MemberRow = { user_id: string; nickname: string; is_owner: boolean; is_me: boolean; joined_at: string; status_code: string | null; blocked: boolean; credit_score?: number | null; nameplate?: string | null; outfit?: unknown };
+export type Member = { userId: string; nickname: string; isOwner: boolean; isMe: boolean; status: StatusCode | null; blocked: boolean; creditScore: number | null; nameplate: Nameplate; outfit: Outfit };
 
 export function memberFromRow(r: MemberRow): Member {
-  return { userId: r.user_id, nickname: r.nickname, isOwner: r.is_owner, isMe: r.is_me, status: toStatusCode(r.status_code), blocked: r.blocked, creditScore: r.credit_score ?? null, nameplate: toNameplate(r.nameplate) };
+  return { userId: r.user_id, nickname: r.nickname, isOwner: r.is_owner, isMe: r.is_me, status: toStatusCode(r.status_code), blocked: r.blocked, creditScore: r.credit_score ?? null, nameplate: toNameplate(r.nameplate), outfit: outfitFromServer(r.outfit) };
 }
 
-export type GroupStandingRow = { user_id: string; nickname: string; is_me: boolean; status_code: string | null; score: number; passed: number; rank: number; credit_score?: number | null; nameplate?: string | null };
-export type GroupStanding = { userId: string; nickname: string; isMe: boolean; status: StatusCode | null; score: number; passed: number; rank: number; creditScore: number | null; nameplate: Nameplate };
+export type GroupStandingRow = { user_id: string; nickname: string; is_me: boolean; status_code: string | null; score: number; passed: number; rank: number; credit_score?: number | null; nameplate?: string | null; outfit?: unknown };
+export type GroupStanding = { userId: string; nickname: string; isMe: boolean; status: StatusCode | null; score: number; passed: number; rank: number; creditScore: number | null; nameplate: Nameplate; outfit: Outfit };
 
 export function groupStandingFromRow(r: GroupStandingRow): GroupStanding {
-  return { userId: r.user_id, nickname: r.nickname, isMe: r.is_me, status: toStatusCode(r.status_code), score: r.score, passed: r.passed, rank: r.rank, creditScore: r.credit_score ?? null, nameplate: toNameplate(r.nameplate) };
+  return { userId: r.user_id, nickname: r.nickname, isMe: r.is_me, status: toStatusCode(r.status_code), score: r.score, passed: r.passed, rank: r.rank, creditScore: r.credit_score ?? null, nameplate: toNameplate(r.nameplate), outfit: outfitFromServer(r.outfit) };
 }
 
 export function passedLabel(n: number): string {

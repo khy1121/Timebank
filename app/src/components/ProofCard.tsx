@@ -1,10 +1,11 @@
 import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { Mascot } from './Mascot';
+import type { Outfit } from '@/domain/closet';
 import { countsLabel, proofNote, proofState, STATE_LABEL, timeAgo, votingOpen, type Proof, type ProofState, type Vote } from '@/domain/groups';
 import { color, live, radius, stroke, themed, type } from '@/theme/tokens';
 
-const AVATAR = require('@/assets/images/closet/base.png');
 
 const TONE: Record<ProofState, { fg: string; bg: string }> = live(() => ({
   pending: { fg: color.accentCoinDeep, bg: color.mascotCream },
@@ -13,6 +14,8 @@ const TONE: Record<ProofState, { fg: string; bg: string }> = live(() => ({
 }));
 
 type Props = {
+  /** 글쓴이의 꾸민 옷. 없으면 내 캐릭터(이 기기의 옷)로 그린다 */
+  outfit?: Outfit;
   proof: Proof;
   /** 아직 받는 중이면 undefined, 받지 못했으면 null */
   photoUrl: string | null | undefined;
@@ -22,7 +25,7 @@ type Props = {
 };
 
 /** 그룹 피드의 인증 카드 (TI-SCR-16, FR-078·079). 피그마 ProofCard 50:1571 */
-export function ProofCard({ proof, photoUrl, now, onVote, onMore }: Props) {
+export function ProofCard({ proof, outfit, photoUrl, now, onVote, onMore }: Props) {
   const state = proofState(proof.createdAt, proof.approvals, proof.doubts, now);
   const tone = TONE[state];
   const canVote = !proof.isMine && votingOpen(proof.createdAt, now);
@@ -46,8 +49,8 @@ export function ProofCard({ proof, photoUrl, now, onVote, onMore }: Props) {
   return (
     <View style={styles.card}>
       <View style={styles.head}>
-        <View style={styles.avatar}>
-          <Image source={AVATAR} style={styles.avatarImg} contentFit="cover" accessible={false} />
+        <View style={styles.avatar} accessible={false} importantForAccessibility="no-hide-descendants">
+          <Mascot size={40} outfit={outfit} />
         </View>
         <View style={styles.who}>
           <Text style={[type.label, styles.ink]} numberOfLines={1}>
@@ -100,16 +103,7 @@ const styles = themed(() => ({
     gap: 10,
   },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    overflow: 'hidden',
-    backgroundColor: color.mascotCream,
-    borderWidth: 1.5,
-    borderColor: color.inkOutline,
-  },
-  avatarImg: { width: 36, height: 36 },
+  avatar: { width: 40, height: 40 },
   who: { flex: 1 },
   pill: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: radius.full },
   more: { paddingHorizontal: 4 },
