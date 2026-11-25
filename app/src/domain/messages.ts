@@ -90,3 +90,6 @@ export const BANKRUPT_COMFORT = '괜찮아요. 다들 한 번쯤은 무너져요
 
 /** 빚이 없을 때 빚 화면 */
 export const NO_DEBT_CHEER = '이대로만 가요. 기한 안에 끝내면 이자가 계속 쌓여요.';
+
+/** 이름표를 서버에 저장하지 못했을 때 (서버가 이유를 주지 않은 경우) */
+export const NAMEPLATE_SAVE_FAILED = '이름표를 저장하지 못했어요. 연결을 확인하고 다시 골라 주세요.';
