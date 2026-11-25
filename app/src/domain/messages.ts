@@ -67,3 +67,6 @@ export function shopMessage(streak: number, toNextBonus: number): string {
   if (streak === 0) return '기한 안에 끝내면 원금의 10%를 벌어요. 냥을 모아 도장을 꾸며 보세요.';
   return `${streak}번 연속 기한 안에 끝냈어요. ${toNextBonus}번 더 하면 1,000냥 보너스예요.`;
 }
+
+/** 이름표를 서버에 저장하지 못했을 때 (서버가 이유를 주지 않은 경우) */
+export const NAMEPLATE_SAVE_FAILED = '이름표를 저장하지 못했어요. 연결을 확인하고 다시 골라 주세요.';
