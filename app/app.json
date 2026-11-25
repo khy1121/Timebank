@@ -50,7 +50,15 @@
           "microphonePermission": false
         }
       ],
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "@sentry/react-native",
+        {
+          "url": "https://sentry.io/",
+          "organization": "young-1n",
+          "project": "todo-interest"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
