@@ -1,6 +1,7 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -18,6 +19,9 @@ import { color, radius, stroke, themed, type } from '@/theme/tokens';
  */
 const EMAIL_LOGIN_ENABLED = false;
 
+/** 만 14세 이상인지 한 번 확인받는다. 이 기기에서 확인했으면 다음 로그인 때는 체크된 채로 시작한다 */
+const AGE_KEY = 'todo-interest/age-confirmed';
+
 /** TI-SCR-01 로그인. (FR-001, FR-055) */
 export default function LoginScreen() {
   const { signInWithKakao, requestCode } = useAuth();
@@ -26,9 +30,21 @@ export default function LoginScreen() {
   const [busy, setBusy] = useState<'kakao' | 'email' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const valid = isValidEmail(email);
+  // 만 14세 미만은 법정대리인 동의가 필요해 받지 않는다(개인정보보호법 제22조의2, 2026-11-25 사용자 결정)
+  const [adult, setAdult] = useState(false);
+  useEffect(() => {
+    AsyncStorage.getItem(AGE_KEY)
+      .then((v) => v === '1' && setAdult(true))
+      .catch(() => {});
+  }, []);
+  const toggleAdult = () => {
+    const next = !adult;
+    setAdult(next);
+    AsyncStorage.setItem(AGE_KEY, next ? '1' : '0').catch(() => {});
+  };
 
   const kakao = async () => {
-    if (busy) return;
+    if (busy || !adult) return;
     setBusy('kakao');
     setError(null);
     const result = await signInWithKakao();
@@ -38,7 +54,7 @@ export default function LoginScreen() {
   };
 
   const sendCode = async () => {
-    if (!valid || busy) return;
+    if (!valid || busy || !adult) return;
     setBusy('email');
     setError(null);
     const result = await requestCode(email);
@@ -64,11 +80,24 @@ export default function LoginScreen() {
           </Text>
 
           <View style={styles.form}>
+            <Pressable
+              onPress={toggleAdult}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: adult }}
+              accessibilityLabel="만 14세 이상이에요"
+              hitSlop={8}
+              style={styles.ageRow}>
+              <View style={[styles.box, adult && styles.boxOn]}>{adult ? <Text style={styles.check}>✓</Text> : null}</View>
+              <View style={styles.ageText}>
+                <Text style={[type.label, styles.ink]}>만 14세 이상이에요</Text>
+                <Text style={[type.caption, styles.terms, styles.left]}>만 14세 미만은 가입할 수 없어요</Text>
+              </View>
+            </Pressable>
             <Button
               label={busy === 'kakao' ? '카카오로 이동하는 중…' : '카카오로 시작하기'}
               variant="kakao"
               onPress={kakao}
-              disabled={busy !== null}
+              disabled={busy !== null || !adult}
             />
 
             {EMAIL_LOGIN_ENABLED ? (
@@ -102,7 +131,7 @@ export default function LoginScreen() {
                   label={busy === 'email' ? '보내는 중…' : '인증 코드 받기'}
                   variant="secondary"
                   onPress={sendCode}
-                  disabled={!valid || busy !== null}
+                  disabled={!valid || busy !== null || !adult}
                 />
               </>
             ) : null}
@@ -144,4 +173,20 @@ const styles = themed(() => ({
   error: { color: color.debtFg },
   terms: { color: color.textTertiary, textAlign: 'center' },
   termsLink: { color: color.textSecondary, textDecorationLine: 'underline' },
+  ageRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 4 },
+  ageText: { flex: 1, gap: 2 },
+  box: {
+    width: 26,
+    height: 26,
+    borderRadius: Math.min(radius.sm, 8),
+    borderWidth: 2,
+    borderColor: color.textSecondary,
+    backgroundColor: color.bgSurface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  boxOn: { backgroundColor: color.brandPrimary, borderColor: color.brandPrimary },
+  check: { color: color.textOnPrimary, fontSize: 16, lineHeight: 20, fontWeight: '700' },
+  ink: { color: color.textPrimary },
+  left: { textAlign: 'left' },
 }));
