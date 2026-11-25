@@ -1,4 +1,5 @@
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/components/Text';
 
 import { formatAmount } from '@/domain/interest';
 import { color, live, themed, type } from '@/theme/tokens';

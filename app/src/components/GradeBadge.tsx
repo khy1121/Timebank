@@ -1,4 +1,5 @@
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/components/Text';
 
 import { gradeOf, type GradeTone } from '@/domain/credit';
 import { color, live, radius, themed, type } from '@/theme/tokens';

@@ -1,5 +1,6 @@
 import { forwardRef, type ComponentRef } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/components/Text';
 
 import { color, radius, shadow, themed, type } from '@/theme/tokens';
 

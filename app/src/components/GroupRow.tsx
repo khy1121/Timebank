@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { Text } from '@/components/Text';
 
 import type { MyGroup } from '@/domain/groups';
 import { color, radius, stroke, themed, type } from '@/theme/tokens';

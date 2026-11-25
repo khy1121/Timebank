@@ -1,6 +1,7 @@
 import * as Font from 'expo-font';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Text, View, type TextStyle, type ViewStyle } from 'react-native';
+import { View, type TextStyle, type ViewStyle } from 'react-native';
+import { Text } from '@/components/Text';
 import Svg, { Circle, Path } from 'react-native-svg';
 
 import { Mascot } from '@/components/Mascot';

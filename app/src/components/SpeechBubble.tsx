@@ -1,4 +1,5 @@
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/components/Text';
 
 import { useLook } from '@/store/look';
 import { color, radius, stroke, themed, type } from '@/theme/tokens';

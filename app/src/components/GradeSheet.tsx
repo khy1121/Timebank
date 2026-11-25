@@ -1,4 +1,5 @@
-import { Modal, Pressable, Text, View } from 'react-native';
+import { Modal, Pressable, View } from 'react-native';
+import { Text } from '@/components/Text';
 
 import { gradeOf, gradeRange, GRADES } from '@/domain/credit';
 import { color, radius, stroke, themed, type } from '@/theme/tokens';

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Text, TextInput, View, type TextInputProps } from 'react-native';
+import { View, type TextInputProps } from 'react-native';
+import { Text, TextInput } from '@/components/Text';
 
 import { color, inputType, radius, stroke, themed, type } from '@/theme/tokens';
 
