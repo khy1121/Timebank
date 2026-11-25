@@ -80,6 +80,7 @@ describe('신청 (FR-105)', () => {
   });
   it('서버 이유를 문구로', () => {
     expect(friendErrorMessage({ hint: 'friend_self' }, '실패')).toBe('내 친구 코드예요');
+    expect(friendErrorMessage({ hint: 'too_many_kakao' }, '실패')).toContain('하루 10번');
     expect(friendErrorMessage({ hint: 'friend_limit' }, '실패')).toBe('친구는 50명까지 둘 수 있어요');
     expect(friendErrorMessage({ hint: '모르는 것' }, '실패')).toBe('실패');
     expect(friendErrorMessage(null, '실패')).toBe('실패');
