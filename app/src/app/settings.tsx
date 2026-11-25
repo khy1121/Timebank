@@ -242,7 +242,7 @@ export default function SettingsScreen() {
 
       {/* 알림 시각 고르기 */}
       <Modal visible={dialog === 'time'} transparent animationType="fade" onRequestClose={() => setDialog(null)}>
-        <Pressable style={styles.backdrop} onPress={() => setDialog(null)} accessibilityLabel="닫기">
+        <Pressable style={styles.backdrop} onPress={() => setDialog(null)} accessibilityRole="button" accessibilityLabel="닫기">
           <Pressable style={styles.sheet} onPress={() => {}} accessibilityViewIsModal>
             <Text style={[type.title, styles.sheetTitle]} accessibilityRole="header">
               몇 시에 알려 드릴까요?

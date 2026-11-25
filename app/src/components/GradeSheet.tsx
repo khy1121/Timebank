@@ -13,7 +13,7 @@ export function GradeSheet({ visible, score, onClose }: Props) {
   const mine = score === null ? null : gradeOf(score).code;
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="닫기">
+      <Pressable style={styles.backdrop} onPress={onClose} accessibilityRole="button" accessibilityLabel="닫기">
         <Pressable style={styles.sheet} onPress={() => {}} accessibilityViewIsModal>
           <View style={styles.head}>
             <Text style={[type.headline, styles.ink]} accessibilityRole="header">
