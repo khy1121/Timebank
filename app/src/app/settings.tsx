@@ -127,6 +127,7 @@ export default function SettingsScreen() {
         <Group label="신용">
           <SettingRow
             first
+            stacked
             label="말투"
             hint={VOICE_HINT[profile?.voice ?? 'spicy']}
             right={
