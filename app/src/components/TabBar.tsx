@@ -1,5 +1,6 @@
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { Text } from '@/components/Text';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
 import { color, font, radius, stroke, themed, type } from '@/theme/tokens';

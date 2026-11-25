@@ -1,7 +1,8 @@
 import * as Linking from 'expo-linking';
 import * as Sharing from 'expo-sharing';
 import { useRef, useState, type ComponentRef } from 'react';
-import { Platform, ScrollView, Share, Text, View, useWindowDimensions } from 'react-native';
+import { Platform, ScrollView, Share, View, useWindowDimensions } from 'react-native';
+import { Text } from '@/components/Text';
 import { captureRef } from 'react-native-view-shot';
 import { SafeAreaView } from 'react-native-safe-area-context';
 

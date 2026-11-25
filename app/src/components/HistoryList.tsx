@@ -1,4 +1,5 @@
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { Text } from '@/components/Text';
 
 import { formatAmount } from '@/domain/interest';
 import { groupByMonth, type Repayment } from '@/domain/records';

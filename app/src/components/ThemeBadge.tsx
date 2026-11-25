@@ -1,4 +1,5 @@
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '@/components/Text';
 
 import { themeName, type GroupTheme } from '@/domain/groups';
 import { color, live, radius, themed, type } from '@/theme/tokens';

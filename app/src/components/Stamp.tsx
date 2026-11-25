@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Text } from '@/components/Text';
 import Svg, { Path } from 'react-native-svg';
 
 import { stampPath, type StampShape } from '@/domain/stampShape';

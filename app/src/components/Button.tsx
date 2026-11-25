@@ -1,4 +1,5 @@
-import { Pressable, Text } from 'react-native';
+import { Pressable } from 'react-native';
+import { Text } from '@/components/Text';
 
 import { color, hardShadow, live, radius, stroke, themed, type } from '@/theme/tokens';
 
