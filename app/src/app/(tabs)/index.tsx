@@ -78,7 +78,7 @@ export default function HomeScreen() {
           <View style={styles.top}>
             <View style={styles.header}>
               <Text style={[type.title, styles.title]} accessibilityRole="header">
-                할일통장
+                todobank
               </Text>
               <Pressable onPress={() => router.push('/settings')} accessibilityRole="button" accessibilityLabel="설정" hitSlop={12}>
                 <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">

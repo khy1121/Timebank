@@ -88,7 +88,7 @@ function MiniHome({ code, fontsReady }: { code: ThemeCode; fontsReady: boolean }
     <View style={[styles.home, { backgroundColor: c.bgPage }]}>
       {/* 위 막대 */}
       <View style={[styles.topBar, { backgroundColor: c.stageSky }]}>
-        <Text style={[ty(tp.headline), { color: c.textPrimary }]}>할일통장</Text>
+        <Text style={[ty(tp.headline), { color: c.textPrimary }]}>todobank</Text>
         <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
           <Circle cx={12} cy={12} r={3.5} stroke={c.textPrimary} strokeWidth={2} />
           <Path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1" stroke={c.textPrimary} strokeWidth={2} strokeLinecap="round" />

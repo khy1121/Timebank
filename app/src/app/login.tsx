@@ -60,7 +60,7 @@ export default function LoginScreen() {
         <KeyboardAvoidingView style={styles.content} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <SpeechBubble text={LOGIN_GREETING} />
           <Text style={[type.display, styles.title]} accessibilityRole="header">
-            할일통장
+            todobank
           </Text>
 
           <View style={styles.form}>
