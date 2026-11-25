@@ -11,6 +11,13 @@ describe('상점 물건 목록', () => {
     expect(new Set(ITEMS.map((i) => i.code)).size).toBe(ITEMS.length);
   });
 
+  it('도장 잉크·글자·모양, 말풍선 색은 분류마다 값이 하나다', () => {
+    for (const slot of ['stampInk', 'stampWord', 'stampShape', 'bubble'] as const) {
+      const prices = new Set(ITEMS.filter((i) => i.slot === slot && i.price > 0).map((i) => i.price));
+      expect(prices.size).toBe(1);
+    }
+  });
+
   it('도장 글자는 도장 안에 들어가도록 3자 이하다', () => {
     for (const item of ITEMS.filter((i) => i.slot === 'stampWord')) expect(item.value.length).toBeLessThanOrEqual(3);
   });
@@ -20,11 +27,11 @@ describe('사기 (TC-063)', () => {
   const owned = ownedCodes(['ink-blue']);
 
   it('잔고가 값 이상이면 살 수 있다', () => {
-    expect(canBuy('ink-green', 1500, owned)).toEqual({ ok: true });
+    expect(canBuy('ink-green', 2000, owned)).toEqual({ ok: true });
   });
 
   it('모자라면 얼마가 모자란지 알려준다', () => {
-    expect(canBuy('ink-gold', 1000, owned)).toEqual({ ok: false, reason: 'short', short: 3000 });
+    expect(canBuy('ink-gold', 1000, owned)).toEqual({ ok: false, reason: 'short', short: 1000 });
   });
 
   it('이미 가진 물건과 기본 물건은 다시 살 수 없다', () => {
