@@ -113,7 +113,7 @@ export function daysSince(since: string, today: DateString): number {
 }
 
 export function friendShareMessage(code: string, link: string): string {
-  return `할 일 이자에서 나랑 같이 미루지 말아요. 친구 코드는 ${code}예요.\n${link}`;
+  return `할일통장에서 나랑 같이 미루지 말아요. 친구 코드는 ${code}예요.\n${link}`;
 }
 
 export function sendResultMessage(result: SendResult): string {

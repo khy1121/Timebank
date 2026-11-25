@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "할 일 이자",
+    "name": "할일통장",
     "slug": "todo-interest",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "todointerest",
+    "scheme": "todobank",
     "userInterfaceStyle": "light",
     "ios": {
       "icon": "./assets/expo.icon"

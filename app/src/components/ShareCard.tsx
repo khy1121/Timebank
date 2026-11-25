@@ -23,7 +23,7 @@ export const ShareCard = forwardRef<ComponentRef<typeof View>, { code: string; w
         <Text style={[type.caption, styles.sub, { fontSize: 11 * s }]}>친구 코드</Text>
         <Text style={[type.display, styles.code, { fontSize: 30 * s, lineHeight: 38 * s, letterSpacing: 2 * s }]}>{code}</Text>
       </View>
-      <Text style={[type.caption, styles.foot, { fontSize: 10 * s, bottom: 18 * s }]}>할 일 이자 앱에서 코드를 넣어 주세요</Text>
+      <Text style={[type.caption, styles.foot, { fontSize: 10 * s, bottom: 18 * s }]}>할일통장 앱에서 코드를 넣어 주세요</Text>
     </View>
   );
 });

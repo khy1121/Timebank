@@ -158,7 +158,7 @@ export function photoPath(groupId: string, userId: string, proofId: string): str
 }
 
 export function inviteMessage(groupName: string, code: string, link: string): string {
-  return `할 일 이자 "${groupName}" 그룹에 들어와요. 초대 코드는 ${code}예요.\n${link}`;
+  return `할일통장 "${groupName}" 그룹에 들어와요. 초대 코드는 ${code}예요.\n${link}`;
 }
 
 /** 서버가 hint로 알려 주는 이유를 화면 문구로 바꾼다 */

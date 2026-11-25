@@ -123,7 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           });
           return error ? { ok: false, message: kakaoErrorMessage(error) } : { ok: true };
         }
-        // 기기: 앱 안 브라우저를 열고, 끝나면 앱 주소(todointerest://auth-callback)로 돌아온다
+        // 기기: 앱 안 브라우저를 열고, 끝나면 앱 주소(todobank://auth-callback)로 돌아온다
         const redirectTo = Linking.createURL('auth-callback');
         const { data, error } = await supabase.auth.signInWithOAuth({
           provider: 'kakao',

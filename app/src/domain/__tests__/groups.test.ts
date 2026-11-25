@@ -36,7 +36,7 @@ describe('초대 코드', () => {
     expect(isCompleteCode('K7Q2M0')).toBe(false);
   });
   it('링크나 메시지에서 코드를 찾는다', () => {
-    expect(codeFromText('todointerest://group-join?code=k7q2m9')).toBe('K7Q2M9');
+    expect(codeFromText('todobank://group-join?code=k7q2m9')).toBe('K7Q2M9');
     expect(codeFromText('초대 코드는 K7Q2M9예요')).toBe('K7Q2M9');
     expect(codeFromText('코드 없음')).toBeNull();
   });

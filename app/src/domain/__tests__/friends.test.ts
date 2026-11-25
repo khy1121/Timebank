@@ -103,9 +103,9 @@ describe('그 밖', () => {
     expect(daysSince('2026-11-02T03:00:00Z', TODAY)).toBe(23);
   });
   it('공유 문구에 코드와 링크', () => {
-    const m = friendShareMessage('HY8K2Q', 'todointerest://friends?code=HY8K2Q');
+    const m = friendShareMessage('HY8K2Q', 'todobank://friends?code=HY8K2Q');
     expect(m).toContain('HY8K2Q');
-    expect(m).toContain('todointerest://friends?code=HY8K2Q');
+    expect(m).toContain('todobank://friends?code=HY8K2Q');
   });
 });
 
