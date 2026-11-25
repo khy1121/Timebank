@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react-native';
 import type { Session } from '@supabase/supabase-js';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
@@ -94,6 +95,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sub.subscription.unsubscribe();
     };
   }, []);
+
+  // 오류 기록에 누구의 오류인지 남긴다. 무작위 사용자 ID만 넘기고 이메일·닉네임은 넘기지 않는다 (NFR-010)
+  const userId = session?.user.id ?? null;
+  useEffect(() => {
+    Sentry.setUser(userId ? { id: userId } : null);
+  }, [userId]);
 
   const auth = useMemo<Auth>(
     () => ({
