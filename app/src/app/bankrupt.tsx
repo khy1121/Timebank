@@ -7,6 +7,7 @@ import Svg, { Path } from 'react-native-svg';
 import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { Mascot } from '@/components/Mascot';
 import { SpeechBubble } from '@/components/SpeechBubble';
+import { BANKRUPT_COMFORT, debtBubble, NO_DEBT_CHEER } from '@/domain/messages';
 import { TopBar } from '@/components/TopBar';
 import { diffDays, formatKoreanDate } from '@/domain/dates';
 import { formatAmount, viewOf } from '@/domain/interest';
@@ -168,7 +169,7 @@ function Debt({
         </View>
       ) : null}
 
-      <SpeechBubble text={overdue.length ? '연체된 것부터 하나만 끝내 봐요. 깎이는 게 바로 멈춰요.' : '작은 일 하나부터 기한 안에 끝내 봐요.'} />
+      <SpeechBubble text={debtBubble(overdue.length > 0)} />
 
       <View style={styles.escape}>
         <Text style={[type.label, styles.ink]}>도저히 안 되겠다면</Text>
@@ -219,7 +220,7 @@ function Bankrupt({ rehabOn, today }: { rehabOn: string; today: string }) {
 
       <Group title="사라진 것" rows={gone} mark="x" />
       <Group title="그대로인 것" rows={kept} mark="check" />
-      <SpeechBubble text="괜찮아요. 다들 한 번쯤은 무너져요. 이번엔 작은 일부터 걸어 봐요." />
+      <SpeechBubble text={BANKRUPT_COMFORT} />
     </>
   );
 }
@@ -270,7 +271,7 @@ function NoDebt({ netWorth }: { netWorth: number }) {
         </View>
         <Text style={[type.caption, styles.muted]}>순자산이 마이너스가 되면 빚, {won(BANKRUPT_AT)}냥에 닿으면 파산이에요.</Text>
       </View>
-      <SpeechBubble text="이대로만 가요. 기한 안에 끝내면 이자가 계속 쌓여요." />
+      <SpeechBubble text={NO_DEBT_CHEER} />
     </>
   );
 }
