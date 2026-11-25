@@ -1,3 +1,5 @@
+// 다른 코드보다 먼저 불러와야 시작할 때 난 오류도 잡힌다
+import { Sentry } from '@/lib/sentry';
 import { useFonts } from 'expo-font';
 import Stack from 'expo-router/stack';
 import * as SplashScreen from 'expo-splash-screen';
@@ -22,7 +24,9 @@ import { color } from '@/theme/tokens';
 
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
+export default Sentry.wrap(RootLayout);
+
+function RootLayout() {
   // 기본 테마(말랑 저금통)와 Pretendard 글꼴. 다른 테마 글꼴은 그 테마를 고를 때 불러온다 (theme/fonts.ts)
   const [loaded, error] = useFonts(STARTUP_FONTS);
 
@@ -88,7 +92,6 @@ function Screens() {
   useEffect(() => {
     if (!loading) SplashScreen.hide();
   }, [loading]);
-
   if (loading) return null;
 
   return (
