@@ -4,6 +4,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Path } from 'react-native-svg';
 
+import { Button } from '@/components/Button';
 import { GradeSheet } from '@/components/GradeSheet';
 import { HistoryList } from '@/components/HistoryList';
 import { GRADE_TONE } from '@/components/GradeBadge';
@@ -25,7 +26,7 @@ import { useCredit } from '@/store/credit';
 import { useStanding } from '@/store/standing';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
-import { color, hardShadow, radius, themed, type } from '@/theme/tokens';
+import { color, hardShadow, radius, stroke, themed, type } from '@/theme/tokens';
 
 const UNDO_MS = 5000;
 
@@ -132,16 +133,6 @@ export default function HomeScreen() {
                 value={showing}
                 onChange={(k) => setShowing(k as View_)}
               />
-              <Pressable
-                onPress={() => router.push('/todo/new')}
-                accessibilityRole="button"
-                accessibilityLabel="할 일 추가"
-                style={({ pressed }) => [styles.plus, !pressed && hardShadow(4), pressed && styles.plusPressed]}>
-                {/* 글자 '+'는 글꼴마다 위아래로 어긋나서 선으로 그린다 */}
-                <Svg width={20} height={20} viewBox="0 0 20 20">
-                  <Path d="M10 2v16M2 10h16" stroke={color.textOnPrimary} strokeWidth={3} strokeLinecap="round" />
-                </Svg>
-              </Pressable>
             </View>
 
             {showing === 'done' ? (
@@ -159,6 +150,9 @@ export default function HomeScreen() {
                 </View>
                 <Text style={[type.headline, styles.ink]}>미룰 일이 하나도 없네요</Text>
                 <Text style={[type.body, styles.secondary, styles.center]}>할 일을 적고 기한 안에 끝내면 냥을 벌어요.</Text>
+                <View style={styles.emptyAction}>
+                  <Button label="할 일 추가" onPress={() => router.push('/todo/new')} />
+                </View>
               </View>
             ) : (
               <View style={styles.list}>
@@ -184,6 +178,21 @@ export default function HomeScreen() {
           </View>
           </View>
         </ScrollView>
+
+        {/* 할 일이 있으면 오른쪽 아래에 떠 있는 추가 버튼. 비어 있으면 가운데 큰 버튼을 쓴다 */}
+        {views.length > 0 && !lastRepaid && !lockNote ? (
+          <Pressable
+            onPress={() => router.push('/todo/new')}
+            accessibilityRole="button"
+            accessibilityLabel="할 일 추가"
+            hitSlop={6}
+            style={({ pressed }) => [styles.fab, !pressed && hardShadow(4), pressed && styles.fabPressed]}>
+            {/* 글자 '+'는 글꼴마다 위아래로 어긋나서 선으로 그린다 */}
+            <Svg width={24} height={24} viewBox="0 0 24 24">
+              <Path d="M12 3v18M3 12h18" stroke={color.textOnPrimary} strokeWidth={3} strokeLinecap="round" />
+            </Svg>
+          </Pressable>
+        ) : null}
 
         <View style={styles.footer}>
           {lockNote && !lastRepaid ? (
@@ -266,10 +275,23 @@ const styles = themed(() => ({
   onBrand: { color: color.textOnPrimary },
   flex: { flex: 1 },
   filters: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  plus: { width: 48, height: 48, borderRadius: radius.full >= 99 ? 24 : radius.md, backgroundColor: color.brandPrimary, alignItems: 'center', justifyContent: 'center' },
-  plusPressed: { backgroundColor: color.brandPressed },
+  fab: {
+    position: 'absolute',
+    right: layout.GUTTER,
+    bottom: 16,
+    width: 60,
+    height: 60,
+    borderRadius: radius.full >= 99 ? 30 : radius.lg,
+    backgroundColor: color.brandPrimary,
+    borderWidth: stroke.outline,
+    borderColor: color.inkOutline,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fabPressed: { backgroundColor: color.brandPressed },
   list: { gap: 12 },
   empty: { alignItems: 'center', gap: 8, paddingTop: 24 },
+  emptyAction: { alignSelf: 'stretch', marginTop: 12 },
   ink: { color: color.textPrimary },
   secondary: { color: color.textSecondary },
   center: { textAlign: 'center' },
