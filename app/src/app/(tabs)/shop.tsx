@@ -11,6 +11,7 @@ import { BACKGROUNDS } from '@/components/HomeBackground';
 import { Mascot } from '@/components/Mascot';
 import { SpeechBubble } from '@/components/SpeechBubble';
 import { Stamp } from '@/components/Stamp';
+import { ThemePreview } from '@/components/ThemePreview';
 import { TopBar } from '@/components/TopBar';
 import { formatAmount } from '@/domain/interest';
 import { shopMessage } from '@/domain/messages';
@@ -20,7 +21,7 @@ import { bankOf } from '@/domain/bank';
 import type { Progress } from '@/domain/bankConditions';
 import { BANK_NAMES, bankStage, canBuy, ITEMS, itemOf, itemsOf, nextBank, SLOT_LABEL, SLOTS, type ShopItem } from '@/domain/shop';
 import { toShape } from '@/domain/stampShape';
-import { THEMES, toThemeCode, type ThemeCode } from '@/theme/themes';
+import { toThemeCode } from '@/theme/themes';
 import { STREAK_STEP } from '@/domain/wallet';
 import { feedback } from '@/lib/feedback';
 import { tokenColor, useLook } from '@/store/look';
@@ -105,7 +106,7 @@ export default function ShopScreen() {
                 const wearing = look.items[slot].code === item.code;
                 const check = canBuy(item.code, wallet.balance, owned);
                 return (
-                  <View key={item.code} style={[styles.card, wearing && styles.cardOn]}>
+                  <View key={item.code} style={[styles.card, slot === 'theme' && styles.cardWide, wearing && styles.cardOn]}>
                     <Preview item={item} />
                     <Text style={[type.label, styles.ink]}>{item.name}</Text>
                     {wearing ? (
@@ -226,7 +227,7 @@ function NeedRow({ done, text, ratio }: { done: boolean; text: string; ratio: nu
 }
 
 function Preview({ item }: { item: ShopItem }) {
-  if (item.slot === 'theme') return <ThemeSwatch code={toThemeCode(item.value)} />;
+  if (item.slot === 'theme') return <ThemePreview code={toThemeCode(item.value)} />;
   if (item.slot === 'stampInk') return <Stamp kind="saved" size={48} ink={tokenColor(item.value, color.inkRed)} />;
   if (item.slot === 'stampWord') return <Stamp kind="saved" size={48} word={item.value} />;
   if (item.slot === 'stampShape') return <Stamp kind="saved" size={48} shape={toShape(item.value)} />;
@@ -234,24 +235,6 @@ function Preview({ item }: { item: ShopItem }) {
   return (
     <View style={[styles.bubble, { backgroundColor: tokenColor(item.value, color.bubbleCream) }]}>
       <Text style={[type.caption, styles.ink]}>안녕하세요</Text>
-    </View>
-  );
-}
-
-/** 테마 견본: 바탕, 카드, 주 색, 글자색을 그 테마의 모서리로 보여 준다 */
-function ThemeSwatch({ code }: { code: ThemeCode }) {
-  const th = THEMES[code];
-  const v = th.v6;
-  const r = Math.min(th.radius.md, 12);
-  return (
-    <View style={[styles.themeSwatch, { backgroundColor: v.white, borderRadius: r, borderColor: v.line, borderWidth: th.stroke.outline ? 1.5 : 0 }]} accessible={false}>
-      <View style={[styles.themeCard, { backgroundColor: v.cream, borderRadius: Math.max(0, r - 4), borderColor: v.line, borderWidth: th.stroke.outline ? 1 : 0, boxShadow: th.cardShadow ?? undefined }]}>
-        <View style={[styles.themeDot, { backgroundColor: v.brand, borderRadius: th.radius.full >= 99 ? 99 : th.radius.sm }]} />
-        <View style={styles.themeLines}>
-          <View style={[styles.themeLine, { backgroundColor: v.ink, width: 34 }]} />
-          <View style={[styles.themeLine, { backgroundColor: v.mute, width: 24 }]} />
-        </View>
-      </View>
     </View>
   );
 }
@@ -304,6 +287,8 @@ const styles = themed(() => ({
     borderWidth: stroke.hairline,
     borderColor: color.borderDefault,
   },
+  // 테마는 미리보기가 커서 한 줄에 하나
+  cardWide: { width: '100%' },
   cardOn: { borderWidth: stroke.outline, borderColor: color.inkOutline, backgroundColor: color.brandSoft },
   bubble: {
     height: 48,
@@ -362,11 +347,6 @@ const styles = themed(() => ({
   closetText: { flex: 1, gap: 2 },
   chev: { color: color.textPrimary },
   closetPressed: { opacity: 0.8 },
-  themeSwatch: { width: 84, height: 56, padding: 8, justifyContent: 'center' },
-  themeCard: { flexDirection: 'row', alignItems: 'center', gap: 6, padding: 6 },
-  themeDot: { width: 14, height: 14 },
-  themeLines: { gap: 4 },
-  themeLine: { height: 4, borderRadius: 2 },
   bgThumb: { width: 72, height: 48, borderRadius: radius.md, borderWidth: stroke.outline, borderColor: color.inkOutline },
   lockBanner: { paddingVertical: 12, paddingHorizontal: 14, borderRadius: 12, backgroundColor: color.debtBg },
   lockText: { color: color.debtFg },
