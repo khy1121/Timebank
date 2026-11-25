@@ -137,7 +137,10 @@ export default function HomeScreen() {
                 accessibilityRole="button"
                 accessibilityLabel="할 일 추가"
                 style={({ pressed }) => [styles.plus, !pressed && hardShadow(4), pressed && styles.plusPressed]}>
-                <Text style={styles.plusText}>+</Text>
+                {/* 글자 '+'는 글꼴마다 위아래로 어긋나서 선으로 그린다 */}
+                <Svg width={20} height={20} viewBox="0 0 20 20">
+                  <Path d="M10 2v16M2 10h16" stroke={color.textOnPrimary} strokeWidth={3} strokeLinecap="round" />
+                </Svg>
               </Pressable>
             </View>
 
@@ -265,7 +268,6 @@ const styles = themed(() => ({
   filters: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   plus: { width: 48, height: 48, borderRadius: radius.full >= 99 ? 24 : radius.md, backgroundColor: color.brandPrimary, alignItems: 'center', justifyContent: 'center' },
   plusPressed: { backgroundColor: color.brandPressed },
-  plusText: { color: color.textOnPrimary, fontSize: 28, lineHeight: 32, fontFamily: type.title.fontFamily },
   list: { gap: 12 },
   empty: { alignItems: 'center', gap: 8, paddingTop: 24 },
   ink: { color: color.textPrimary },
