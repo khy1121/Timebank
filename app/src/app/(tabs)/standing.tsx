@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
 import { GradeBadge } from '@/components/GradeBadge';
+import { Mascot } from '@/components/Mascot';
 import { NameplateBorder, NameplateStamp, nameplateNameStyle } from '@/components/Nameplate';
 import { TopBar } from '@/components/TopBar';
 import { signed, titleOf, type BoardRow } from '@/domain/credit';
@@ -103,6 +104,9 @@ function BoardList({ rows, board }: { rows: BoardRow[]; board: Board }) {
           <>
             <NameplateBorder plate={r.nameplate} radius={PLATE_RADIUS} />
             <Text style={[type.label, styles.rank, r.rank <= 3 && styles.top]}>{r.rank}</Text>
+            <View style={styles.avatar} accessible={false} importantForAccessibility="no-hide-descendants">
+              <Mascot size={AVATAR} outfit={r.isMe ? undefined : r.outfit} />
+            </View>
             <View style={styles.flex}>
               <View style={styles.nameRow}>
                 <Text style={[type.label, styles.ink, styles.shrink, nameplateNameStyle(r.nameplate)]} numberOfLines={1}>
@@ -140,6 +144,8 @@ function BoardList({ rows, board }: { rows: BoardRow[]; board: Board }) {
 
 /** 순위·그룹원 줄의 모서리. 이름표 테두리도 같은 값을 쓴다 */
 const PLATE_RADIUS = 16;
+/** 순위표 줄의 캐릭터 크기 */
+const AVATAR = 40;
 
 const styles = themed(() => ({
   safe: layout.screen,
@@ -156,6 +162,7 @@ const styles = themed(() => ({
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   shrink: { flexShrink: 1 },
   rank: { width: 24, color: color.textTertiary },
+  avatar: { width: AVATAR, height: AVATAR, marginVertical: -6 },
   top: { color: color.accentCoinDeep },
   score: { width: 44, textAlign: 'right' },
   dots: { textAlign: 'center', color: color.textTertiary, paddingVertical: 4 },

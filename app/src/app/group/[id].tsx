@@ -1,5 +1,5 @@
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { FlatList, Pressable, RefreshControl, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -9,6 +9,7 @@ import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { ProofCard } from '@/components/ProofCard';
 import { GradeBadge } from '@/components/GradeBadge';
 import { NameplateBorder, NameplateStamp, nameplateNameStyle } from '@/components/Nameplate';
+import { Mascot } from '@/components/Mascot';
 import { ThemeBadge } from '@/components/ThemeBadge';
 import { TopBar } from '@/components/TopBar';
 import {
@@ -66,6 +67,8 @@ export default function GroupScreen() {
   const [pot, setPot] = useState<number | null>(null);
   const [standing, setStanding] = useState<GroupStanding[] | null>(null);
   const [members, setMembers] = useState<Member[] | null>(null);
+  // 피드 글쓴이의 꾸민 캐릭터. 그룹원 목록에서 user_id로 찾는다
+  const outfits = useMemo(() => Object.fromEntries((members ?? []).map((m) => [m.userId, m.outfit])), [members]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   // 잘 된 일을 알리는 문구. 오류와 다르게 파란 띠로 보여준다
@@ -137,8 +140,9 @@ export default function GroupScreen() {
     useCallback(() => {
       if (!id) return;
       loadFeed();
+      loadMembers();
       markSeen(id);
-    }, [id, loadFeed, markSeen]),
+    }, [id, loadFeed, loadMembers, markSeen]),
   );
 
   useEffect(() => {
@@ -261,7 +265,7 @@ export default function GroupScreen() {
         contentContainerStyle={styles.content}
         ItemSeparatorComponent={() => <View style={styles.gap} />}
         renderItem={({ item }) => (
-          <ProofCard proof={item} photoUrl={feed?.urls[item.photoPath]} now={now} onVote={(v) => vote(item, v)} onMore={() => setMenu(item)} />
+          <ProofCard proof={item} outfit={item.isMine ? undefined : outfits[item.userId]} photoUrl={feed?.urls[item.photoPath]} now={now} onVote={(v) => vote(item, v)} onMore={() => setMenu(item)} />
         )}
         onEndReachedThreshold={0.5}
         onEndReached={() => {
@@ -347,6 +351,9 @@ function StandingList({ rows }: { rows: GroupStanding[] | null }) {
             accessibilityLabel={`${r.rank}등 ${r.nickname}${r.isMe ? ', 나' : ''}. 인증 ${r.passed}번`}>
             <Text style={[type.numberM, styles.rank]}>{r.rank}</Text>
             <NameplateBorder plate={r.nameplate} radius={PLATE_RADIUS} />
+            <View style={styles.avatar} accessible={false} importantForAccessibility="no-hide-descendants">
+              <Mascot size={AVATAR} outfit={r.isMe ? undefined : r.outfit} />
+            </View>
             <View style={styles.who}>
               <View style={styles.nameRow}>
                 <Text style={[type.label, styles.ink, nameplateNameStyle(r.nameplate)]}>{r.isMe ? `${r.nickname} (나)` : r.nickname}</Text>
@@ -356,7 +363,7 @@ function StandingList({ rows }: { rows: GroupStanding[] | null }) {
             </View>
             <View style={styles.score}>
               <Text style={[type.headline, styles.ink]}>인증 {r.passed}번</Text>
-              {r.passed === 0 ? <Text style={[type.caption, styles.muted]}>이번 주에 인정받은 인증이 없어요</Text> : null}
+              {r.passed === 0 ? <Text style={[type.caption, styles.muted, styles.right]}>이번 주에 인정받은 인증이 없어요</Text> : null}
             </View>
           </View>
         ))}
@@ -384,6 +391,9 @@ function MemberList({
       {rows.map((m, i) => (
         <View key={m.userId} style={[styles.rankRow, m.isMe && styles.meRow]}>
           <NameplateBorder plate={m.blocked ? 'none' : m.nameplate} radius={PLATE_RADIUS} />
+          <View style={styles.avatar} accessible={false} importantForAccessibility="no-hide-descendants">
+            <Mascot size={AVATAR} outfit={m.isMe ? undefined : m.blocked ? undefined : m.outfit} />
+          </View>
           <View style={styles.who}>
             <Text style={[type.label, styles.ink, nameplateNameStyle(m.nameplate)]}>
               {m.isMe ? `${m.nickname} (나)` : m.nickname}
@@ -413,6 +423,8 @@ function MemberList({
 
 /** 순위·그룹원 줄의 모서리. 이름표 테두리도 같은 값을 쓴다 */
 const PLATE_RADIUS = 16;
+/** 그룹 순위·그룹원 줄의 캐릭터 크기 */
+const AVATAR = 40;
 
 const styles = themed(() => ({
   safe: layout.screen,
@@ -434,10 +446,12 @@ const styles = themed(() => ({
   section: { gap: 10 },
   list: { gap: 6 },
   // 줄마다 떨어진 카드. 이름표는 테두리로만 보인다
+  avatar: { width: AVATAR, height: AVATAR, marginVertical: -6 },
   rankRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16, overflow: 'hidden', backgroundColor: color.bgSurface, borderRadius: PLATE_RADIUS, borderWidth: 1, borderColor: color.borderDefault },
   meRow: { backgroundColor: color.brandSoft },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   rank: { width: 20, color: color.textPrimary },
-  who: { flex: 1, gap: 4, alignItems: 'flex-start' },
-  score: { alignItems: 'flex-end' },
+  who: { flex: 1, minWidth: 0, gap: 4, alignItems: 'flex-start' },
+  score: { alignItems: 'flex-end', flexShrink: 1, maxWidth: '45%' },
+  right: { textAlign: 'right' },
 }));
