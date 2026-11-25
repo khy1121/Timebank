@@ -1,72 +1,66 @@
+import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Svg, { Circle, Defs, Line, LinearGradient, Pattern, Rect, Stop } from 'react-native-svg';
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
 import { NAMEPLATE_LABEL, nameplateDecor, type Nameplate } from '@/domain/bank';
 import { color, themed, type } from '@/theme/tokens';
 
 /**
- * 이름표 (FR-113, 상점기획서 11.4절). 순위표·그룹 목록 한 줄 전체의 배경.
- * 재료 서열(종이 < 구리 < 은 < 금 < 백금 < 다이아)을 따르고, 위로 갈수록 테두리·무늬·광택·도장이 하나씩 더해진다.
- * 무늬는 움직이지 않고 아주 옅게 깔아 글자 대비 4.5:1을 지킨다. 색만으로 구분하지 않게 꾸밈 개수도 다르다.
+ * 이름표 (FR-113, 상점기획서 11.4절). 순위표·그룹 목록에서 내 줄의 테두리.
+ * 줄 바탕은 모두 같고 테두리만 바뀐다(바탕까지 바꾸면 목록이 어지러워서, 2026-11-25 사용자 결정).
+ * 재료 서열(한지 < 구리 < 은 < 금 < 백금 < 다이아)을 따라 테두리가 굵어지고, 백금·다이아에는 은행 도장이 붙는다.
+ * 색만으로 구분하지 않게 굵기와 도장도 다르다.
  */
 
 type Look = {
-  /** 바탕. 두 색이면 위→아래 광택 */
-  fill: [string, string] | [string, string, string];
-  border?: { color: string; width: number; double?: boolean };
-  /** 아래쪽에만 얇은 선 */
-  underline?: string;
-  pattern?: 'dots' | 'coins' | 'diagonal';
-  patternColor?: string;
+  /** 테두리 색. 여러 색이면 왼쪽→오른쪽으로 섞는다(다이아) */
+  colors: [string] | [string, string, string];
+  width: number;
 };
 
 export const NAMEPLATE_LOOK: Record<Exclude<Nameplate, 'none'>, Look> = {
-  hanji: { fill: ['#F7F0E1', '#F7F0E1'] },
-  copper: { fill: ['#F8E6D8', '#F8E6D8'], underline: '#B87333' },
-  silver: { fill: ['#F6F8FA', '#DFE4EA'], border: { color: '#A3ADB8', width: 1 }, pattern: 'dots', patternColor: '#8D98A5' },
-  gold: { fill: ['#FFF6D6', '#F4D987'], border: { color: '#C9981E', width: 1.5 }, pattern: 'coins', patternColor: '#B9861A' },
-  platinum: { fill: ['#F5F8FC', '#D5DFEA'], border: { color: '#7F94AB', width: 2.5 }, pattern: 'coins', patternColor: '#6F849B' },
-  diamond: { fill: ['#E9F8FF', '#DDF1FF', '#F1E8FF'], border: { color: '#5E9BD6', width: 1.5, double: true }, pattern: 'diagonal', patternColor: '#5E9BD6' },
+  hanji: { colors: ['#C9B38A'], width: 1.5 },
+  copper: { colors: ['#B87333'], width: 1.5 },
+  silver: { colors: ['#A3ADB8'], width: 2 },
+  gold: { colors: ['#C9981E'], width: 2.5 },
+  platinum: { colors: ['#5F7790'], width: 3 },
+  diamond: { colors: ['#5E9BD6', '#B48CF0', '#4FC3CF'], width: 3 },
 };
 
-/** 줄 뒤에 까는 배경. 부모는 overflow: hidden이어야 한다 */
-export function NameplateBackground({ plate, radius = 0 }: { plate: Nameplate; radius?: number }) {
+/** 줄 위에 겹치는 테두리. 부모 줄과 같은 radius를 넘긴다 */
+export function NameplateBorder({ plate, radius = 0 }: { plate: Nameplate; radius?: number }) {
   if (plate === 'none') return null;
   const look = NAMEPLATE_LOOK[plate];
+  if (look.colors.length === 1) {
+    return <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderWidth: look.width, borderColor: look.colors[0], borderRadius: radius }]} />;
+  }
+  return <GradientBorder plate={plate} look={look} radius={radius} />;
+}
+
+/** 여러 색 테두리(다이아). SVG 선은 크기를 알아야 안쪽에 맞게 그릴 수 있어 먼저 잰다 */
+function GradientBorder({ plate, look, radius }: { plate: Nameplate; look: Look; radius: number }) {
+  const [size, setSize] = useState<{ w: number; h: number } | null>(null);
   const id = `np-${plate}`;
+  const half = look.width / 2;
   return (
-    <View pointerEvents="none" style={StyleSheet.absoluteFill} accessible={false} importantForAccessibility="no-hide-descendants">
-      <Svg width="100%" height="100%">
-        <Defs>
-          <LinearGradient id={`${id}-fill`} x1="0" y1="0" x2="0" y2="1">
-            {look.fill.map((c, i) => (
-              <Stop key={i} offset={i / (look.fill.length - 1)} stopColor={c} />
-            ))}
-          </LinearGradient>
-          {look.pattern === 'dots' ? (
-            <Pattern id={`${id}-pat`} width={10} height={10} patternUnits="userSpaceOnUse">
-              <Circle cx={5} cy={5} r={1} fill={look.patternColor} opacity={0.18} />
-            </Pattern>
-          ) : look.pattern === 'coins' ? (
-            <Pattern id={`${id}-pat`} width={22} height={22} patternUnits="userSpaceOnUse">
-              <Circle cx={11} cy={11} r={5} fill="none" stroke={look.patternColor} strokeWidth={1} opacity={0.16} />
-              <Rect x={9.5} y={9.5} width={3} height={3} fill="none" stroke={look.patternColor} strokeWidth={0.8} opacity={0.16} />
-            </Pattern>
-          ) : look.pattern === 'diagonal' ? (
-            <Pattern id={`${id}-pat`} width={8} height={8} patternUnits="userSpaceOnUse">
-              <Line x1={0} y1={8} x2={8} y2={0} stroke={look.patternColor} strokeWidth={1} opacity={0.14} />
-            </Pattern>
-          ) : null}
-        </Defs>
-        <Rect x={0} y={0} width="100%" height="100%" rx={radius} fill={`url(#${id}-fill)`} />
-        {look.pattern ? <Rect x={0} y={0} width="100%" height="100%" rx={radius} fill={`url(#${id}-pat)`} /> : null}
-      </Svg>
-      {look.border ? (
-        <View style={[StyleSheet.absoluteFill, { borderWidth: look.border.width, borderColor: look.border.color, borderRadius: radius }]}>
-          {look.border.double ? <View style={[styles.inner, { borderColor: look.border.color, borderRadius: Math.max(0, radius - 3) }]} /> : null}
-        </View>
+    <View
+      pointerEvents="none"
+      style={StyleSheet.absoluteFill}
+      accessible={false}
+      importantForAccessibility="no-hide-descendants"
+      onLayout={(e) => setSize({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}>
+      {size ? (
+        <Svg width={size.w} height={size.h}>
+          <Defs>
+            <LinearGradient id={id} x1="0" y1="0" x2="1" y2="0">
+              {look.colors.map((c, i) => (
+                <Stop key={i} offset={i / (look.colors.length - 1)} stopColor={c} />
+              ))}
+            </LinearGradient>
+          </Defs>
+          <Rect x={half} y={half} width={size.w - look.width} height={size.h - look.width} rx={Math.max(0, radius - half)} fill="none" stroke={`url(#${id})`} strokeWidth={look.width} />
+        </Svg>
       ) : null}
-      {look.underline ? <View style={[styles.underline, { backgroundColor: look.underline }]} /> : null}
     </View>
   );
 }
@@ -91,7 +85,7 @@ export function nameplateNameStyle(plate: Nameplate) {
 export function NameplateSwatch({ plate, size = 56 }: { plate: Nameplate; size?: number }) {
   return (
     <View style={[styles.swatch, { width: size * 1.6, height: size * 0.6 }, plate === 'none' && styles.swatchNone]}>
-      <NameplateBackground plate={plate} radius={8} />
+      <NameplateBorder plate={plate} radius={8} />
       <Text style={[type.caption, styles.swatchText, nameplateNameStyle(plate)]}>{NAMEPLATE_LABEL[plate]}</Text>
       <NameplateStamp plate={plate} />
     </View>
@@ -99,8 +93,6 @@ export function NameplateSwatch({ plate, size = 56 }: { plate: Nameplate; size?:
 }
 
 const styles = themed(() => ({
-  inner: { position: 'absolute', top: 2, left: 2, right: 2, bottom: 2, borderWidth: 1 },
-  underline: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 2 },
   stamp: { borderWidth: 1.5, borderRadius: 4, paddingHorizontal: 3, transform: [{ rotate: '-6deg' }] },
   stampText: { fontFamily: type.stamp.fontFamily, fontSize: 10, lineHeight: 13 },
   bold: { fontFamily: type.headline.fontFamily },

@@ -8,7 +8,7 @@ import { Chip } from '@/components/Chip';
 import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { ProofCard } from '@/components/ProofCard';
 import { GradeBadge } from '@/components/GradeBadge';
-import { NameplateBackground, NameplateStamp, nameplateNameStyle } from '@/components/Nameplate';
+import { NameplateBorder, NameplateStamp, nameplateNameStyle } from '@/components/Nameplate';
 import { ThemeBadge } from '@/components/ThemeBadge';
 import { TopBar } from '@/components/TopBar';
 import {
@@ -342,12 +342,11 @@ function StandingList({ rows }: { rows: GroupStanding[] | null }) {
         {rows.map((r, i) => (
           <View
             key={r.userId}
-            style={[styles.rankRow, i > 0 && styles.rowBorder]}
+            style={[styles.rankRow, r.isMe && styles.meRow]}
             accessible
             accessibilityLabel={`${r.rank}등 ${r.nickname}${r.isMe ? ', 나' : ''}. 인증 ${r.passed}번`}>
             <Text style={[type.numberM, styles.rank]}>{r.rank}</Text>
-            <NameplateBackground plate={r.nameplate} />
-            {r.isMe ? <View style={styles.meBar} /> : null}
+            <NameplateBorder plate={r.nameplate} radius={PLATE_RADIUS} />
             <View style={styles.who}>
               <View style={styles.nameRow}>
                 <Text style={[type.label, styles.ink, nameplateNameStyle(r.nameplate)]}>{r.isMe ? `${r.nickname} (나)` : r.nickname}</Text>
@@ -383,8 +382,8 @@ function MemberList({
   return (
     <View style={styles.list}>
       {rows.map((m, i) => (
-        <View key={m.userId} style={[styles.rankRow, i > 0 && styles.rowBorder]}>
-          <NameplateBackground plate={m.blocked ? 'none' : m.nameplate} />
+        <View key={m.userId} style={[styles.rankRow, m.isMe && styles.meRow]}>
+          <NameplateBorder plate={m.blocked ? 'none' : m.nameplate} radius={PLATE_RADIUS} />
           <View style={styles.who}>
             <Text style={[type.label, styles.ink, nameplateNameStyle(m.nameplate)]}>
               {m.isMe ? `${m.nickname} (나)` : m.nickname}
@@ -412,6 +411,9 @@ function MemberList({
   );
 }
 
+/** 순위·그룹원 줄의 모서리. 이름표 테두리도 같은 값을 쓴다 */
+const PLATE_RADIUS = 16;
+
 const styles = themed(() => ({
   safe: layout.screen,
   content: { ...layout.content, gap: 0 },
@@ -430,11 +432,11 @@ const styles = themed(() => ({
   banner: { paddingVertical: 10, paddingHorizontal: 14, borderRadius: radius.md, backgroundColor: color.brandSoft },
   empty: { ...layout.panel, gap: 8, padding: 20 },
   section: { gap: 10 },
-  list: layout.list,
-  rankRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16, overflow: 'hidden' },
-  meBar: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, backgroundColor: color.brandPrimary },
+  list: { gap: 6 },
+  // 줄마다 떨어진 카드. 이름표는 테두리로만 보인다
+  rankRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16, overflow: 'hidden', backgroundColor: color.bgSurface, borderRadius: PLATE_RADIUS, borderWidth: 1, borderColor: color.borderDefault },
+  meRow: { backgroundColor: color.brandSoft },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  rowBorder: { borderTopWidth: stroke.hairline, borderTopColor: color.borderDefault },
   rank: { width: 20, color: color.textPrimary },
   who: { flex: 1, gap: 4, alignItems: 'flex-start' },
   score: { alignItems: 'flex-end' },

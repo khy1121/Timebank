@@ -6,14 +6,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
 import { GradeBadge } from '@/components/GradeBadge';
-import { NameplateBackground, NameplateStamp, nameplateNameStyle } from '@/components/Nameplate';
+import { NameplateBorder, NameplateStamp, nameplateNameStyle } from '@/components/Nameplate';
 import { TopBar } from '@/components/TopBar';
 import { signed, titleOf, type BoardRow } from '@/domain/credit';
 import { useCredit } from '@/store/credit';
 import { useFriends } from '@/store/friends';
 import { useTodos } from '@/store/todos';
 import * as layout from '@/theme/layout';
-import { color, stroke, themed, type } from '@/theme/tokens';
+import { color, themed, type } from '@/theme/tokens';
 
 type Board = 'global' | 'friends';
 
@@ -101,8 +101,7 @@ function BoardList({ rows, board }: { rows: BoardRow[]; board: Board }) {
         // 줄 배경은 이름표가 쓴다. 나는 왼쪽 막대와 "(나)"로 표시한다 (상점기획서 11.4절)
         const body = (
           <>
-            <NameplateBackground plate={r.nameplate} />
-            {r.isMe ? <View style={styles.meBar} /> : null}
+            <NameplateBorder plate={r.nameplate} radius={PLATE_RADIUS} />
             <Text style={[type.label, styles.rank, r.rank <= 3 && styles.top]}>{r.rank}</Text>
             <View style={styles.flex}>
               <View style={styles.nameRow}>
@@ -126,11 +125,11 @@ function BoardList({ rows, board }: { rows: BoardRow[]; board: Board }) {
               <Pressable
                 onPress={() => router.push({ pathname: '/friend/[id]', params: { id: r.userId! } })}
                 accessibilityRole="button"
-                style={[styles.row, i > 0 && styles.rowBorder]}>
+                style={[styles.row, r.isMe && styles.meRow]}>
                 {body}
               </Pressable>
             ) : (
-              <View style={[styles.row, i > 0 && styles.rowBorder]}>{body}</View>
+              <View style={[styles.row, r.isMe && styles.meRow]}>{body}</View>
             )}
           </View>
         );
@@ -138,6 +137,9 @@ function BoardList({ rows, board }: { rows: BoardRow[]; board: Board }) {
     </View>
   );
 }
+
+/** 순위·그룹원 줄의 모서리. 이름표 테두리도 같은 값을 쓴다 */
+const PLATE_RADIUS = 16;
 
 const styles = themed(() => ({
   safe: layout.screen,
@@ -147,12 +149,12 @@ const styles = themed(() => ({
   myCard: { ...layout.card, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16 },
   scoreRow: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
   tabs: { flexDirection: 'row', gap: 8 },
-  list: layout.list,
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16, overflow: 'hidden' },
-  meBar: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, backgroundColor: color.brandPrimary },
+  list: { gap: 6 },
+  // 줄마다 떨어진 카드. 이름표는 테두리로만 보인다
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16, overflow: 'hidden', backgroundColor: color.bgSurface, borderRadius: PLATE_RADIUS, borderWidth: 1, borderColor: color.borderDefault },
+  meRow: { backgroundColor: color.brandSoft },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   shrink: { flexShrink: 1 },
-  rowBorder: { borderTopWidth: stroke.hairline, borderTopColor: color.borderDefault },
   rank: { width: 24, color: color.textTertiary },
   top: { color: color.accentCoinDeep },
   score: { width: 44, textAlign: 'right' },
