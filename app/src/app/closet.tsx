@@ -373,7 +373,7 @@ function NameplatePicker({ stage, current, onPick }: { stage: number; current: N
       <Text style={[type.headline, pickerStyles.ink]} accessibilityRole="header">
         이름표
       </Text>
-      <Text style={[type.caption, pickerStyles.muted]}>순위표와 그룹에서 내 줄 배경이 돼요. 은행을 키우면 더 좋은 이름표가 열려요.</Text>
+      <Text style={[type.caption, pickerStyles.muted]}>순위표와 그룹에서 내 줄 테두리가 돼요. 은행을 키우면 더 좋은 이름표가 열려요.</Text>
       <View style={pickerStyles.grid} accessibilityRole="radiogroup">
         {NAMEPLATES.map((n) => {
           const need = nameplateStage(n);
