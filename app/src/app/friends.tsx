@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
 import { ConfirmSheet } from '@/components/ConfirmSheet';
+import { NameplateBorder, NameplateStamp, nameplateNameStyle } from '@/components/Nameplate';
 import { TextField } from '@/components/TextField';
 import { TopBar } from '@/components/TopBar';
 import {
@@ -334,17 +335,21 @@ export default function FriendsScreen() {
                 <Text style={[type.body, styles.secondary]}>위의 코드를 보내 친구를 불러 보세요. 그룹원에게는 그룹 화면에서 바로 신청할 수 있어요.</Text>
               </View>
             ) : (
-              <View style={styles.list}>
-                {sorted.map((f, i) => {
+              <View style={styles.friendList}>
+                {sorted.map((f) => {
                   const line = activityLine(f, today);
                   return (
                     <Pressable
                       key={f.userId}
                       onPress={() => router.push({ pathname: '/friend/[id]', params: { id: f.userId } })}
                       accessibilityRole="button"
-                      style={[styles.listRow, i > 0 && styles.rowBorder]}>
+                      style={styles.friendRow}>
+                      <NameplateBorder plate={f.nameplate} radius={PLATE_RADIUS} />
                       <View style={styles.who}>
-                        <Text style={[type.label, styles.ink]}>{f.name}</Text>
+                        <View style={styles.plateName}>
+                          <Text style={[type.label, styles.ink, nameplateNameStyle(f.nameplate)]}>{f.name}</Text>
+                          <NameplateStamp plate={f.nameplate} />
+                        </View>
                         <Text style={[type.caption, { color: TONE[line.tone] }]}>{line.text}</Text>
                       </View>
                       <Text style={[type.headline, styles.muted]}>›</Text>
@@ -372,6 +377,8 @@ export default function FriendsScreen() {
     </SafeAreaView>
   );
 }
+
+const PLATE_RADIUS = 16;
 
 const styles = themed(() => ({
   safe: layout.screen,
@@ -401,6 +408,10 @@ const styles = themed(() => ({
   askButton: { width: 92 },
   list: layout.list,
   listRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16 },
+  // 친구 목록은 순위표처럼 줄마다 떨어진 카드. 이름표는 테두리로 보인다
+  friendList: { gap: 6 },
+  plateName: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  friendRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16, backgroundColor: color.bgSurface, borderRadius: PLATE_RADIUS, borderWidth: 1, borderColor: color.borderDefault },
   rowBorder: { borderTopWidth: stroke.hairline, borderTopColor: color.borderDefault },
   who: { flex: 1, gap: 2 },
   pill: { paddingVertical: 6, paddingHorizontal: 14, borderRadius: radius.full, backgroundColor: color.brandPrimary },

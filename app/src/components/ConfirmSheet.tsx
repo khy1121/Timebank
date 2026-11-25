@@ -18,7 +18,7 @@ type Props = {
 export function ConfirmSheet({ visible, title, message, confirmLabel, danger, onConfirm, onCancel }: Props) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
-      <Pressable style={styles.backdrop} onPress={onCancel} accessibilityLabel="닫기">
+      <Pressable style={styles.backdrop} onPress={onCancel} accessibilityRole="button" accessibilityLabel="닫기">
         <Pressable style={styles.sheet} onPress={() => {}} accessibilityViewIsModal>
           <Text style={[type.title, styles.title]} accessibilityRole="header">
             {title}

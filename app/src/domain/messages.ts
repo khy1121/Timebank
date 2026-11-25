@@ -68,5 +68,28 @@ export function shopMessage(streak: number, toNextBonus: number): string {
   return `${streak}번 연속 기한 안에 끝냈어요. ${toNextBonus}번 더 하면 1,000냥 보너스예요.`;
 }
 
+/** 할 일을 찾을 수 없을 때 (상세·수정 화면) */
+export const TODO_GONE = '이미 처리했거나 없는 할 일이에요.';
+
+/** 끝낸 일이 하나도 없을 때 (상환 내역) */
+export const HISTORY_EMPTY = '아직 끝낸 일이 없어요. 기한 안에 끝내면 여기에 적립 도장이 찍혀요.';
+
+/** 할 일 상세: 기한 전·오늘까지일 때 돌려받을 냥과 넘기면 깎이는 냥 */
+export function dueBubble(state: 'today' | 'upcoming', payout: number, daysLeft: number, nextDayLoss: number): string {
+  if (state === 'today') return `오늘 끝내면 ${formatAmount(payout)}냥이 돌아와요. 넘기면 내일부터 원금이 하루에 ${formatAmount(nextDayLoss)}냥씩 깎여요.`;
+  return `기한까지 ${daysLeft}일 남았어요. 넘기면 원금이 하루에 ${formatAmount(nextDayLoss)}냥씩 깎이기 시작해요.`;
+}
+
+/** 빚 화면: 연체가 있으면 그것부터, 없으면 작은 일부터 */
+export function debtBubble(hasOverdue: boolean): string {
+  return hasOverdue ? '연체된 것부터 하나만 끝내 봐요. 깎이는 게 바로 멈춰요.' : '작은 일 하나부터 기한 안에 끝내 봐요.';
+}
+
+/** 파산 중 화면 */
+export const BANKRUPT_COMFORT = '괜찮아요. 다들 한 번쯤은 무너져요. 이번엔 작은 일부터 걸어 봐요.';
+
+/** 빚이 없을 때 빚 화면 */
+export const NO_DEBT_CHEER = '이대로만 가요. 기한 안에 끝내면 이자가 계속 쌓여요.';
+
 /** 이름표를 서버에 저장하지 못했을 때 (서버가 이유를 주지 않은 경우) */
 export const NAMEPLATE_SAVE_FAILED = '이름표를 저장하지 못했어요. 연결을 확인하고 다시 골라 주세요.';
