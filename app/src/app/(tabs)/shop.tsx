@@ -48,6 +48,8 @@ const TAB_ITEMS: { key: Tab; label: string }[] = [
 ];
 /** 꾸미기 탭에 진열하는 칸 */
 const DECOR_SLOTS = SLOTS.filter((s) => s !== 'theme');
+const TILE_COLS = 4;
+const TILE_GAP = 8;
 
 /**
  * TI-SCR-10 상점. 위에 통장과 옷장 입구, 아래는 내 은행·테마·꾸미기 탭으로 나눠 한 번에 한 묶음만 보여 준다. (FR-060~064, FR-070)
@@ -60,6 +62,8 @@ export default function ShopScreen() {
   const look = useLook();
   const [asking, setAsking] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('bank');
+  // 꾸미기 칸 너비: 줄 너비를 재서 네 칸이 딱 맞게 나눈다(퍼센트로 두면 좁은 화면에서 세 칸만 들어간다)
+  const [tileW, setTileW] = useState<number | null>(null);
   const askingItem = asking ? itemOf(asking) : undefined;
 
   const equip = (item: ShopItem) => {
@@ -139,7 +143,7 @@ export default function ShopScreen() {
                 <Text style={[type.headline, styles.ink]} accessibilityRole="header">
                   {SLOT_LABEL[slot]}
                 </Text>
-                <View style={styles.tiles}>
+                <View style={styles.tiles} onLayout={(e) => setTileW(Math.floor((e.nativeEvent.layout.width - TILE_GAP * (TILE_COLS - 1)) / TILE_COLS))}>
                   {itemsOf(slot).map((item) => {
                     const st = stateOf(item);
                     const onPress = st.wearing ? undefined : st.has ? () => equip(item) : st.check.ok ? () => setAsking(item.code) : undefined;
@@ -150,7 +154,7 @@ export default function ShopScreen() {
                         disabled={!onPress}
                         accessibilityRole="button"
                         accessibilityLabel={`${SLOT_LABEL[slot]} ${item.name}, ${statusText(item, st)}`}
-                        style={({ pressed }) => [styles.tile, st.wearing && styles.tileOn, pressed && styles.pressed]}>
+                        style={({ pressed }) => [styles.tile, tileW ? { width: tileW } : null, st.wearing && styles.tileOn, pressed && styles.pressed]}>
                         <Preview item={item} />
                         <Text style={[type.caption, styles.ink]} numberOfLines={1}>
                           {item.name}
@@ -340,9 +344,9 @@ const styles = themed(() => ({
   tabs: { flexDirection: 'row' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 12, justifyContent: 'space-between' },
   // 꾸미기 한 줄에 네 칸. 칸 수가 모자란 줄도 왼쪽부터 같은 너비로 채운다
-  tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: TILE_GAP },
   tile: {
-    width: '22.9%',
+    width: '22%',
     alignItems: 'center',
     gap: 4,
     paddingVertical: 10,
