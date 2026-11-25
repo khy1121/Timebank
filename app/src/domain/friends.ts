@@ -129,6 +129,7 @@ const HINT_MESSAGE: Record<string, string> = {
   friend_limit: `친구는 ${FRIEND_LIMIT}명까지 둘 수 있어요`,
   friend_target_limit: '상대의 친구가 가득 찼어요',
   too_many_attempts: '코드를 너무 많이 틀렸어요. 1시간 뒤에 다시 해 주세요',
+  too_many_kakao: '카카오톡 친구 찾기는 하루 10번까지 할 수 있어요. 내일 다시 해 주세요',
   request_gone: '이미 없어진 신청이에요',
   bad_display_name: `이름은 1~${DISPLAY_NAME_MAX}자로 적어 주세요`,
 };
