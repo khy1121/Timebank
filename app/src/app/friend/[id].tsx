@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/Button';
 import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { Mascot } from '@/components/Mascot';
+import { NameplateBorder, NameplateStamp, nameplateNameStyle } from '@/components/Nameplate';
 import { TopBar } from '@/components/TopBar';
 import { activityLine, daysSince, type FriendProfile } from '@/domain/friends';
 import { useFriends } from '@/store/friends';
@@ -105,7 +106,11 @@ export default function FriendScreen() {
           <>
             <View style={styles.hero}>
               <Mascot size={96} />
-              <Text style={[type.title, styles.ink]}>{p.name}</Text>
+              <View style={[styles.plate, p.nameplate === 'none' && styles.plateNone]}>
+                <NameplateBorder plate={p.nameplate} radius={14} />
+                <Text style={[type.title, styles.ink, nameplateNameStyle(p.nameplate)]}>{p.name}</Text>
+                <NameplateStamp plate={p.nameplate} />
+              </View>
               <Text style={[type.caption, styles.secondary]}>친구가 된 지 {daysSince(p.since, today)}일째</Text>
               {line ? <Text style={[type.label, styles.secondary]}>{line.text}</Text> : null}
             </View>
@@ -173,6 +178,9 @@ function Stat({ label, value, tone }: { label: string; value: string; tone: stri
 }
 
 const styles = themed(() => ({
+  // 이름을 이름표 테두리 안에 둔다. 이름표가 없으면 테두리 없이 이름만
+  plate: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 4, paddingHorizontal: 16, borderRadius: 14, backgroundColor: color.bgSurface },
+  plateNone: { backgroundColor: 'transparent' },
   safe: layout.screen,
   content: layout.content,
   section: layout.section,

@@ -10,7 +10,7 @@ type Props = { visible: boolean; title?: string; actions: SheetAction[]; onClose
 export function ActionSheet({ visible, title, actions, onClose }: Props) {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="닫기">
+      <Pressable style={styles.backdrop} onPress={onClose} accessibilityRole="button" accessibilityLabel="닫기">
         <Pressable style={styles.sheet} onPress={() => {}} accessibilityViewIsModal>
           {title ? (
             <Text style={[type.headline, styles.title]} accessibilityRole="header">

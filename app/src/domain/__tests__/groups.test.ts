@@ -165,3 +165,11 @@ describe('그룹 테마 (시간적금기획서 11절)', () => {
     expect(proofHint('cooking')).toBe('만든 요리');
   });
 });
+
+describe('이름표 저장 실패 문구', () => {
+  it('잠긴 이름표와 모르는 이름표는 이유를, 그 밖은 기본 문구를 보여 준다', () => {
+    expect(groupErrorMessage({ hint: 'nameplate_locked' }, '기본')).toBe('아직 열지 않은 이름표예요. 은행을 키우면 열려요');
+    expect(groupErrorMessage({ hint: 'unknown_nameplate' }, '기본')).toBe('없는 이름표예요');
+    expect(groupErrorMessage({ message: 'Failed to fetch' }, '기본')).toBe('기본');
+  });
+});

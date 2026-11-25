@@ -7,6 +7,7 @@ import * as layout from '@/theme/layout';
 import { color, live, radius, stroke, themed, type } from '@/theme/tokens';
 
 import { SpeechBubble } from './SpeechBubble';
+import { HISTORY_EMPTY } from '@/domain/messages';
 import { ForfeitSticker, Stamp } from './Stamp';
 
 const shortDate = (d: string) => `${Number(d.slice(5, 7))}월 ${Number(d.slice(8, 10))}일`;
@@ -66,7 +67,7 @@ export function HistoryList({ repayments, today, settlementFor, canProof, onProo
         </View>
       </View>
 
-      {groups.length === 0 ? <SpeechBubble text="아직 끝낸 일이 없어요. 기한 안에 끝내면 여기에 적립 도장이 찍혀요." /> : null}
+      {groups.length === 0 ? <SpeechBubble text={HISTORY_EMPTY} /> : null}
 
       {groups.map((g) => (
         <View key={g.key} style={styles.group}>

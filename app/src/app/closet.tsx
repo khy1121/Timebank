@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { useMemo, useRef, useState, type ComponentRef } from 'react';
+import { useEffect, useMemo, useRef, useState, type ComponentRef } from 'react';
 import { Pressable, ScrollView, Text, View, type LayoutChangeEvent } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
@@ -9,6 +9,7 @@ import { Button } from '@/components/Button';
 import { Chip } from '@/components/Chip';
 import { Mascot } from '@/components/Mascot';
 import { NameplateSwatch } from '@/components/Nameplate';
+import { Snackbar } from '@/components/Snackbar';
 import { TopBar } from '@/components/TopBar';
 import { bankOf, NAMEPLATE_LABEL, NAMEPLATES, nameplateStage, resolveNameplate, type Nameplate } from '@/domain/bank';
 import { outfitOf, sameOutfit, trialState, wear, wearLine, withOutfit, type Outfit } from '@/domain/closet';
@@ -43,13 +44,20 @@ const inside = (r: Rect | null, x: number, y: number) => !!r && x >= r.x && x <=
  * 입어 보는 모습은 저장하지 않는다. "이대로 입기"나 "사기"를 눌러야 저장된다.
  */
 export default function ClosetScreen() {
-  const { profile, update } = useProfile();
+  const { profile, update, setNameplate } = useProfile();
   const { owned, wallet, buyAll, account } = useTodos();
   const saved = useMemo(() => outfitOf(profile?.equipped ?? {}, owned), [profile, owned]);
   const [trial, setTrial] = useState<Outfit | null>(null);
   const current = trial ?? saved;
   const [tab, setTab] = useState<WearSlot>('head');
   const [bounce, setBounce] = useState(0);
+  // 이름표 저장이 실패했을 때 아래에 잠깐 띄우는 안내
+  const [plateNote, setPlateNote] = useState<string | null>(null);
+  useEffect(() => {
+    if (!plateNote) return;
+    const t = setTimeout(() => setPlateNote(null), 4000);
+    return () => clearTimeout(t);
+  }, [plateNote]);
   const [line, setLine] = useState('소품을 꾹 눌러 저한테 끌어 놓아 보세요. 그냥 눌러도 돼요.');
   const [dragging, setDragging] = useState<ShopItem | null>(null);
   const [hover, setHover] = useState(false);
@@ -190,9 +198,14 @@ export default function ClosetScreen() {
           <NameplatePicker
             stage={account.bankStage}
             current={resolveNameplate(profile?.nameplate, account.bankStage)}
-            onPick={(n) => {
-              update({ nameplate: n });
+            onPick={async (n) => {
               feedback.tap();
+              const err = await setNameplate(n);
+              if (err) {
+                feedback.deny();
+                setPlateNote(err);
+                return;
+              }
               track('nameplate_set', { nameplate: n });
             }}
           />
@@ -233,6 +246,12 @@ export default function ClosetScreen() {
             <Text style={[type.caption, styles.muted, styles.center]}>안 산 소품도 입어 볼 수 있어요. 마음에 들면 그때 사요.</Text>
           )}
         </View>
+
+        {plateNote ? (
+          <View style={styles.note} pointerEvents="box-none">
+            <Snackbar text={plateNote} />
+          </View>
+        ) : null}
 
         {/* 끌고 있는 소품 */}
         <Animated.View pointerEvents="none" style={[styles.ghost, ghostStyle]}>
@@ -294,6 +313,7 @@ function Tile({ item, wearing, owned, lock, onTap, onDragStart, onDragMove, onDr
 const styles = themed(() => ({
   safe: layout.screen,
   root: { flex: 1 },
+  note: { position: 'absolute', left: layout.GUTTER, right: layout.GUTTER, bottom: 12 },
   content: layout.content,
   stage: {
     alignItems: 'center',

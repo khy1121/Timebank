@@ -170,6 +170,8 @@ const HINT_MESSAGE: Record<string, string> = {
   own_proof: '내 인증에는 투표할 수 없어요',
   closed: '24시간이 지나 투표할 수 없어요',
   blocked: '이 인증에는 투표할 수 없어요',
+  nameplate_locked: '아직 열지 않은 이름표예요. 은행을 키우면 열려요',
+  unknown_nameplate: '없는 이름표예요',
 };
 
 export function groupErrorMessage(err: { hint?: string | null; message?: string } | null, fallback: string): string {

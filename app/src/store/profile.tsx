@@ -8,6 +8,8 @@ import {
   type Profile,
   type ProfileRow,
 } from '@/domain/profile';
+import { groupErrorMessage } from '@/domain/groups';
+import { NAMEPLATE_SAVE_FAILED } from '@/domain/messages';
 import { supabase } from '@/lib/supabase';
 
 import { useAuth } from './auth';
@@ -26,6 +28,8 @@ type Store = {
   profile: Profile | null;
   needsOnboarding: boolean;
   update: (patch: Partial<Profile>) => Promise<void>;
+  /** 이름표를 고른다. 서버가 거절하면 고르기 전으로 되돌리고 이유 문구를 돌려준다. 성공하면 null */
+  setNameplate: (n: Profile['nameplate']) => Promise<string | null>;
   /** 이 기기에 저장된 사본을 지운다. 로그아웃·계정 삭제 때 쓴다. */
   clearLocal: () => Promise<void>;
 };
@@ -87,13 +91,31 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     [userId, profile],
   );
 
+  const setNameplate = useCallback(
+    async (n: Profile['nameplate']): Promise<string | null> => {
+      if (!userId || !profile) return NAMEPLATE_SAVE_FAILED;
+      const before = profile.nameplate;
+      const save = (p: Profile) => {
+        setLoaded({ userId, profile: p });
+        AsyncStorage.setItem(storageKey(userId), JSON.stringify(p)).catch((e) => console.warn('설정을 저장하지 못했어요', e));
+      };
+      save({ ...profile, nameplate: n });
+      const { error } = await supabase.rpc('set_nameplate', { p_nameplate: n });
+      if (!error) return null;
+      console.warn('이름표를 서버에 올리지 못했어요', error);
+      save({ ...profile, nameplate: before });
+      return groupErrorMessage(error, NAMEPLATE_SAVE_FAILED);
+    },
+    [userId, profile],
+  );
+
   const clearLocal = useCallback(async () => {
     if (userId) await AsyncStorage.removeItem(storageKey(userId)).catch((e) => console.warn('지우지 못했어요', e));
   }, [userId]);
 
   const store = useMemo<Store>(
-    () => ({ profile, needsOnboarding: needsOnboarding(profile), update, clearLocal }),
-    [profile, update, clearLocal],
+    () => ({ profile, needsOnboarding: needsOnboarding(profile), update, setNameplate, clearLocal }),
+    [profile, update, setNameplate, clearLocal],
   );
 
   return <ProfileContext.Provider value={store}>{children}</ProfileContext.Provider>;
