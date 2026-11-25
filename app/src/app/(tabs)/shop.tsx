@@ -7,7 +7,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Amount } from '@/components/Amount';
 import { Button } from '@/components/Button';
 import { ConfirmSheet } from '@/components/ConfirmSheet';
-import { BACKGROUNDS } from '@/components/HomeBackground';
 import { Mascot } from '@/components/Mascot';
 import { Segmented } from '@/components/Segmented';
 import { Stamp } from '@/components/Stamp';
@@ -294,7 +293,6 @@ function Preview({ item }: { item: ShopItem }) {
   if (item.slot === 'stampInk') return <Stamp kind="saved" size={44} ink={tokenColor(item.value, color.inkRed)} />;
   if (item.slot === 'stampWord') return <Stamp kind="saved" size={44} word={item.value} />;
   if (item.slot === 'stampShape') return <Stamp kind="saved" size={44} shape={toShape(item.value)} />;
-  if (item.slot === 'background') return <Image source={BACKGROUNDS[item.value]} style={styles.bgThumb} contentFit="cover" accessible={false} />;
   return (
     <View style={[styles.bubble, { backgroundColor: tokenColor(item.value, color.bubbleCream) }]}>
       <Text style={[type.caption, styles.ink]}>안녕</Text>
@@ -413,7 +411,6 @@ const styles = themed(() => ({
     borderWidth: stroke.outline,
     borderColor: color.inkOutline,
   },
-  bgThumb: { width: 72, height: 48, borderRadius: radius.md, borderWidth: stroke.outline, borderColor: color.inkOutline },
   lockBanner: { paddingVertical: 12, paddingHorizontal: 14, borderRadius: 12, backgroundColor: color.debtBg },
   lockText: { color: color.debtFg },
 }));
