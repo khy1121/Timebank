@@ -167,29 +167,20 @@ export type Summary = {
   totalDebt: number;
   totalInterest: number;
   grade: number;
-  /** 미완료 할 일을 모두 그대로 둘 때 7일 뒤의 총 부채 (FR-027). 미완료가 없으면 null */
-  forecast7: number | null;
   overdueCount: number;
   todayCount: number;
   upcomingCount: number;
 };
-
-export const FORECAST_DAYS = 7;
 
 export function summarize(todos: Todo[], today: DateString): Summary {
   const open = todos.filter((t) => t.status === 'open');
   const views = open.map((t) => viewOf(t, today));
   const totalDebt = views.reduce((s, v) => s + v.debt, 0);
   const totalInterest = views.reduce((s, v) => s + v.interest, 0);
-  const later = addDays(today, FORECAST_DAYS);
-  const forecast7 = open.length
-    ? open.reduce((s, t) => s + debtFor(principalOf(t.importance), overdueDays(t.dueDate, later)), 0)
-    : null;
   return {
     totalDebt,
     totalInterest,
     grade: creditGrade(totalInterest),
-    forecast7,
     overdueCount: views.filter((v) => v.state === 'overdue').length,
     todayCount: views.filter((v) => v.state === 'today').length,
     upcomingCount: views.filter((v) => v.state === 'upcoming').length,
@@ -207,17 +198,6 @@ export function weekDays(todos: Todo[], today: DateString): WeekDay[] {
     const date = addDays(today, offset);
     const has = dueDates.has(date);
     out.push({ date, isToday: offset === 0, dot: has ? (offset < 0 ? 'overdue' : 'upcoming') : null });
-  }
-  return out;
-}
-
-/** 7일 뒤까지 날짜별 예상 총 부채. 홈의 작은 막대그래프용. */
-export function forecastSeries(todos: Todo[], today: DateString, days = FORECAST_DAYS): number[] {
-  const open = todos.filter((t) => t.status === 'open');
-  const out: number[] = [];
-  for (let i = 0; i <= days; i++) {
-    const at = addDays(today, i);
-    out.push(open.reduce((s, t) => s + debtFor(principalOf(t.importance), overdueDays(t.dueDate, at)), 0));
   }
   return out;
 }
