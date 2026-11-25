@@ -41,7 +41,7 @@ export function Stamp({ kind, size = 44, ink, word, shape }: Props) {
   const label = fixed ? fixed.word : (word ?? look.stampWord);
   const form: StampShape = fixed ? 'circle' : (shape ?? look.stampShape);
   // 글자가 많거나 별 모양이면 도장 안에 들어가도록 줄인다
-  const fontSize = Math.round(size * (label.length >= 3 || form === 'star' ? 0.22 : 0.27));
+  const fontSize = Math.round(size * (label.length >= 3 || form === 'star' || form === 'heart' ? 0.22 : 0.27));
   // 글꼴마다 글자가 줄 가운데보다 조금 위아래로 그려져서, 테두리 한가운데 오도록 내린다
   const nudge = fontSize * (THEMES[currentTheme()].fonts.centerNudge ?? 0);
   return (
