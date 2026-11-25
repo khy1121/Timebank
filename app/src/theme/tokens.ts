@@ -59,10 +59,18 @@ function buildColor(th: ThemeDef) {
     inkBlue: '#2F47B8',
     inkGreen: '#1E8A4E',
     inkGold: '#B9861A',
+    inkPurple: '#6E46C2',
+    inkPink: '#D23F7A',
+    inkTeal: '#12807F',
+    inkSumi: '#2E2A28',
     bubbleCream: '#FFF1CF',
     bubbleSky: '#DDEBFF',
     bubbleMint: '#DCF4E5',
     bubblePink: '#FFE2EC',
+    bubbleLemon: '#FFF6B3',
+    bubbleLavender: '#ECE4FF',
+    bubblePeach: '#FFE3D0',
+    bubbleCloud: '#ECEFF3',
     // 카카오 로그인 버튼 (카카오 디자인 가이드의 지정 색)
     kakaoYellow: '#FEE500',
     kakaoYellowPressed: '#D9C300',
@@ -107,6 +115,19 @@ function buildType(font: ReturnType<typeof buildFont>, scale = 1) {
 }
 
 const first = THEMES[DEFAULT_THEME];
+
+/** 어떤 테마의 토큰 값 한 벌. 지금 테마와 상관없이 그 테마로 그려 볼 때 쓴다 (상점 테마 미리보기) */
+export function tokensFor(code: ThemeCode) {
+  const th = THEMES[code];
+  const f = buildFont(th);
+  return {
+    color: buildColor(th),
+    radius: { ...th.radius },
+    stroke: { ...th.stroke },
+    type: buildType(f, th.fonts.displayScale ?? 1),
+    shadow: { card: th.cardShadow, drop: th.buttonDrop },
+  };
+}
 
 export const color = buildColor(first);
 export const radius = { ...first.radius };

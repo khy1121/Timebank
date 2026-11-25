@@ -9,17 +9,16 @@ import { Button } from '@/components/Button';
 import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { BACKGROUNDS } from '@/components/HomeBackground';
 import { Mascot } from '@/components/Mascot';
-import { SpeechBubble } from '@/components/SpeechBubble';
+import { Segmented } from '@/components/Segmented';
 import { Stamp } from '@/components/Stamp';
-import { ThemePreview } from '@/components/ThemePreview';
+import { ThemeCard } from '@/components/ThemeCard';
 import { TopBar } from '@/components/TopBar';
 import { formatAmount } from '@/domain/interest';
-import { shopMessage } from '@/domain/messages';
 import { josa } from '@/domain/korean';
 import { shopLockReason } from '@/domain/savings';
 import { bankOf } from '@/domain/bank';
 import type { Progress } from '@/domain/bankConditions';
-import { BANK_NAMES, bankStage, canBuy, ITEMS, itemOf, itemsOf, nextBank, SLOT_LABEL, SLOTS, type ShopItem } from '@/domain/shop';
+import { BANK_NAMES, bankStage, canBuy, ITEMS, itemOf, itemsOf, nextBank, SLOT_LABEL, SLOTS, type BuyCheck, type DecorSlot, type ShopItem } from '@/domain/shop';
 import { toShape } from '@/domain/stampShape';
 import { toThemeCode } from '@/theme/themes';
 import { STREAK_STEP } from '@/domain/wallet';
@@ -41,13 +40,26 @@ const BANK_ART = [
   require('@/assets/images/bank/bank-central.png'),
 ];
 
-/** TI-SCR-10 상점. 잔고와 연속 기록, 내 은행, 옷장 입구, 꾸미기. (FR-060~064, FR-070) */
+type Tab = 'bank' | 'theme' | 'decor';
+const TAB_ITEMS: { key: Tab; label: string }[] = [
+  { key: 'bank', label: '내 은행' },
+  { key: 'theme', label: '테마' },
+  { key: 'decor', label: '꾸미기' },
+];
+/** 꾸미기 탭에 진열하는 칸 */
+const DECOR_SLOTS = SLOTS.filter((s) => s !== 'theme');
+
+/**
+ * TI-SCR-10 상점. 위에 통장과 옷장 입구, 아래는 내 은행·테마·꾸미기 탭으로 나눠 한 번에 한 묶음만 보여 준다. (FR-060~064, FR-070)
+ * 꾸미기는 한 줄에 네 칸씩 작게 진열해 스크롤을 줄인다.
+ */
 export default function ShopScreen() {
   const { wallet, account, owned, buy, today, nextBankProgress } = useTodos();
   const locked = shopLockReason(account, today) !== null;
   const { profile, update } = useProfile();
   const look = useLook();
   const [asking, setAsking] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>('bank');
   const askingItem = asking ? itemOf(asking) : undefined;
 
   const equip = (item: ShopItem) => {
@@ -55,19 +67,39 @@ export default function ShopScreen() {
     update({ equipped: { ...profile.equipped, [item.slot]: item.code } });
   };
 
+  /** 물건 하나의 상태: 착용 중인지, 가졌는지, 살 수 있는지 */
+  const stateOf = (item: ShopItem): ItemState => ({
+    wearing: look.items[item.slot as DecorSlot]?.code === item.code,
+    has: owned.has(item.code),
+    check: canBuy(item.code, wallet.balance, owned),
+  });
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <TopBar lead="none" title="상점" />
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.panel}>
-          <Text style={[type.label, styles.panelLabel]}>통장 (쓸 수 있는 냥)</Text>
-          <Amount value={account.cash} size="XL" tone={account.cash < 0 ? 'debt' : 'ink'} />
-          <View style={styles.streak} accessible accessibilityLabel={`연속 기록 ${wallet.streak}번, 보너스까지 ${wallet.toNextBonus}번`}>
-            {Array.from({ length: STREAK_STEP }, (_, i) => (
-              <View key={i} style={[styles.streakDot, i < wallet.streak % STREAK_STEP && styles.streakOn]} />
-            ))}
-            <Text style={[type.caption, styles.muted]}>보너스까지 {wallet.toNextBonus}번</Text>
+        <View style={styles.head}>
+          <View
+            style={styles.wallet}
+            accessible
+            accessibilityLabel={`통장 ${formatAmount(account.cash)}냥. 연속 기록 ${wallet.streak}번, 보너스까지 ${wallet.toNextBonus}번`}>
+            <Text style={[type.caption, styles.panelLabel]}>통장</Text>
+            <Amount value={account.cash} size="L" tone={account.cash < 0 ? 'debt' : 'ink'} />
+            <View style={styles.streak}>
+              {Array.from({ length: STREAK_STEP }, (_, i) => (
+                <View key={i} style={[styles.streakDot, i < wallet.streak % STREAK_STEP && styles.streakOn]} />
+              ))}
+              <Text style={[type.caption, styles.muted]}>보너스까지 {wallet.toNextBonus}번</Text>
+            </View>
           </View>
+          <Pressable
+            onPress={() => router.push('/closet')}
+            accessibilityRole="button"
+            accessibilityLabel="옷장에서 마스코트 옷 입혀 보기"
+            style={({ pressed }) => [styles.closet, pressed && styles.pressed]}>
+            <Mascot size={56} />
+            <Text style={[type.label, styles.ink]}>옷장 ›</Text>
+          </Pressable>
         </View>
 
         {locked ? (
@@ -78,54 +110,63 @@ export default function ShopScreen() {
           </Pressable>
         ) : null}
 
-        <SpeechBubble text={shopMessage(wallet.streak, wallet.toNextBonus)} />
+        <View style={styles.tabs}>
+          <Segmented items={TAB_ITEMS} value={tab} onChange={setTab} />
+        </View>
 
-        <BankCard owned={owned} balance={wallet.balance} progress={nextBankProgress} onOpen={(code) => setAsking(code)} />
+        {tab === 'bank' ? <BankCard owned={owned} balance={wallet.balance} progress={nextBankProgress} onOpen={(code) => setAsking(code)} /> : null}
 
-        <Pressable
-          onPress={() => router.push('/closet')}
-          accessibilityRole="button"
-          accessibilityLabel="옷장에서 마스코트 옷 입혀 보기"
-          style={({ pressed }) => [styles.closet, pressed && styles.closetPressed]}>
-          <Mascot size={72} />
-          <View style={styles.closetText}>
-            <Text style={[type.headline, styles.ink]}>옷장</Text>
-            <Text style={[type.caption, styles.panelLabel]}>모자, 안경, 옷을 끌어다 입혀 봐요. 안 산 것도 입어 볼 수 있어요.</Text>
+        {tab === 'theme' ? (
+          <View style={styles.grid}>
+            {itemsOf('theme').map((item) => {
+              const st = stateOf(item);
+              return (
+                <ThemeCard
+                  key={item.code}
+                  code={toThemeCode(item.value)}
+                  name={item.name}
+                  wearing={st.wearing}
+                  footer={<ItemStatus item={item} {...st} onEquip={() => equip(item)} onBuy={() => setAsking(item.code)} />}
+                />
+              );
+            })}
           </View>
-          <Text style={[type.headline, styles.chev]}>›</Text>
-        </Pressable>
+        ) : null}
 
-        {SLOTS.map((slot) => (
-          <View key={slot} style={styles.group}>
-            <Text style={[type.headline, styles.ink]} accessibilityRole="header">
-              {SLOT_LABEL[slot]}
-            </Text>
-            <View style={styles.grid}>
-              {itemsOf(slot).map((item) => {
-                const has = owned.has(item.code);
-                const wearing = look.items[slot].code === item.code;
-                const check = canBuy(item.code, wallet.balance, owned);
-                return (
-                  <View key={item.code} style={[styles.card, slot === 'theme' && styles.cardWide, wearing && styles.cardOn]}>
-                    <Preview item={item} />
-                    <Text style={[type.label, styles.ink]}>{item.name}</Text>
-                    {wearing ? (
-                      <Text style={[type.caption, styles.wearing]}>착용 중</Text>
-                    ) : has ? (
-                      <Action label="착용" onPress={() => equip(item)} />
-                    ) : check.ok ? (
-                      <Action label={`${formatAmount(item.price)}냥`} primary onPress={() => setAsking(item.code)} />
-                    ) : !check.ok && check.reason === 'locked' ? (
-                      <Text style={[type.caption, styles.muted]}>{check.lock}</Text>
-                    ) : (
-                      <Text style={[type.caption, styles.muted]}>{formatAmount(check.ok ? 0 : (check.short ?? item.price))}냥 더 필요해요</Text>
-                    )}
-                  </View>
-                );
-              })}
-            </View>
-          </View>
-        ))}
+        {tab === 'decor'
+          ? DECOR_SLOTS.map((slot) => (
+              <View key={slot} style={styles.group}>
+                <Text style={[type.headline, styles.ink]} accessibilityRole="header">
+                  {SLOT_LABEL[slot]}
+                </Text>
+                <View style={styles.tiles}>
+                  {itemsOf(slot).map((item) => {
+                    const st = stateOf(item);
+                    const onPress = st.wearing ? undefined : st.has ? () => equip(item) : st.check.ok ? () => setAsking(item.code) : undefined;
+                    return (
+                      <Pressable
+                        key={item.code}
+                        onPress={onPress}
+                        disabled={!onPress}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${SLOT_LABEL[slot]} ${item.name}, ${statusText(item, st)}`}
+                        style={({ pressed }) => [styles.tile, st.wearing && styles.tileOn, pressed && styles.pressed]}>
+                        <Preview item={item} />
+                        <Text style={[type.caption, styles.ink]} numberOfLines={1}>
+                          {item.name}
+                        </Text>
+                        <Text
+                          style={[type.caption, styles.tileStatus, st.wearing ? styles.wearingText : !st.has && st.check.ok ? styles.priceText : styles.muted]}
+                          numberOfLines={1}>
+                          {statusText(item, st, true)}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            ))
+          : null}
       </ScrollView>
 
       <ConfirmSheet
@@ -146,6 +187,25 @@ export default function ShopScreen() {
       />
     </SafeAreaView>
   );
+}
+
+type ItemState = { wearing: boolean; has: boolean; check: BuyCheck };
+
+/** 상태 문구. short면 작은 칸에 들어가게 줄인다 */
+function statusText(item: ShopItem, { wearing, has, check }: ItemState, short = false): string {
+  if (wearing) return '착용 중';
+  if (has) return '착용하기';
+  if (check.ok) return `${formatAmount(item.price)}냥`;
+  if (check.reason === 'locked') return short ? `🔒 ${BANK_NAMES[item.needsBank ?? 0]}` : `🔒 ${check.lock}`;
+  return short ? `${formatAmount(item.price)}냥` : `${formatAmount(check.short ?? item.price)}냥 더 필요해요`;
+}
+
+/** 테마 카드 아래 상태: 착용 중 글자, 착용·사기 버튼, 잠김·모자람 글자 */
+function ItemStatus({ item, onEquip, onBuy, ...st }: ItemState & { item: ShopItem; onEquip: () => void; onBuy: () => void }) {
+  if (st.wearing) return <Text style={[type.caption, styles.wearingText]}>착용 중</Text>;
+  if (st.has) return <Action label="착용" onPress={onEquip} />;
+  if (st.check.ok) return <Action label={`${formatAmount(item.price)}냥`} primary onPress={onBuy} />;
+  return <Text style={[type.caption, styles.muted]}>{statusText(item, st)}</Text>;
 }
 
 /** 확인 창 문구. 은행이면 새로 생기는 혜택과 열리는 물건까지 알려준다. */
@@ -227,14 +287,13 @@ function NeedRow({ done, text, ratio }: { done: boolean; text: string; ratio: nu
 }
 
 function Preview({ item }: { item: ShopItem }) {
-  if (item.slot === 'theme') return <ThemePreview code={toThemeCode(item.value)} />;
-  if (item.slot === 'stampInk') return <Stamp kind="saved" size={48} ink={tokenColor(item.value, color.inkRed)} />;
-  if (item.slot === 'stampWord') return <Stamp kind="saved" size={48} word={item.value} />;
-  if (item.slot === 'stampShape') return <Stamp kind="saved" size={48} shape={toShape(item.value)} />;
+  if (item.slot === 'stampInk') return <Stamp kind="saved" size={44} ink={tokenColor(item.value, color.inkRed)} />;
+  if (item.slot === 'stampWord') return <Stamp kind="saved" size={44} word={item.value} />;
+  if (item.slot === 'stampShape') return <Stamp kind="saved" size={44} shape={toShape(item.value)} />;
   if (item.slot === 'background') return <Image source={BACKGROUNDS[item.value]} style={styles.bgThumb} contentFit="cover" accessible={false} />;
   return (
     <View style={[styles.bubble, { backgroundColor: tokenColor(item.value, color.bubbleCream) }]}>
-      <Text style={[type.caption, styles.ink]}>안녕하세요</Text>
+      <Text style={[type.caption, styles.ink]}>안녕</Text>
     </View>
   );
 }
@@ -255,15 +314,19 @@ function Action({ label, onPress, primary }: { label: string; onPress: () => voi
 const styles = themed(() => ({
   safe: layout.screen,
   content: layout.content,
-  panel: {
+  head: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
     backgroundColor: color.bgSurface,
     borderRadius: radius.xl,
     borderWidth: stroke.outline,
     borderColor: color.inkOutline,
-    padding: 20,
-    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
   },
-  streak: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
+  wallet: { flex: 1, gap: 2 },
+  streak: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 2 },
   streakDot: {
     width: 14,
     height: 10,
@@ -274,26 +337,28 @@ const styles = themed(() => ({
   },
   streakOn: { backgroundColor: color.accentCoin },
   group: { gap: 10 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 10, justifyContent: 'space-between' },
-  // 칸 수가 홀수여도 마지막 칸이 혼자 늘어나지 않게 너비를 고정한다
-  card: {
-    width: '48.5%',
+  tabs: { flexDirection: 'row' },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', rowGap: 12, justifyContent: 'space-between' },
+  // 꾸미기 한 줄에 네 칸. 칸 수가 모자란 줄도 왼쪽부터 같은 너비로 채운다
+  tiles: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  tile: {
+    width: '22.9%',
     alignItems: 'center',
-    gap: 8,
-    paddingVertical: 16,
-    paddingHorizontal: 12,
+    gap: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
     backgroundColor: color.bgSurface,
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     borderWidth: stroke.hairline,
     borderColor: color.borderDefault,
   },
-  // 테마는 미리보기가 커서 한 줄에 하나
-  cardWide: { width: '100%' },
-  cardOn: { borderWidth: stroke.outline, borderColor: color.inkOutline, backgroundColor: color.brandSoft },
+  tileOn: { borderWidth: Math.max(stroke.outline, 2), borderColor: color.brandPrimary, backgroundColor: color.brandSoft },
+  tileStatus: { fontSize: 11, lineHeight: 14 },
+  priceText: { color: color.brandPrimary },
   bubble: {
-    height: 48,
+    height: 44,
     justifyContent: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     borderRadius: radius.md,
     borderBottomLeftRadius: 4,
     borderWidth: stroke.outline,
@@ -303,7 +368,7 @@ const styles = themed(() => ({
   actionPrimary: { backgroundColor: color.brandPrimary, borderWidth: stroke.outline, borderColor: color.inkOutline },
   actionPlain: { backgroundColor: stroke.outline === 0 ? color.bgSunken : color.bgSurface, borderWidth: stroke.outline, borderColor: color.inkOutline },
   pressed: { opacity: 0.8 },
-  wearing: { color: color.brandPrimary, minHeight: 36, lineHeight: 36 },
+  wearingText: { color: color.brandPrimary },
   muted: { color: color.textSecondary, textAlign: 'center' },
   panelLabel: { color: color.textSecondary },
   ink: { color: color.textPrimary },
@@ -335,18 +400,15 @@ const styles = themed(() => ({
   flex: { flex: 1 },
   perks: { gap: 2, padding: 12, borderRadius: radius.md, backgroundColor: color.bgSunken },
   closet: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 2,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
     backgroundColor: color.mascotCream,
     borderRadius: radius.lg,
     borderWidth: stroke.outline,
     borderColor: color.inkOutline,
-    padding: 12,
   },
-  closetText: { flex: 1, gap: 2 },
-  chev: { color: color.textPrimary },
-  closetPressed: { opacity: 0.8 },
   bgThumb: { width: 72, height: 48, borderRadius: radius.md, borderWidth: stroke.outline, borderColor: color.inkOutline },
   lockBanner: { paddingVertical: 12, paddingHorizontal: 14, borderRadius: 12, backgroundColor: color.debtBg },
   lockText: { color: color.debtFg },

@@ -5,7 +5,7 @@ import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { color, font, radius, stroke, themed, type } from '@/theme/tokens';
 
 /** 탭 이름(라우트) → 표시 이름과 아이콘. 피그마 TabBar 56:1931 */
-const TABS: Record<string, { label: string; icon: (c: string) => React.ReactNode }> = {
+export const TABS: Record<string, { label: string; icon: (c: string) => React.ReactNode }> = {
   index: {
     label: '할 일',
     icon: (c) => (
