@@ -41,5 +41,23 @@ npm run typecheck
 npm run lint
 ```
 
+## 휴대폰 빌드 (EAS)
+앱 식별자는 `com.todobank.app`(안드로이드 패키지, iOS 번들 ID). 스토어에 올린 뒤에는 바꿀 수 없다.
+
+| 프로필 | 쓰임 |
+|---|---|
+| development | 개발용 빌드(expo-dev-client). 안드로이드 APK, 개발 서버에 붙여 쓴다 |
+| preview | 친구에게 나눠 줄 시험용 APK |
+| production | 스토어 제출용. 빌드 번호는 EAS가 올린다 |
+
+클라우드 빌드는 `.env`를 올리지 않는다. 처음 한 번 환경 변수를 EAS에 넣는다.
+```bash
+cd app
+npx eas-cli env:push development --path .env
+npx eas-cli env:push preview --path .env
+npx eas-cli build --profile development --platform android
+```
+Sentry 소스맵 올리기는 development·preview에서 끈다(`SENTRY_DISABLE_AUTO_UPLOAD`). production에서는 EAS에 `SENTRY_AUTH_TOKEN`을 넣어야 한다.
+
 ## 작업 규칙
 처음 받았으면 [CONTRIBUTING.md](CONTRIBUTING.md)의 "처음 한 번"을 먼저 실행한다. 커밋 메시지 형식 검사가 켜진다.
