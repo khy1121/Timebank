@@ -4,6 +4,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Path } from 'react-native-svg';
 
+import { DayStrip } from '@/components/DayStrip';
 import { Button } from '@/components/Button';
 import { GradeSheet } from '@/components/GradeSheet';
 import { HistoryList } from '@/components/HistoryList';
@@ -15,7 +16,7 @@ import { Snackbar } from '@/components/Snackbar';
 import { TodoTicket } from '@/components/TodoTicket';
 import { gradeOf, titleOf } from '@/domain/credit';
 import { diffDays } from '@/domain/dates';
-import { formatAmount, sortViews, summarize, viewOf } from '@/domain/interest';
+import { formatAmount, sortViews, summarize, viewOf, weekDays } from '@/domain/interest';
 import { homeMessage, repayMessage } from '@/domain/messages';
 import { completionPreview, shopLockReason } from '@/domain/savings';
 import { feedback } from '@/lib/feedback';
@@ -46,9 +47,9 @@ export default function HomeScreen() {
   const [showing, setShowing] = useState<View_>('open');
   const [gradeOpen, setGradeOpen] = useState(false);
 
-  const { summary, views } = useMemo(() => {
+  const { summary, views, week } = useMemo(() => {
     const open = todos.filter((t) => t.status === 'open');
-    return { summary: summarize(todos, today), views: sortViews(open.map((t) => viewOf(t, today))) };
+    return { summary: summarize(todos, today), views: sortViews(open.map((t) => viewOf(t, today))), week: weekDays(todos, today) };
   }, [todos, today]);
 
   useEffect(() => {
@@ -126,6 +127,8 @@ export default function HomeScreen() {
           ) : null}
 
           <View style={layout.section}>
+            {/* 이번 주 기한 (FR-017) */}
+            <DayStrip days={week} />
             <View style={styles.filters}>
               <Segmented
                 items={[
