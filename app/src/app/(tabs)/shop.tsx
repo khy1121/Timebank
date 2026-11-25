@@ -175,13 +175,13 @@ function BankCard({ owned, balance, progress, onOpen }: { owned: Set<string>; ba
         <View style={styles.bankText}>
           <Text style={[type.caption, styles.panelLabel]}>내 은행 {stage}단계 / 6단계</Text>
           <Text style={[type.title, styles.ink]}>{BANK_NAMES[stage]}</Text>
-          <Text style={[type.caption, styles.panelLabel]}>{next ? `다음은 ${next.name}` : '가장 큰 은행이에요'}</Text>
+          {next ? null : <Text style={[type.caption, styles.panelLabel]}>가장 큰 은행이에요</Text>}
         </View>
       </View>
       {next && nextDef ? (
         <>
           <View style={styles.need}>
-            <Text style={[type.label, styles.ink]}>{josa(next.name, '을', '를')} 열려면</Text>
+            <Text style={[type.label, styles.ink]}>다음 은행 {josa(next.name, '을', '를')} 열려면</Text>
             <NeedRow done={conditionDone} text={progress?.text ?? '조건 없음'} ratio={progress && progress.target ? progress.current / progress.target : 1} />
             <NeedRow done={enoughCoins} text={`${formatAmount(Math.min(balance, next.price))} / ${formatAmount(next.price)}냥`} ratio={ratio} />
           </View>
