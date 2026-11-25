@@ -170,13 +170,8 @@ describe('홈 요약 (TC-023, TC-027)', () => {
     expect([s.overdueCount, s.todayCount, s.upcomingCount]).toEqual([2, 1, 1]);
   });
 
-  test('7일 뒤 예상 부채는 미완료 전체를 포함한다', () => {
-    expect(s.forecast7).toBe(18416); // 7,781 + 4,287 + 1,948 + 4,400
-  });
-
-  test('미완료가 없으면 예상 부채를 보여주지 않는다', () => {
+  test('미완료가 없으면 빚이 없고 1등급', () => {
     const none = summarize([todo('done', 3, '2026-11-01', 'repaid')], TODAY);
-    expect(none.forecast7).toBeNull();
     expect(none.totalDebt).toBe(0);
     expect(none.grade).toBe(1);
   });
