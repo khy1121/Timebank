@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SpeechBubble } from '@/components/SpeechBubble';
+import { TODO_GONE } from '@/domain/messages';
 import { TodoForm } from '@/components/TodoForm';
 import { TopBar } from '@/components/TopBar';
 import { useTodos } from '@/store/todos';
@@ -21,7 +22,7 @@ export default function EditTodoScreen() {
       <SafeAreaView style={styles.safe}>
         <TopBar onLead={goBack} />
         <View style={styles.body}>
-          <SpeechBubble text="이미 처리했거나 없는 할 일이에요." />
+          <SpeechBubble text={TODO_GONE} />
         </View>
       </SafeAreaView>
     );

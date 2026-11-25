@@ -10,6 +10,7 @@ import { Button } from '@/components/Button';
 import { CoinMeter } from '@/components/CoinMeter';
 import { ConfirmSheet } from '@/components/ConfirmSheet';
 import { SpeechBubble } from '@/components/SpeechBubble';
+import { dueBubble, TODO_GONE } from '@/domain/messages';
 import { TopBar } from '@/components/TopBar';
 import { addDays, formatKoreanDate } from '@/domain/dates';
 import { formatAmount, viewOf } from '@/domain/interest';
@@ -38,7 +39,7 @@ export default function TodoDetailScreen() {
       <SafeAreaView style={styles.safe}>
         <TopBar onLead={goBack} />
         <View style={styles.missing}>
-          <SpeechBubble text="이미 처리했거나 없는 할 일이에요." />
+          <SpeechBubble text={TODO_GONE} />
         </View>
       </SafeAreaView>
     );
@@ -142,13 +143,7 @@ export default function TodoDetailScreen() {
             {v.capped ? <Text style={[type.caption, styles.muted]}>상한에 닿아서 더 깎이지 않아요.</Text> : null}
           </View>
         ) : (
-          <SpeechBubble
-            text={
-              v.state === 'today'
-                ? `오늘 끝내면 ${formatAmount(payout)}냥이 돌아와요. 넘기면 내일부터 원금이 하루에 ${formatAmount(v.nextDayInterest)}냥씩 깎여요.`
-                : `기한까지 ${v.daysLeft}일 남았어요. 넘기면 원금이 하루에 ${formatAmount(v.nextDayInterest)}냥씩 깎이기 시작해요.`
-            }
-          />
+          <SpeechBubble text={dueBubble(v.state === 'today' ? 'today' : 'upcoming', payout, v.daysLeft, v.nextDayInterest)} />
         )}
       </ScrollView>
 
