@@ -19,6 +19,11 @@ export type FontSet = {
   weighted?: boolean;
   /** 제목·숫자 글꼴의 글자가 작게 그려지면 키우는 비율 (손글씨 Gaegu) */
   displayScale?: number;
+  /**
+   * 제목 글꼴 글자가 줄 가운데보다 위(+면 아래로 내림)에 그려지는 정도. 글자 크기에 곱한다.
+   * 도장처럼 글자를 테두리 한가운데 두어야 할 때 쓴다. 글꼴 위아래 여백 값으로 잰 것
+   */
+  centerNudge?: number;
 };
 
 export type ThemeDef = {
@@ -70,7 +75,7 @@ export const THEMES: Record<ThemeCode, ThemeDef> = {
     stroke: { outline: 0, hairline: 0 },
     cardShadow: '0px 4px 0px 0px rgba(58, 42, 30, 0.14)',
     buttonDrop: { color: '#D45A2A', x: 0, y: 4 },
-    fonts: { display: 'Jua', body: 'GowunDodum', bodyMedium: 'GowunDodum' },
+    fonts: { display: 'Jua', body: 'GowunDodum', bodyMedium: 'GowunDodum', centerNudge: 0.07 },
   },
   timebank: {
     code: 'timebank',
@@ -98,7 +103,7 @@ export const THEMES: Record<ThemeCode, ThemeDef> = {
     stroke: { outline: 1.5, hairline: 1 },
     cardShadow: null,
     buttonDrop: null,
-    fonts: { display: 'BlackHanSans', body: 'IBMPlexSansKR-Regular', bodyMedium: 'IBMPlexSansKR-Medium' },
+    fonts: { display: 'BlackHanSans', body: 'IBMPlexSansKR-Regular', bodyMedium: 'IBMPlexSansKR-Medium', centerNudge: 0.1 },
   },
   notebook: {
     code: 'notebook',
@@ -112,7 +117,7 @@ export const THEMES: Record<ThemeCode, ThemeDef> = {
     stroke: { outline: 1.5, hairline: 1 },
     cardShadow: '2px 3px 0px 0px #2B2F3A',
     buttonDrop: { color: '#2B2F3A', x: 2, y: 3 },
-    fonts: { display: 'Gaegu-Bold', body: 'GowunDodum', bodyMedium: 'GowunDodum', displayScale: 1.2 },
+    fonts: { display: 'Gaegu-Bold', body: 'GowunDodum', bodyMedium: 'GowunDodum', displayScale: 1.2, centerNudge: -0.04 },
   },
   arcade: {
     code: 'arcade',
@@ -126,7 +131,7 @@ export const THEMES: Record<ThemeCode, ThemeDef> = {
     stroke: { outline: 3, hairline: 2 },
     cardShadow: '4px 4px 0px 0px #14142B',
     buttonDrop: { color: '#14142B', x: 4, y: 4 },
-    fonts: { display: 'DoHyeon', body: 'Pretendard-Regular', bodyMedium: 'Pretendard-Medium' },
+    fonts: { display: 'DoHyeon', body: 'Pretendard-Regular', bodyMedium: 'Pretendard-Medium', centerNudge: 0.05 },
   },
 };
 

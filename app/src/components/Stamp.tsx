@@ -3,7 +3,8 @@ import Svg, { Path } from 'react-native-svg';
 
 import { stampPath, type StampShape } from '@/domain/stampShape';
 import { useLook } from '@/store/look';
-import { color, live, themed, type } from '@/theme/tokens';
+import { THEMES } from '@/theme/themes';
+import { color, currentTheme, live, themed, type } from '@/theme/tokens';
 
 /**
  * saved: 적립(기한 안에 끝냄). 상점에서 산 잉크·글자·모양으로 꾸민다
@@ -41,6 +42,8 @@ export function Stamp({ kind, size = 44, ink, word, shape }: Props) {
   const form: StampShape = fixed ? 'circle' : (shape ?? look.stampShape);
   // 글자가 많거나 별 모양이면 도장 안에 들어가도록 줄인다
   const fontSize = Math.round(size * (label.length >= 3 || form === 'star' ? 0.22 : 0.27));
+  // 글꼴마다 글자가 줄 가운데보다 조금 위아래로 그려져서, 테두리 한가운데 오도록 내린다
+  const nudge = fontSize * (THEMES[currentTheme()].fonts.centerNudge ?? 0);
   return (
     <View style={[styles.box, { width: size, height: size }]} accessible accessibilityLabel={`${STAMP_LABEL[kind]} 도장`}>
       <Svg width={size} height={size} style={StyleSheet.absoluteFill}>
@@ -54,7 +57,13 @@ export function Stamp({ kind, size = 44, ink, word, shape }: Props) {
         />
         <Path d={stampPath(form, size, 5.5)} stroke={tint} strokeWidth={1} strokeDasharray="2.5,2" fill="none" strokeLinejoin="round" />
       </Svg>
-      <Text style={[type.stamp, styles.text, { color: tint, fontSize, lineHeight: Math.round(fontSize * 1.2) }]}>{label}</Text>
+      <Text
+        style={[
+          type.stamp,
+          { color: tint, fontSize, lineHeight: Math.round(fontSize * 1.2), transform: [{ translateY: nudge }, { rotate: '-12deg' }] },
+        ]}>
+        {label}
+      </Text>
     </View>
   );
 }
@@ -68,11 +77,12 @@ export function ForfeitSticker({ size = 44 }: { size?: number }) {
   const w = size;
   const h = Math.round(size * 0.68);
   const fontSize = Math.round(size * 0.27);
+  const nudge = fontSize * (THEMES[currentTheme()].fonts.centerNudge ?? 0);
   return (
     <View style={[styles.box, { width: size, height: size }]} accessible accessibilityLabel="몰수 딱지">
       <View style={[styles.sticker, { width: w, height: h, borderRadius: Math.max(2, Math.round(size / 24)) }]}>
         <View style={styles.stickerInner}>
-          <Text style={[type.stamp, styles.stickerText, { fontSize, lineHeight: Math.round(fontSize * 1.2) }]}>몰수</Text>
+          <Text style={[type.stamp, styles.stickerText, { fontSize, lineHeight: Math.round(fontSize * 1.2), transform: [{ translateY: nudge }] }]}>몰수</Text>
         </View>
       </View>
     </View>
@@ -81,7 +91,6 @@ export function ForfeitSticker({ size = 44 }: { size?: number }) {
 
 const styles = themed(() => ({
   box: { alignItems: 'center', justifyContent: 'center', opacity: 0.92 },
-  text: { transform: [{ rotate: '-12deg' }] },
   sticker: { backgroundColor: color.debtFg, padding: 3, transform: [{ rotate: '8deg' }] },
   stickerInner: {
     flex: 1,
