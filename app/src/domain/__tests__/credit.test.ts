@@ -93,8 +93,14 @@ describe('서버 값', () => {
   });
   it('순위표 행', () => {
     expect(boardFromRows([{ rank: 1, name: '준*', score: 968, week_delta: 5, is_me: false }])).toEqual([
-      { rank: 1, userId: null, name: '준*', score: 968, weekDelta: 5, isMe: false, nameplate: 'none' },
+      { rank: 1, userId: null, name: '준*', score: 968, weekDelta: 5, isMe: false, nameplate: 'none', outfit: { head: 'head-none', face: 'face-none', body: 'body-none' } },
     ]);
+  });
+
+  it('남의 꾸민 옷: 아는 코드는 그대로, 모르는 코드·다른 칸 코드·빈칸은 안 씀', () => {
+    const [row] = boardFromRows([{ rank: 2, name: '민*', score: 700, week_delta: 0, is_me: false, outfit: { head: 'head-beanie', face: 'body-raincoat', body: null } }]);
+    expect(row.outfit).toEqual({ head: 'head-beanie', face: 'face-none', body: 'body-none' });
+    expect(boardFromRows([{ rank: 3, name: '지*', score: 1, week_delta: 0, is_me: false, outfit: 'x' }])[0].outfit.head).toBe('head-none');
   });
 });
 

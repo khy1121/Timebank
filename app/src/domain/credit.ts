@@ -1,3 +1,4 @@
+import { outfitFromServer, type Outfit } from './closet';
 import { toNameplate, type Nameplate } from './bank';
 import { diffDays, type DateString } from './dates';
 
@@ -172,8 +173,8 @@ export function signed(n: number): string {
   return '0';
 }
 
-export type BoardRow = { rank: number; userId: string | null; name: string; score: number; weekDelta: number; isMe: boolean; nameplate: Nameplate };
+export type BoardRow = { rank: number; userId: string | null; name: string; score: number; weekDelta: number; isMe: boolean; nameplate: Nameplate; outfit: Outfit };
 
-export function boardFromRows(rows: { rank: number; user_id?: string | null; name: string; score: number; week_delta: number; is_me: boolean; nameplate?: string | null }[]): BoardRow[] {
-  return rows.map((r) => ({ rank: r.rank, userId: r.user_id ?? null, name: r.name, score: r.score, weekDelta: r.week_delta, isMe: r.is_me, nameplate: toNameplate(r.nameplate) }));
+export function boardFromRows(rows: { rank: number; user_id?: string | null; name: string; score: number; week_delta: number; is_me: boolean; nameplate?: string | null; outfit?: unknown }[]): BoardRow[] {
+  return rows.map((r) => ({ rank: r.rank, userId: r.user_id ?? null, name: r.name, score: r.score, weekDelta: r.week_delta, isMe: r.is_me, nameplate: toNameplate(r.nameplate), outfit: outfitFromServer(r.outfit) }));
 }

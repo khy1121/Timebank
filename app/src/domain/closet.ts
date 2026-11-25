@@ -27,6 +27,20 @@ export function outfitOf(equipped: Equipped, owned: Set<string>): Outfit {
   return { head: pick('head'), face: pick('face'), body: pick('body') };
 }
 
+/**
+ * 서버가 돌려준 남의 옷({ head, face, body }, 산 물건만)을 앱 모양으로. 모르는 코드나 빈칸은 "안 씀".
+ * 순위표·그룹에서 다른 사람의 꾸민 캐릭터를 그릴 때 쓴다.
+ */
+export function outfitFromServer(value: unknown): Outfit {
+  const o = value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+  const pick = (slot: WearSlot) => {
+    const code = typeof o[slot] === 'string' ? (o[slot] as string) : null;
+    const item = code ? itemOf(code) : undefined;
+    return item && item.slot === slot ? item.code : defaultItem(slot).code;
+  };
+  return { head: pick('head'), face: pick('face'), body: pick('body') };
+}
+
 /** 소품을 입힌다. 같은 소품을 다시 고르면 벗긴다. */
 export function wear(outfit: Outfit, code: string): Outfit {
   const item = itemOf(code);
