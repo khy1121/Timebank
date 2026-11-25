@@ -1,6 +1,6 @@
 # 공개 페이지
 
-할일통장의 지원 페이지(`index.html`)와 개인정보 처리방침(`privacy.html`). 스토어에 적는 지원 주소·처리방침 주소로 쓴다.
+todobank의 지원 페이지(`index.html`)와 개인정보 처리방침(`privacy.html`). 스토어에 적는 지원 주소·처리방침 주소로 쓴다.
 
 - 처리방침 본문은 앱 안 처리방침 `app/src/domain/privacy.ts`에서 만든다. 그 파일을 고치면 다시 만든다.
 
